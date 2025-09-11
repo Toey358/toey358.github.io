@@ -1,0 +1,3513 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animal Tracking Dashboard - ระบบบันทึกการพบสัตว์</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://img.icons8.com/parakeet/96/bird.png">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #3b82f6;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --purple-color: #8b5cf6;
+            --pink-color: #ec4899;
+            --indigo-color: #6366f1;
+            --teal-color: #14b8a6;
+            --dark-color: #1e293b;
+            --light-color: #f8fafc;
+            --border-color: #e2e8f0;
+            --bg-color: #f1f5f9;
+            --sidebar-width: 260px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.15), 0 6px 10px rgba(0,0,0,0.08);
+            --focus-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: var(--bg-color);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            background: white;
+            color: var(--dark-color);
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .sidebar-header h2 .header-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-header p {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin: 0;
+            font-weight: 400;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.95rem;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-weight: 500;
+            border-left: 3px solid transparent;
+        }
+
+        .menu-item:hover {
+            background: var(--light-color);
+            color: var(--dark-color);
+            border-left-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .menu-item.active {
+            background: rgba(59, 130, 246, 0.05);
+            color: var(--primary-color);
+            font-weight: 600;
+            border-left-color: var(--primary-color);
+        }
+
+        .menu-item i {
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+            transition: all 0.2s ease;
+            opacity: 0.8;
+        }
+
+        .menu-item:hover i,
+        .menu-item.active i {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+
+        .menu-item.external::after {
+            content: '\f35d';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 0.8rem;
+            opacity: 0.6;
+            margin-left: auto;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Mobile Toggle */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1002;
+            background: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-md);
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--dark-color);
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-lg);
+            animation: slideDown 0.5s ease;
+            position: relative;
+        }
+
+        .header h1 {
+            color: var(--dark-color);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header h1 img {
+            width: 50px;
+            height: 50px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .last-update {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary-color);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Stats Cards */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Map Container */
+        .map-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow-md);
+            animation: fadeIn 0.7s ease;
+            margin-bottom: 30px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+
+        .section-header h2 {
+            color: var(--dark-color);
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-header h2 i {
+            color: var(--primary-color);
+        }
+
+        #map {
+            height: 400px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            z-index: 10;
+            position: relative;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow-md);
+            animation: fadeIn 0.8s ease;
+        }
+
+        .chart-canvas {
+            max-height: 350px;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-label {
+            color: var(--dark-color);
+            font-size: 0.95rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .filter-select {
+            padding: 8px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: 'Prompt', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: var(--focus-shadow);
+            transform: translateY(-1px);
+        }
+
+        .date-filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Table Container */
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow-md);
+            animation: fadeIn 0.9s ease;
+            overflow-x: auto;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding: 10px 40px 10px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            width: 300px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-family: 'Prompt', sans-serif;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: var(--focus-shadow);
+            transform: translateY(-1px);
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        /* Table Styles */
+        .table-wrapper {
+            margin-top: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 15px;
+            color: var(--dark-color);
+            font-size: 0.95rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        tbody tr {
+            transition: all 0.2s ease;
+            background: white;
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .btn-view {
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            color: white;
+        }
+
+        .btn-view:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+        }
+
+        .pagination button {
+            padding: 8px 15px;
+            border: 2px solid var(--border-color);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            color: var(--dark-color);
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination button.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .pagination-info {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1003;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 750px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            color: var(--dark-color);
+            font-size: 1.6rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-header h2 i {
+            color: var(--primary-color);
+        }
+
+        .btn-close {
+            background: #f1f5f9;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-close:hover {
+            background: #e2e8f0;
+            color: var(--dark-color);
+            transform: rotate(90deg);
+        }
+
+        /* Form Styles */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-label {
+            display: block;
+            color: var(--dark-color);
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-family: 'Prompt', sans-serif;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: var(--focus-shadow);
+            transform: translateY(-1px);
+        }
+
+        .form-control:read-only {
+            background: #f8fafc;
+            cursor: not-allowed;
+        }
+
+        .form-control.editable {
+            background: white;
+            cursor: text;
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Image Upload Styles */
+        .image-upload-container {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            background: #fafbfc;
+        }
+
+        .image-upload-container:hover {
+            border-color: var(--primary-color);
+            background: rgba(59, 130, 246, 0.02);
+        }
+
+        .image-upload-container.drag-over {
+            border-color: var(--primary-color);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #64748b;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
+        .file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Enhanced Image Preview Styles - Centered */
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            margin: 0 auto 15px auto;
+            cursor: pointer;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-preview-container {
+            text-align: center;
+        }
+
+        .image-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .btn-image {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-delete-image {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+        }
+
+        .btn-change-image {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            color: white;
+        }
+
+        .btn-image:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Color Picker */
+        .color-picker-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .color-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .color-box:hover {
+            transform: scale(1.1);
+        }
+
+        .color-box.selected {
+            border: 2px solid var(--dark-color);
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+        }
+
+        .color-box.color-picker-btn {
+            background: #f1f5f9;
+            border: 2px dashed #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 1.2rem;
+            width: 40px;
+            height: 40px;
+        }
+
+        .color-box.color-picker-btn:hover {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+            color: var(--primary-color);
+        }
+
+        .custom-color-picker {
+            position: relative;
+            display: inline-block;
+        }
+
+        .color-picker-input {
+            position: absolute;
+            opacity: 0;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+        }
+
+        .color-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .color-code-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .color-code-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: var(--focus-shadow);
+        }
+
+        /* Button Groups */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            padding-top: 20px;
+        }
+
+        .btn-group.hidden {
+            display: none;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #94a3b8;
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Button Loading Spinner */
+        .btn-loading {
+            position: relative;
+            color: transparent;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            color: white;
+        }
+
+        /* Refresh Button */
+        .btn-refresh {
+            background: linear-gradient(135deg, #14b8a6, #2dd4bf);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-refresh:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Password Input Modal */
+        .password-modal {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.4s ease;
+        }
+
+        .password-modal h3 {
+            color: var(--dark-color);
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .password-modal h3 i {
+            color: var(--danger-color);
+            font-size: 1.6rem;
+        }
+
+        .password-modal p {
+            color: #64748b;
+            font-size: 1rem;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            text-align: center;
+            font-family: 'Prompt', sans-serif;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: var(--danger-color);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .password-modal .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        .password-modal .btn {
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        /* Confirm Delete Button Loading */
+        .btn-confirm-delete {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+            position: relative;
+        }
+
+        .btn-confirm-delete.loading {
+            color: transparent;
+            pointer-events: none;
+        }
+
+        .btn-confirm-delete.loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Image Modal */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1005;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .image-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+
+        .image-modal img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .image-modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            color: var(--dark-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-modal-close:hover {
+            transform: scale(1.1);
+            background: #f1f5f9;
+        }
+
+        /* No Image Placeholder */
+        .no-image-placeholder {
+            text-align: center;
+            color: #94a3b8;
+            padding: 40px 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 2px dashed #e2e8f0;
+            margin: 0 auto;
+        }
+
+        .no-image-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .no-image-placeholder p {
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        /* Detail Form Special Layout */
+        .detail-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .detail-form-grid .form-group.reporter-position-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            grid-column: span 2;
+        }
+
+        /* Animations */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            font-size: 1.2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+
+            .last-update {
+                position: static;
+                margin-top: 15px;
+                display: inline-flex;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid,
+            .detail-form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+
+            .detail-form-grid .form-group.reporter-position-row {
+                grid-column: span 1;
+                grid-template-columns: 1fr;
+            }
+
+            .search-box input {
+                width: 100%;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-wrap: wrap;
+            }
+
+            .filter-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group, .date-filter-group {
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Toggle Button -->
+    <button class="mobile-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2><span class="header-icon"><i class="fas fa-paw"></i></span> Animal Tracking</h2>
+            <p>ระบบบันทึกการพบสัตว์</p>
+        </div>
+        <nav class="sidebar-menu">
+            <button class="menu-item active" onclick="showDashboard()">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </button>
+            <button class="menu-item" onclick="openAddModal()">
+                <i class="fas fa-plus-circle"></i>
+                <span>เพิ่มข้อมูล</span>
+            </button>
+            <a href="https://script.google.com/macros/s/AKfycbw-HZf4cI6cbF64F6wiMWxAiJzG70YmQd64WPqVWfaEDScq6AU1WCNnPcoh8MZZYshf/exec" 
+               target="_blank" class="menu-item external" onclick="openMapLink(event)">
+                <i class="fas fa-map"></i>
+                <span>Map</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Header -->
+            <div class="header">
+                <h1><img src="https://img.icons8.com/parakeet/96/bird.png" alt="Bird Icon"> ระบบบันทึกการพบสัตว์</h1>
+                <p>Animal Tracking Dashboard - บันทึกและติดตามข้อมูลการพบสัตว์ในพื้นที่</p>
+                <div class="last-update" id="lastUpdateTime">
+                    <i class="fas fa-clock"></i>
+                    <span>อัพเดทล่าสุด: --:--</span>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-value" id="totalRecords">0</div>
+                    <div class="stat-label">จำนวนบันทึกทั้งหมด</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="stat-value" id="totalLocations">0</div>
+                    <div class="stat-label">จำนวนสถานที่</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stat-value" id="todayRecords">0</div>
+                    <div class="stat-label">บันทึกวันนี้</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="stat-value" id="totalAnimals">0</div>
+                    <div class="stat-label">จำนวนสัตว์ทั้งหมด</div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="filter-group">
+                    <label class="filter-label">ช่วงเวลา:</label>
+                    <select class="filter-select" id="filterPeriod" onchange="filterData()">
+                        <option value="all">ทั้งหมด</option>
+                        <option value="today">วันนี้</option>
+                        <option value="week">สัปดาห์นี้</option>
+                        <option value="month">เดือนนี้</option>
+                        <option value="custom">กำหนดเอง</option>
+                    </select>
+                </div>
+                
+                <div class="date-filter-group" id="customDateFilter" style="display: none;">
+                    <div class="filter-group">
+                        <label class="filter-label">ปี:</label>
+                        <select class="filter-select" id="filterYear" onchange="filterData()">
+                            <option value="">ทั้งหมด</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">เดือน:</label>
+                        <select class="filter-select" id="filterMonth" onchange="filterData()">
+                            <option value="">ทั้งหมด</option>
+                            <option value="01">มกราคม</option>
+                            <option value="02">กุมภาพันธ์</option>
+                            <option value="03">มีนาคม</option>
+                            <option value="04">เมษายน</option>
+                            <option value="05">พฤษภาคม</option>
+                            <option value="06">มิถุนายน</option>
+                            <option value="07">กรกฎาคม</option>
+                            <option value="08">สิงหาคม</option>
+                            <option value="09">กันยายน</option>
+                            <option value="10">ตุลาคม</option>
+                            <option value="11">พฤศจิกายน</option>
+                            <option value="12">ธันวาคม</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">วัน:</label>
+                        <select class="filter-select" id="filterDay" onchange="filterData()">
+                            <option value="">ทั้งหมด</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">ชื่อเหตุการณ์:</label>
+                    <select class="filter-select" id="filterEvent" onchange="filterData()">
+                        <option value="all">ทั้งหมด</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">สถานที่:</label>
+                    <select class="filter-select" id="filterLocation" onchange="filterData()">
+                        <option value="all">ทั้งหมด</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div class="map-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-map"></i> แผนที่แสดงตำแหน่งการพบสัตว์</h2>
+                    <button class="btn-refresh" onclick="refreshMap()">
+                        <i class="fas fa-sync-alt"></i> รีเฟรช
+                    </button>
+                </div>
+                <div id="map"></div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <!-- Location Chart -->
+                <div class="chart-container">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-bar"></i> จำนวนครั้งการพบสัตว์</h2>
+                    </div>
+                    <canvas id="locationChart" class="chart-canvas"></canvas>
+                </div>
+
+                <!-- Daily Reports Chart -->
+                <div class="chart-container">
+                    <div class="section-header">
+                        <h2><i class="fas fa-calendar-day"></i> จำนวนการรายงานรายวัน</h2>
+                    </div>
+                    <canvas id="dailyChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="table-container">
+                <div class="section-header">
+                    <h2><i class="fas fa-table"></i> ตารางข้อมูลการพบสัตว์</h2>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="ค้นหา..." onkeyup="searchTable()">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <div id="tableContent">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Modal -->
+    <div id="formModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="formModalTitle"><i class="fas fa-plus-circle"></i> เพิ่มข้อมูลการพบสัตว์</h2>
+                <button class="btn-close" onclick="closeFormModal()">×</button>
+            </div>
+            <form id="dataForm">
+                <input type="hidden" id="formId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">ชื่อเหตุการณ์ *</label>
+                        <input type="text" class="form-control" id="formEventName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">จำนวน</label>
+                        <input type="number" class="form-control" id="formQuantity" min="0">
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">รายละเอียด</label>
+                        <textarea class="form-control" id="formDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">สถานที่เกิดเหตุ *</label>
+                        <input type="text" class="form-control" id="formLocation" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ขนาดของสัตว์</label>
+                        <select class="form-control" id="formAnimalSize">
+                            <option value="">-- เลือก --</option>
+                            <option value="เล็ก">เล็ก</option>
+                            <option value="กลาง">กลาง</option>
+                            <option value="ใหญ่">ใหญ่</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">พิกัด GPS</label>
+                        <input type="text" class="form-control" id="formGPS" placeholder="เช่น 14.8818, 102.0269">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">สภาพแวดล้อม</label>
+                        <select class="form-control" id="formEnvironment">
+                            <option value="">-- เลือก --</option>
+                            <option value="แดดจัด">แดดจัด</option>
+                            <option value="ท้องฟ้าโปร่ง">ท้องฟ้าโปร่ง</option>
+                            <option value="มีเมฆมาก">มีเมฆมาก</option>
+                            <option value="มีเมฆมืดครึ่ง">มีเมฆมืดครึ่ง</option>
+                            <option value="หมอกหนา">หมอกหนา</option>
+                            <option value="ฝนตก">ฝนตก</option>
+                            <option value="มีลูกเห็บ">มีลูกเห็บ</option>
+                            <option value="อื่นๆ">อื่นๆ</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">รูปภาพ</label>
+                        <div class="image-upload-container" id="imageUploadContainer">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="upload-text">คลิกหรือลากไฟล์รูปภาพมาที่นี่</div>
+                            <div class="upload-hint">รองรับไฟล์ JPG, PNG (ขนาดไม่เกิน 5MB)</div>
+                            <input type="file" class="file-input" id="imageFileInput" accept="image/*">
+                        </div>
+                        <div id="imagePreviewContainer" style="display: none;" class="image-preview-container">
+                            <img id="imagePreview" class="image-preview" src="" alt="Preview" onclick="openImageModal(this.src)">
+                            <div class="image-controls">
+                                <button type="button" class="btn-image btn-change-image" onclick="changeImage()">
+                                    <i class="fas fa-exchange-alt"></i> เปลี่ยนรูป
+                                </button>
+                                <button type="button" class="btn-image btn-delete-image" onclick="removeImage()">
+                                    <i class="fas fa-trash"></i> ลบรูป
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">สีบนแผนที่</label>
+                        <div class="color-picker-container" id="colorContainer">
+                            <div class="color-box selected" style="background: #3b82f6;" onclick="selectColor('#3b82f6', this)"></div>
+                            <div class="color-box" style="background: #10b981;" onclick="selectColor('#10b981', this)"></div>
+                            <div class="color-box" style="background: #f59e0b;" onclick="selectColor('#f59e0b', this)"></div>
+                            <div class="color-box" style="background: #ef4444;" onclick="selectColor('#ef4444', this)"></div>
+                            <div class="color-box" style="background: #8b5cf6;" onclick="selectColor('#8b5cf6', this)"></div>
+                            <div class="color-box" style="background: #ec4899;" onclick="selectColor('#ec4899', this)"></div>
+                            <div class="custom-color-picker">
+                                <div class="color-box color-picker-btn" title="เลือกสีเพิ่มเติม">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                                <input type="color" class="color-picker-input" id="customColorPicker" onchange="selectCustomColor(this.value)">
+                            </div>
+                        </div>
+                        <div class="color-input-group">
+                            <input type="text" class="color-code-input" id="formColorCode" placeholder="หรือใส่รหัสสี เช่น #FF6B6B" value="#3b82f6">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ผู้รายงาน</label>
+                        <input type="text" class="form-control" id="formReporter" placeholder="ชื่อผู้รายงาน">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ตำแหน่ง</label>
+                        <input type="text" class="form-control" id="formPosition" placeholder="ตำแหน่งหน้าที่">
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">หมายเหตุ</label>
+                        <textarea class="form-control" id="formNotes" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" id="saveButton">
+                        <i class="fas fa-save"></i> บันทึกข้อมูล
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeFormModal()">
+                        <i class="fas fa-times"></i> ยกเลิก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View/Edit Detail Modal -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="detailModalTitle"><i class="fas fa-info-circle"></i> รายละเอียดข้อมูล</h2>
+                <button class="btn-close" onclick="closeDetailModal()">×</button>
+            </div>
+            <div id="detailForm">
+                <input type="hidden" id="detailId">
+                <div class="detail-form-grid">
+                    <div class="form-group">
+                        <label class="form-label">วันที่บันทึก</label>
+                        <input type="text" class="form-control" id="detailTimestamp" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ชื่อเหตุการณ์</label>
+                        <input type="text" class="form-control" id="detailEventName" readonly>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">รายละเอียด</label>
+                        <textarea class="form-control" id="detailDescription" rows="3" readonly></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">จำนวน</label>
+                        <input type="number" class="form-control" id="detailQuantity" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ขนาดของสัตว์</label>
+                        <select class="form-control" id="detailAnimalSize" disabled>
+                            <option value="">-- เลือก --</option>
+                            <option value="เล็ก">เล็ก</option>
+                            <option value="กลาง">กลาง</option>
+                            <option value="ใหญ่">ใหญ่</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">สถานที่เกิดเหตุ</label>
+                        <input type="text" class="form-control" id="detailLocation" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">สภาพแวดล้อม</label>
+                        <select class="form-control" id="detailEnvironment" disabled>
+                            <option value="">-- เลือก --</option>
+                            <option value="แดดจัด">แดดจัด</option>
+                            <option value="ท้องฟ้าโปร่ง">ท้องฟ้าโปร่ง</option>
+                            <option value="มีเมฆมาก">มีเมฆมาก</option>
+                            <option value="มีเมฆมืดครึ่ง">มีเมฆมืดครึ่ง</option>
+                            <option value="หมอกหนา">หมอกหนา</option>
+                            <option value="ฝนตก">ฝนตก</option>
+                            <option value="อื่นๆ">อื่นๆ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">พิกัด GPS</label>
+                        <input type="text" class="form-control" id="detailGPS" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">สีบนแผนที่</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="detailColorBox" style="display: inline-block; width: 30px; height: 30px; border-radius: 8px; border: 2px solid #e2e8f0;"></span>
+                            <input type="text" class="form-control" id="detailColor" readonly style="flex: 1;">
+                        </div>
+                        <div class="color-picker-container" id="detailColorContainer" style="display: none;">
+                            <div class="color-box" style="background: #3b82f6;" onclick="selectDetailColor('#3b82f6', this)"></div>
+                            <div class="color-box" style="background: #10b981;" onclick="selectDetailColor('#10b981', this)"></div>
+                            <div class="color-box" style="background: #f59e0b;" onclick="selectDetailColor('#f59e0b', this)"></div>
+                            <div class="color-box" style="background: #ef4444;" onclick="selectDetailColor('#ef4444', this)"></div>
+                            <div class="color-box" style="background: #8b5cf6;" onclick="selectDetailColor('#8b5cf6', this)"></div>
+                            <div class="color-box" style="background: #ec4899;" onclick="selectDetailColor('#ec4899', this)"></div>
+                            <div class="custom-color-picker">
+                                <div class="color-box color-picker-btn" title="เลือกสีเพิ่มเติม">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                                <input type="color" class="color-picker-input" id="detailCustomColorPicker" onchange="selectDetailCustomColor(this.value)">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">รูปภาพ</label>
+                        <div id="detailImageContainer" class="image-preview-container">
+                            <div id="detailNoImage" class="no-image-placeholder">
+                                <i class="fas fa-image"></i>
+                                <p>ไม่มีรูปภาพ</p>
+                            </div>
+                            <div id="detailImageDisplay" style="display: none;">
+                                <img id="detailImagePreview" class="image-preview" src="" alt="รูปภาพ" onclick="openImageModal(this.src)">
+                                <div class="image-controls" id="detailImageControls" style="display: none;">
+                                    <button type="button" class="btn-image btn-change-image" onclick="changeDetailImage()">
+                                        <i class="fas fa-exchange-alt"></i> เปลี่ยนรูป
+                                    </button>
+                                    <button type="button" class="btn-image btn-delete-image" onclick="removeDetailImage()">
+                                        <i class="fas fa-trash"></i> ลบรูป
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="image-upload-container" id="detailImageUploadContainer" style="display: none;">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="upload-text">คลิกหรือลากไฟล์รูปภาพมาที่นี่</div>
+                                <div class="upload-hint">รองรับไฟล์ JPG, PNG (ขนาดไม่เกิน 5MB)</div>
+                                <input type="file" class="file-input" id="detailImageFileInput" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Reporter and Position in same row -->
+                    <div class="form-group reporter-position-row">
+                        <div>
+                            <label class="form-label">ผู้รายงาน</label>
+                            <input type="text" class="form-control" id="detailReporter" readonly>
+                        </div>
+                        <div>
+                            <label class="form-label">ตำแหน่ง</label>
+                            <input type="text" class="form-control" id="detailPosition" readonly>
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">หมายเหตุ</label>
+                        <textarea class="form-control" id="detailNotes" rows="2" readonly></textarea>
+                    </div>
+                </div>
+            </div>
+            <!-- View Mode Buttons -->
+            <div class="btn-group" id="viewButtons">
+                <button type="button" class="btn btn-success" onclick="enableEditMode()">
+                    <i class="fas fa-edit"></i> แก้ไข
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteFromDetail()">
+                    <i class="fas fa-trash"></i> ลบ
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="closeDetailModal()">
+                    <i class="fas fa-times"></i> ปิด
+                </button>
+            </div>
+            <!-- Edit Mode Buttons -->
+            <div class="btn-group hidden" id="editButtons">
+                <button type="button" class="btn btn-primary" id="saveDetailButton" onclick="saveDetailChanges()">
+                    <i class="fas fa-save"></i> บันทึก
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="cancelEdit()">
+                    <i class="fas fa-times"></i> ยกเลิก
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="password-modal">
+            <h3><i class="fas fa-shield-alt"></i> ยืนยันการลบข้อมูล</h3>
+            <p>กรุณาใส่รหัสผ่านเพื่อยืนยันการลบข้อมูล<br><small style="color: #94a3b8;">(รหัสผ่าน: 1234)</small></p>
+            <input type="password" class="password-input" id="passwordInput" placeholder="ใส่รหัสผ่าน" maxlength="4">
+            <div class="btn-group">
+                <button class="btn btn-confirm-delete" id="confirmDeleteBtn" onclick="confirmDelete()">
+                    <i class="fas fa-check"></i> ยืนยันการลบ
+                </button>
+                <button class="btn btn-secondary" onclick="closePasswordModal()">
+                    <i class="fas fa-times"></i> ยกเลิก
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="image-modal">
+        <div class="image-modal-content">
+            <button class="image-modal-close" onclick="closeImageModal()">×</button>
+            <img id="modalImage" src="" alt="รูปภาพขยาย">
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        // Configuration - ใส่ URL ของ Web App ที่ได้จาก Google Apps Script (แก้ไขใหม่)
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwVglGD0XjduHDSiYPEAJsgkvyLIzCxxsGguBbUzAdjSnC4PMDdWprTxZb3WngUHByElA/exec';
+        
+        // Global variables
+        let map;
+        let markers = [];
+        let allData = [];
+        let filteredData = [];
+        let currentDetailId = null;
+        let locationChart = null;
+        let dailyChart = null;
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let selectedColor = '#3b82f6';
+        let selectedDetailColor = '#3b82f6';
+        let isEditMode = false;
+        let originalDetailData = {};
+        let lastDataHash = '';
+        let currentImageFile = null;
+        let currentDetailImageFile = null;
+        let currentFilters = {
+            period: 'all',
+            location: 'all',
+            event: 'all',
+            year: '',
+            month: '',
+            day: ''
+        };
+
+        // Convert Google Drive URL to direct display URL - Improved version
+        function convertGoogleDriveUrl(url) {
+            if (!url || typeof url !== 'string') return null;
+            
+            // If already a direct URL, return as is
+            if (url.includes('drive.google.com/uc?') || url.includes('googleusercontent.com')) {
+                return url;
+            }
+            
+            // Extract file ID from various Google Drive URL formats
+            let fileId = null;
+            
+            try {
+                // Format: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+                const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                if (fileMatch) {
+                    fileId = fileMatch[1];
+                }
+                
+                // Format: https://drive.google.com/open?id=FILE_ID
+                if (!fileId) {
+                    const openMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                    if (openMatch) {
+                        fileId = openMatch[1];
+                    }
+                }
+                
+                // If we found a file ID, convert to direct URL
+                if (fileId) {
+                    return `https://drive.google.com/uc?export=view&id=${fileId}`;
+                }
+            } catch (error) {
+                console.error('Error converting Google Drive URL:', error);
+            }
+            
+            // Return original URL if conversion fails
+            return url;
+        }
+
+        // Test if image URL is accessible
+        function testImageUrl(url) {
+            return new Promise((resolve) => {
+                if (!url) {
+                    resolve(false);
+                    return;
+                }
+                
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = url;
+                
+                // Timeout after 5 seconds
+                setTimeout(() => resolve(false), 5000);
+            });
+        }
+
+        // Get optimized image URL for Google Drive
+        async function getOptimizedImageUrl(originalUrl) {
+            if (!originalUrl) return null;
+            
+            const convertedUrl = convertGoogleDriveUrl(originalUrl);
+            if (!convertedUrl) return null;
+            
+            // Test if the converted URL works
+            const isAccessible = await testImageUrl(convertedUrl);
+            if (isAccessible) {
+                return convertedUrl;
+            }
+            
+            // If the standard conversion doesn't work, try alternative methods
+            const fileId = extractFileId(originalUrl);
+            if (fileId) {
+                // Try thumbnail URL for faster loading
+                const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400-h400`;
+                const thumbnailAccessible = await testImageUrl(thumbnailUrl);
+                if (thumbnailAccessible) {
+                    return thumbnailUrl;
+                }
+            }
+            
+            return null;
+        }
+
+        // Extract file ID from Google Drive URL
+        function extractFileId(url) {
+            if (!url) return null;
+            
+            const patterns = [
+                /\/file\/d\/([a-zA-Z0-9_-]+)/,
+                /[?&]id=([a-zA-Z0-9_-]+)/,
+                /\/d\/([a-zA-Z0-9_-]+)/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) {
+                    return match[1];
+                }
+            }
+            
+            return null;
+        }
+
+        // Open Image in Modal
+        function openImageModal(src) {
+            if (!src) return;
+            
+            document.getElementById('modalImage').src = src;
+            document.getElementById('imageModal').classList.add('active');
+        }
+
+        // Close Image Modal
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('active');
+        }
+
+        // Initialize Map
+        function initMap() {
+            map = L.map('map').setView([14.8818, 102.0269], 10);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+        }
+
+        // Get Data Hash for change detection
+        function getDataHash(data) {
+            return JSON.stringify(data).length + '_' + data.length;
+        }
+
+        // Load Data
+        async function loadData(silent = false) {
+            try {
+                const response = await fetch(API_URL + '?action=readAll');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const newData = result.data || [];
+                    const newDataHash = getDataHash(newData);
+                    
+                    // Only update if data actually changed
+                    if (newDataHash !== lastDataHash) {
+                        allData = newData;
+                        lastDataHash = newDataHash;
+                        
+                        updateYearFilter();
+                        updateLocationFilter();
+                        updateEventFilter();
+                        applyCurrentFilters();
+                        updateLastUpdateTime();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+                if (!silent) {
+                    Swal.fire('Error', 'ไม่สามารถโหลดข้อมูลได้', 'error');
+                }
+            }
+        }
+
+        // Update Last Update Time - Use AD year
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('th-TH', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('lastUpdateTime').innerHTML = `
+                <i class="fas fa-clock"></i>
+                <span>อัพเดทล่าสุด: ${timeString}</span>
+            `;
+        }
+
+        // Format Date and Time - Use AD year
+        function formatDateTime(timestamp) {
+            if (!timestamp) return '-';
+            
+            const date = new Date(timestamp);
+            if (isNaN(date.getTime())) {
+                return timestamp;
+            }
+            
+            // Use AD year (ค.ศ.)
+            return date.toLocaleString('en-GB', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Update Year Filter - Use AD years
+        function updateYearFilter() {
+            const yearSet = new Set();
+            allData.forEach(item => {
+                if (item.Timestamp) {
+                    const date = new Date(item.Timestamp);
+                    if (!isNaN(date.getTime())) {
+                        yearSet.add(date.getFullYear()); // Use AD year directly
+                    }
+                }
+            });
+
+            const yearSelect = document.getElementById('filterYear');
+            const currentYear = yearSelect.value;
+            yearSelect.innerHTML = '<option value="">ทั้งหมด</option>';
+            
+            Array.from(yearSet).sort((a, b) => b - a).forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year; // Display AD year
+                if (year.toString() === currentYear) {
+                    option.selected = true;
+                }
+                yearSelect.appendChild(option);
+            });
+        }
+
+        // Update Event Filter
+        function updateEventFilter() {
+            const eventSet = new Set();
+            allData.forEach(item => {
+                if (item['ชื่อเหตุการณ์']) {
+                    eventSet.add(item['ชื่อเหตุการณ์']);
+                }
+            });
+
+            const eventSelect = document.getElementById('filterEvent');
+            const currentEvent = eventSelect.value;
+            eventSelect.innerHTML = '<option value="all">ทั้งหมด</option>';
+            
+            Array.from(eventSet).sort().forEach(event => {
+                const option = document.createElement('option');
+                option.value = event;
+                option.textContent = event;
+                if (event === currentEvent) {
+                    option.selected = true;
+                }
+                eventSelect.appendChild(option);
+            });
+        }
+
+        // Update Location Filter
+        function updateLocationFilter() {
+            const locationSet = new Set();
+            allData.forEach(item => {
+                if (item['สถานที่เกิดเหตุ']) {
+                    locationSet.add(item['สถานที่เกิดเหตุ']);
+                }
+            });
+
+            const locationSelect = document.getElementById('filterLocation');
+            const currentLocation = locationSelect.value;
+            locationSelect.innerHTML = '<option value="all">ทั้งหมด</option>';
+            
+            Array.from(locationSet).sort().forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = location;
+                if (location === currentLocation) {
+                    option.selected = true;
+                }
+                locationSelect.appendChild(option);
+            });
+        }
+
+        // Update Day Filter
+        function updateDayFilter() {
+            const daySelect = document.getElementById('filterDay');
+            const currentDay = daySelect.value;
+            daySelect.innerHTML = '<option value="">ทั้งหมด</option>';
+            
+            for (let i = 1; i <= 31; i++) {
+                const option = document.createElement('option');
+                const dayStr = i.toString().padStart(2, '0');
+                option.value = dayStr;
+                option.textContent = i;
+                if (dayStr === currentDay) {
+                    option.selected = true;
+                }
+                daySelect.appendChild(option);
+            }
+        }
+
+        // Show/Hide Custom Date Filter
+        function toggleCustomDateFilter() {
+            const period = document.getElementById('filterPeriod').value;
+            const customFilter = document.getElementById('customDateFilter');
+            
+            if (period === 'custom') {
+                customFilter.style.display = 'flex';
+                updateDayFilter();
+            } else {
+                customFilter.style.display = 'none';
+            }
+        }
+
+        // Store Current Filters
+        function storeCurrentFilters() {
+            currentFilters = {
+                period: document.getElementById('filterPeriod').value,
+                location: document.getElementById('filterLocation').value,
+                event: document.getElementById('filterEvent').value,
+                year: document.getElementById('filterYear').value,
+                month: document.getElementById('filterMonth').value,
+                day: document.getElementById('filterDay').value
+            };
+        }
+
+        // Apply Current Filters
+        function applyCurrentFilters() {
+            // Restore filter values
+            document.getElementById('filterPeriod').value = currentFilters.period;
+            document.getElementById('filterLocation').value = currentFilters.location;
+            document.getElementById('filterEvent').value = currentFilters.event;
+            document.getElementById('filterYear').value = currentFilters.year;
+            document.getElementById('filterMonth').value = currentFilters.month;
+            document.getElementById('filterDay').value = currentFilters.day;
+            
+            toggleCustomDateFilter();
+            filterData(true);
+        }
+
+        // Filter Data
+        function filterData(skipStore = false) {
+            if (!skipStore) {
+                storeCurrentFilters();
+            }
+            
+            toggleCustomDateFilter();
+            
+            const period = currentFilters.period;
+            const location = currentFilters.location;
+            const event = currentFilters.event;
+            const year = currentFilters.year;
+            const month = currentFilters.month;
+            const day = currentFilters.day;
+            
+            filteredData = allData.filter(item => {
+                // Filter by period
+                if (period !== 'all' && item.Timestamp) {
+                    const date = new Date(item.Timestamp);
+                    const now = new Date();
+                    
+                    switch(period) {
+                        case 'today':
+                            if (date.toDateString() !== now.toDateString()) return false;
+                            break;
+                        case 'week':
+                            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                            if (date < weekAgo) return false;
+                            break;
+                        case 'month':
+                            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                            if (date < monthAgo) return false;
+                            break;
+                        case 'custom':
+                            if (year && date.getFullYear().toString() !== year) return false;
+                            if (month && (date.getMonth() + 1).toString().padStart(2, '0') !== month) return false;
+                            if (day && date.getDate().toString().padStart(2, '0') !== day) return false;
+                            break;
+                    }
+                }
+                
+                // Filter by location
+                if (location !== 'all' && item['สถานที่เกิดเหตุ'] !== location) {
+                    return false;
+                }
+                
+                // Filter by event
+                if (event !== 'all' && item['ชื่อเหตุการณ์'] !== event) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            currentPage = 1;
+            updateTable();
+            updateStats();
+            updateMap();
+            updateCharts();
+            updatePagination();
+        }
+
+        // Update Table with Pagination - Removed image and reporter columns
+        function updateTable() {
+            const tableContent = document.getElementById('tableContent');
+            
+            if (filteredData.length === 0) {
+                tableContent.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>ยังไม่มีข้อมูล</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>วันที่และเวลา</th>
+                            <th>ชื่อเหตุการณ์</th>
+                            <th>สถานที่</th>
+                            <th>จำนวน</th>
+                            <th>การจัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+            `;
+
+            pageData.forEach(item => {
+                html += `
+                    <tr onclick="viewDetail('${item.ID}')">
+                        <td>${formatDateTime(item.Timestamp)}</td>
+                        <td>${item['ชื่อเหตุการณ์'] || '-'}</td>
+                        <td>${item['สถานที่เกิดเหตุ'] || '-'}</td>
+                        <td>${item['จำนวน'] || '-'}</td>
+                        <td>
+                            <button class="btn-view" onclick="event.stopPropagation(); viewDetail('${item.ID}')">
+                                <i class="fas fa-eye"></i> ดูรายละเอียด
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            tableContent.innerHTML = html;
+        }
+
+        // Update Pagination
+        function updatePagination() {
+            const pagination = document.getElementById('pagination');
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            
+            // Previous button
+            html += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                <i class="fas fa-chevron-left"></i>
+            </button>`;
+            
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    html += `<button onclick="changePage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    html += `<span style="padding: 0 10px;">...</span>`;
+                }
+            }
+            
+            // Next button
+            html += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                <i class="fas fa-chevron-right"></i>
+            </button>`;
+            
+            // Page info
+            html += `<span class="pagination-info">หน้า ${currentPage} จาก ${totalPages}</span>`;
+            
+            pagination.innerHTML = html;
+        }
+
+        // Change Page
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPage = page;
+            updateTable();
+            updatePagination();
+            
+            // Scroll to table
+            document.querySelector('.table-container').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Update Stats
+        function updateStats() {
+            document.getElementById('totalRecords').textContent = filteredData.length;
+            
+            const uniqueLocations = new Set(filteredData.map(item => item['สถานที่เกิดเหตุ'])).size;
+            document.getElementById('totalLocations').textContent = uniqueLocations;
+            
+            const today = new Date().toDateString();
+            const todayRecords = filteredData.filter(item => {
+                if (item.Timestamp) {
+                    const date = new Date(item.Timestamp);
+                    return !isNaN(date.getTime()) && date.toDateString() === today;
+                }
+                return false;
+            }).length;
+            document.getElementById('todayRecords').textContent = todayRecords;
+            
+            const totalAnimals = filteredData.reduce((sum, item) => {
+                return sum + (parseInt(item['จำนวน']) || 0);
+            }, 0);
+            document.getElementById('totalAnimals').textContent = totalAnimals;
+        }
+
+        // Update Map
+        function updateMap() {
+            // Clear existing markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            // Add new circles
+            filteredData.forEach(item => {
+                if (item['พิกัด GPS']) {
+                    try {
+                        const coords = item['พิกัด GPS'].split(',').map(c => parseFloat(c.trim()));
+                        if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                            const color = item['สี'] || '#3b82f6';
+                            
+                            // Create circle marker
+                            const circle = L.circleMarker(coords, {
+                                radius: 8,
+                                fillColor: color,
+                                color: color,
+                                weight: 2,
+                                opacity: 0.8,
+                                fillOpacity: 0.6
+                            }).addTo(map);
+                            
+                            circle.bindPopup(`
+                                <strong>${item['ชื่อเหตุการณ์']}</strong><br>
+                                สถานที่: ${item['สถานที่เกิดเหตุ']}<br>
+                                จำนวน: ${item['จำนวน'] || '-'}<br>
+                                ขนาด: ${item['ขนาดของสัตว์'] || '-'}<br>
+                                ผู้รายงาน: ${item['ผู้รายงาน'] || '-'}
+                            `);
+                            markers.push(circle);
+                        }
+                    } catch (e) {
+                        console.error('Invalid GPS coordinates:', item['พิกัด GPS']);
+                    }
+                }
+            });
+
+            // Fit map to markers if any
+            if (markers.length > 0) {
+                const group = new L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        // Update Charts
+        function updateCharts() {
+            updateLocationChart();
+            updateDailyChart();
+        }
+
+        // Update Location Chart
+        function updateLocationChart() {
+            const ctx = document.getElementById('locationChart').getContext('2d');
+            
+            // Count occurrences per location
+            const locationCounts = {};
+            filteredData.forEach(item => {
+                const location = item['สถานที่เกิดเหตุ'] || 'ไม่ระบุ';
+                locationCounts[location] = (locationCounts[location] || 0) + 1;
+            });
+            
+            // Sort and get top locations
+            const sortedLocations = Object.entries(locationCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 7);
+
+            if (locationChart) {
+                locationChart.destroy();
+            }
+
+            locationChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedLocations.map(([location]) => location),
+                    datasets: [{
+                        label: 'จำนวนครั้งที่พบ',
+                        data: sortedLocations.map(([, count]) => count),
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(236, 72, 153, 0.8)',
+                            'rgba(99, 102, 241, 0.8)',
+                            'rgba(20, 184, 166, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgb(59, 130, 246)',
+                            'rgb(16, 185, 129)',
+                            'rgb(245, 158, 11)',
+                            'rgb(139, 92, 246)',
+                            'rgb(236, 72, 153)',
+                            'rgb(99, 102, 241)',
+                            'rgb(20, 184, 166)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'จำนวนครั้งการพบสัตว์ตามสถานที่',
+                            font: {
+                                size: 14,
+                                family: 'Prompt'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                font: {
+                                    family: 'Prompt'
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    family: 'Prompt'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update Daily Chart
+        function updateDailyChart() {
+            const ctx = document.getElementById('dailyChart').getContext('2d');
+            
+            // Count reports by date
+            const dailyCounts = {};
+            filteredData.forEach(item => {
+                if (item.Timestamp) {
+                    const date = new Date(item.Timestamp);
+                    if (!isNaN(date.getTime())) {
+                        const dateKey = date.toLocaleDateString('en-GB'); // Use AD format
+                        dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + 1;
+                    }
+                }
+            });
+            
+            // Sort dates and get last 7 days
+            const sortedDates = Object.entries(dailyCounts)
+                .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+                .slice(-7);
+
+            if (dailyChart) {
+                dailyChart.destroy();
+            }
+
+            dailyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sortedDates.map(([date]) => date),
+                    datasets: [{
+                        label: 'จำนวนการรายงาน',
+                        data: sortedDates.map(([, count]) => count),
+                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                        borderColor: 'rgb(99, 102, 241)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'จำนวนการรายงานรายวัน (7 วันล่าสุด)',
+                            font: {
+                                size: 14,
+                                family: 'Prompt'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                font: {
+                                    family: 'Prompt'
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    family: 'Prompt'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Toggle Sidebar
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        // Show Dashboard
+        function showDashboard() {
+            // Set active menu
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.menu-item').classList.add('active');
+            
+            // Close sidebar on mobile
+            if (window.innerWidth <= 1024) {
+                toggleSidebar();
+            }
+        }
+
+        // Open Map Link
+        function openMapLink(event) {
+            // Close sidebar on mobile
+            if (window.innerWidth <= 1024) {
+                toggleSidebar();
+            }
+            // Link will open in new tab automatically due to target="_blank"
+        }
+
+        // Color Selection
+        function selectColor(color, element) {
+            selectedColor = color;
+            document.getElementById('formColorCode').value = color;
+            
+            // Update selected state
+            document.querySelectorAll('#colorContainer .color-box:not(.color-picker-btn)').forEach(box => {
+                box.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+
+        // Custom Color Selection
+        function selectCustomColor(color) {
+            selectedColor = color;
+            document.getElementById('formColorCode').value = color;
+            
+            // Remove selected state from predefined colors
+            document.querySelectorAll('#colorContainer .color-box:not(.color-picker-btn)').forEach(box => {
+                box.classList.remove('selected');
+            });
+            
+            // Add selected state to custom color picker
+            document.querySelector('#colorContainer .color-picker-btn').classList.add('selected');
+        }
+
+        // Detail Color Selection
+        function selectDetailColor(color, element) {
+            selectedDetailColor = color;
+            document.getElementById('detailColor').value = color;
+            document.getElementById('detailColorBox').style.background = color;
+            
+            // Update selected state
+            document.querySelectorAll('#detailColorContainer .color-box:not(.color-picker-btn)').forEach(box => {
+                box.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+
+        // Detail Custom Color Selection
+        function selectDetailCustomColor(color) {
+            selectedDetailColor = color;
+            document.getElementById('detailColor').value = color;
+            document.getElementById('detailColorBox').style.background = color;
+            
+            // Remove selected state from predefined colors
+            document.querySelectorAll('#detailColorContainer .color-box:not(.color-picker-btn)').forEach(box => {
+                box.classList.remove('selected');
+            });
+            
+            // Add selected state to custom color picker
+            document.querySelector('#detailColorContainer .color-picker-btn').classList.add('selected');
+        }
+
+        // Image Upload Handlers
+        function setupImageUpload() {
+            const fileInput = document.getElementById('imageFileInput');
+            const uploadContainer = document.getElementById('imageUploadContainer');
+            
+            fileInput.addEventListener('change', handleImageSelect);
+            uploadContainer.addEventListener('dragover', handleDragOver);
+            uploadContainer.addEventListener('drop', handleImageDrop);
+            uploadContainer.addEventListener('dragleave', handleDragLeave);
+        }
+
+        function setupDetailImageUpload() {
+            const fileInput = document.getElementById('detailImageFileInput');
+            const uploadContainer = document.getElementById('detailImageUploadContainer');
+            
+            if (fileInput && uploadContainer) {
+                fileInput.addEventListener('change', handleDetailImageSelect);
+                uploadContainer.addEventListener('dragover', handleDragOver);
+                uploadContainer.addEventListener('drop', handleDetailImageDrop);
+                uploadContainer.addEventListener('dragleave', handleDragLeave);
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleImageDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleImageFile(files[0], false);
+            }
+        }
+
+        function handleDetailImageDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleImageFile(files[0], true);
+            }
+        }
+
+        function handleImageSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageFile(file, false);
+            }
+        }
+
+        function handleDetailImageSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageFile(file, true);
+            }
+        }
+
+        function handleImageFile(file, isDetail = false) {
+            // Validate file
+            if (!file.type.startsWith('image/')) {
+                Swal.fire('Error', 'กรุณาเลือกไฟล์รูปภาพเท่านั้น', 'error');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) { // 5MB
+                Swal.fire('Error', 'ขนาดไฟล์ต้องไม่เกิน 5MB', 'error');
+                return;
+            }
+            
+            // Store file
+            if (isDetail) {
+                currentDetailImageFile = file;
+            } else {
+                currentImageFile = file;
+            }
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                showImagePreview(e.target.result, isDetail);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showImagePreview(src, isDetail = false) {
+            if (isDetail) {
+                document.getElementById('detailNoImage').style.display = 'none';
+                document.getElementById('detailImageUploadContainer').style.display = 'none';
+                document.getElementById('detailImageDisplay').style.display = 'block';
+                document.getElementById('detailImagePreview').src = src;
+                
+                // แสดง controls เฉพาะเมื่ออยู่ในโหมดแก้ไข
+                if (isEditMode) {
+                    document.getElementById('detailImageControls').style.display = 'flex';
+                }
+            } else {
+                document.getElementById('imageUploadContainer').style.display = 'none';
+                document.getElementById('imagePreviewContainer').style.display = 'block';
+                document.getElementById('imagePreview').src = src;
+            }
+        }
+
+        function changeImage() {
+            document.getElementById('imageFileInput').click();
+        }
+
+        function changeDetailImage() {
+            document.getElementById('detailImageFileInput').click();
+        }
+
+        function removeImage() {
+            currentImageFile = null;
+            document.getElementById('imageUploadContainer').style.display = 'block';
+            document.getElementById('imagePreviewContainer').style.display = 'none';
+            document.getElementById('imageFileInput').value = '';
+        }
+
+        // Enhanced removeDetailImage ให้จัดการ UI และลบจาก Drive พร้อมรหัสผ่าน
+        async function removeDetailImage() {
+            if (!currentDetailId) {
+                Swal.fire('Error', 'ไม่สามารถระบุข้อมูลได้', 'error');
+                return;
+            }
+
+            // ขอรหัสผ่านก่อนลบรูปภาพ
+            const { value: password } = await Swal.fire({
+                title: 'ยืนยันการลบรูปภาพ',
+                text: 'กรุณาใส่รหัสผ่านเพื่อยืนยันการลบรูปภาพ',
+                input: 'password',
+                inputPlaceholder: 'ใส่รหัสผ่าน (1234)',
+                inputAttributes: {
+                    maxlength: 4,
+                    autocapitalize: 'off',
+                    autocorrect: 'off',
+                    style: 'text-align: center; font-size: 1.2rem; letter-spacing: 0.2em;'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'กรุณาใส่รหัสผ่าน!';
+                    }
+                    if (value !== '1234') {
+                        return 'รหัสผ่านไม่ถูกต้อง!';
+                    }
+                }
+            });
+
+            if (!password) return; // ยกเลิกถ้าไม่ใส่รหัสผ่าน
+
+            try {
+                // แสดง loading สำหรับการลบรูปภาพ
+                Swal.fire({
+                    title: 'กำลังลบรูปภาพ...',
+                    html: '<div class="spinner" style="margin: 20px auto;"></div>',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Get current image URL to delete from Drive
+                const currentItem = allData.find(item => item.ID === currentDetailId);
+                const imageUrl = currentItem ? currentItem['ลิงค์รูปภาพ'] : '';
+                
+                if (imageUrl) {
+                    // ลบรูปภาพจาก Google Drive ผ่าน API
+                    const deleteImageResponse = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'deleteImage',
+                            imageUrlOrId: imageUrl
+                        })
+                    });
+                    
+                    const deleteImageResult = await deleteImageResponse.json();
+                    console.log('Delete image result:', deleteImageResult);
+                }
+
+                // อัพเดทข้อมูลใน Sheet โดยลบ imageUrl ออก
+                const updateResponse = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'update',
+                        id: currentDetailId,
+                        eventName: document.getElementById('detailEventName').value,
+                        description: document.getElementById('detailDescription').value,
+                        quantity: document.getElementById('detailQuantity').value,
+                        location: document.getElementById('detailLocation').value,
+                        animalSize: document.getElementById('detailAnimalSize').value,
+                        environment: document.getElementById('detailEnvironment').value,
+                        gps: document.getElementById('detailGPS').value,
+                        notes: document.getElementById('detailNotes').value,
+                        reporter: document.getElementById('detailReporter').value,
+                        position: document.getElementById('detailPosition').value,
+                        color: selectedDetailColor,
+                        imageUrl: '' // ลบ URL รูปภาพ
+                    })
+                });
+                
+                const updateResult = await updateResponse.json();
+                
+                if (updateResult.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'ลบรูปภาพสำเร็จ!',
+                        text: 'รูปภาพถูกลบออกจากระบบแล้ว',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    
+                    // อัพเดท local data
+                    const updatedItem = allData.find(item => item.ID === currentDetailId);
+                    if (updatedItem) {
+                        updatedItem['ลิงค์รูปภาพ'] = '';
+                        originalDetailData['ลิงค์รูปภาพ'] = '';
+                    }
+                    
+                    // จัดการ UI
+                    currentDetailImageFile = null;
+                    document.getElementById('detailImageDisplay').style.display = 'none';
+                    document.getElementById('detailImageControls').style.display = 'none';
+                    document.getElementById('detailNoImage').style.display = 'none';
+                    document.getElementById('detailImageFileInput').value = '';
+                    
+                    // แสดง upload container ถ้าอยู่ในโหมดแก้ไข
+                    if (isEditMode) {
+                        document.getElementById('detailImageUploadContainer').style.display = 'block';
+                    } else {
+                        document.getElementById('detailNoImage').style.display = 'block';
+                    }
+                    
+                    // อัพเดท hash เพื่อป้องกันการ refresh ที่ไม่จำเป็น
+                    lastDataHash = getDataHash(allData);
+                } else {
+                    Swal.fire('Error', updateResult.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error removing image:', error);
+                Swal.fire('Error', 'ไม่สามารถลบรูปภาพได้', 'error');
+            }
+        }
+
+        // Upload Image to Google Drive via Apps Script
+        async function uploadImageToDrive(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        const imageData = e.target.result;
+                        const response = await fetch(API_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                action: 'uploadImage',
+                                imageData: imageData,
+                                fileName: file.name,
+                                mimeType: file.type
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        if (result.success) {
+                            resolve(result.data);
+                        } else {
+                            reject(new Error(result.message));
+                        }
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Color Code Input
+        document.addEventListener('DOMContentLoaded', function() {
+            const colorCodeInput = document.getElementById('formColorCode');
+            if (colorCodeInput) {
+                colorCodeInput.addEventListener('input', function() {
+                    if (this.value.match(/^#[0-9A-F]{6}$/i)) {
+                        selectedColor = this.value;
+                        // Remove selected state from all color boxes
+                        document.querySelectorAll('#colorContainer .color-box').forEach(box => {
+                            box.classList.remove('selected');
+                        });
+                        
+                        // Check if it matches any predefined color
+                        let matchFound = false;
+                        document.querySelectorAll('#colorContainer .color-box:not(.color-picker-btn)').forEach(box => {
+                            const boxColor = rgbToHex(box.style.backgroundColor);
+                            if (boxColor.toLowerCase() === this.value.toLowerCase()) {
+                                box.classList.add('selected');
+                                matchFound = true;
+                            }
+                        });
+                        
+                        // If no match, select custom color picker
+                        if (!matchFound) {
+                            document.querySelector('#colorContainer .color-picker-btn').classList.add('selected');
+                        }
+                    }
+                });
+            }
+            
+            // Custom color picker click handler
+            const customColorPicker = document.getElementById('customColorPicker');
+            const colorPickerBtn = document.querySelector('#colorContainer .color-picker-btn');
+            if (customColorPicker && colorPickerBtn) {
+                colorPickerBtn.addEventListener('click', function() {
+                    customColorPicker.click();
+                });
+            }
+            
+            // Detail custom color picker click handler
+            const detailCustomColorPicker = document.getElementById('detailCustomColorPicker');
+            const detailColorPickerBtn = document.querySelector('#detailColorContainer .color-picker-btn');
+            if (detailCustomColorPicker && detailColorPickerBtn) {
+                detailColorPickerBtn.addEventListener('click', function() {
+                    detailCustomColorPicker.click();
+                });
+            }
+            
+            // Setup image upload
+            setupImageUpload();
+            setupDetailImageUpload();
+        });
+
+        // Set Button Loading State
+        function setButtonLoading(buttonId, loading) {
+            const button = document.getElementById(buttonId);
+            if (loading) {
+                button.disabled = true;
+                button.classList.add('btn-loading');
+            } else {
+                button.disabled = false;
+                button.classList.remove('btn-loading');
+            }
+        }
+
+        // Open Add Modal
+        function openAddModal() {
+            // Set active menu
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.menu-item')[1].classList.add('active');
+            
+            document.getElementById('formModalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> เพิ่มข้อมูลการพบสัตว์';
+            document.getElementById('dataForm').reset();
+            document.getElementById('formId').value = '';
+            selectedColor = '#3b82f6';
+            document.getElementById('formColorCode').value = '#3b82f6';
+            currentImageFile = null;
+            
+            // Reset image upload
+            document.getElementById('imageUploadContainer').style.display = 'block';
+            document.getElementById('imagePreviewContainer').style.display = 'none';
+            document.getElementById('imageFileInput').value = '';
+            
+            // Reset color selection - select first predefined color
+            document.querySelectorAll('#colorContainer .color-box').forEach((box, index) => {
+                if (index === 0 && !box.classList.contains('color-picker-btn')) {
+                    box.classList.add('selected');
+                } else {
+                    box.classList.remove('selected');
+                }
+            });
+            
+            document.getElementById('formModal').classList.add('active');
+            
+            // Close sidebar on mobile
+            if (window.innerWidth <= 1024) {
+                toggleSidebar();
+            }
+        }
+
+        // Close Form Modal
+        function closeFormModal() {
+            document.getElementById('formModal').classList.remove('active');
+            document.getElementById('dataForm').reset();
+            currentImageFile = null;
+        }
+
+        // View Detail - Enhanced to show images from Google Drive with centered layout
+        async function viewDetail(id) {
+            const item = allData.find(d => d.ID === id);
+            if (!item) {
+                Swal.fire('Error', 'ไม่พบข้อมูลที่ต้องการดู', 'error');
+                return;
+            }
+
+            currentDetailId = id;
+            isEditMode = false;
+            
+            // Store original data for cancel functionality
+            originalDetailData = { ...item };
+            
+            // Fill detail form with readonly inputs
+            document.getElementById('detailId').value = item.ID;
+            document.getElementById('detailTimestamp').value = formatDateTime(item.Timestamp) || '-';
+            document.getElementById('detailEventName').value = item['ชื่อเหตุการณ์'] || '';
+            document.getElementById('detailDescription').value = item['รายละเอียด'] || '';
+            document.getElementById('detailQuantity').value = item['จำนวน'] || '';
+            document.getElementById('detailAnimalSize').value = item['ขนาดของสัตว์'] || '';
+            document.getElementById('detailLocation').value = item['สถานที่เกิดเหตุ'] || '';
+            document.getElementById('detailEnvironment').value = item['ข้อมูลสภาพแวดล้อม'] || '';
+            document.getElementById('detailGPS').value = item['พิกัด GPS'] || '';
+            document.getElementById('detailNotes').value = item['หมายเหตุ'] || '';
+            document.getElementById('detailReporter').value = item['ผู้รายงาน'] || '';
+            document.getElementById('detailPosition').value = item['ตำแหน่ง'] || '';
+            
+            const color = item['สี'] || '#3b82f6';
+            selectedDetailColor = color;
+            document.getElementById('detailColor').value = color;
+            document.getElementById('detailColorBox').style.background = color;
+            
+            // Handle image display - Enhanced for Google Drive with centered layout
+            const imageUrl = await getOptimizedImageUrl(item['ลิงค์รูปภาพ']);
+            if (imageUrl) {
+                document.getElementById('detailNoImage').style.display = 'none';
+                document.getElementById('detailImageDisplay').style.display = 'block';
+                document.getElementById('detailImagePreview').src = imageUrl;
+                
+                // Add loading indicator
+                const imageElement = document.getElementById('detailImagePreview');
+                imageElement.onload = function() {
+                    this.style.opacity = '1';
+                };
+                imageElement.onerror = function() {
+                    // If image fails to load, show no image placeholder
+                    document.getElementById('detailNoImage').style.display = 'block';
+                    document.getElementById('detailImageDisplay').style.display = 'none';
+                    console.warn('Failed to load image:', imageUrl);
+                };
+                imageElement.style.opacity = '0.5'; // Show loading state
+            } else {
+                document.getElementById('detailNoImage').style.display = 'block';
+                document.getElementById('detailImageDisplay').style.display = 'none';
+            }
+            
+            // Set view mode
+            setViewMode();
+            
+            // Update modal title
+            document.getElementById('detailModalTitle').innerHTML = '<i class="fas fa-info-circle"></i> รายละเอียดข้อมูล';
+            
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        // Set View Mode
+        function setViewMode() {
+            isEditMode = false;
+            
+            // Make all inputs readonly
+            document.getElementById('detailEventName').readOnly = true;
+            document.getElementById('detailDescription').readOnly = true;
+            document.getElementById('detailQuantity').readOnly = true;
+            document.getElementById('detailAnimalSize').disabled = true;
+            document.getElementById('detailEnvironment').disabled = true;
+            document.getElementById('detailLocation').readOnly = true;
+            document.getElementById('detailGPS').readOnly = true;
+            document.getElementById('detailColor').readOnly = true;
+            document.getElementById('detailNotes').readOnly = true;
+            document.getElementById('detailReporter').readOnly = true;
+            document.getElementById('detailPosition').readOnly = true;
+            
+            // Remove editable class
+            document.querySelectorAll('#detailForm .editable').forEach(el => {
+                el.classList.remove('editable');
+            });
+            
+            // Hide color picker, image controls และ upload container
+            document.getElementById('detailColorContainer').style.display = 'none';
+            document.getElementById('detailImageControls').style.display = 'none';
+            document.getElementById('detailImageUploadContainer').style.display = 'none';
+            
+            // แสดง no image placeholder ถ้าไม่มีรูปภาพ
+            if (document.getElementById('detailImageDisplay').style.display !== 'block') {
+                document.getElementById('detailNoImage').style.display = 'block';
+            }
+            
+            // Show view buttons, hide edit buttons
+            document.getElementById('viewButtons').classList.remove('hidden');
+            document.getElementById('editButtons').classList.add('hidden');
+        }
+
+        // Enable Edit Mode
+        function enableEditMode() {
+            isEditMode = true;
+            
+            // Make inputs editable
+            document.getElementById('detailEventName').readOnly = false;
+            document.getElementById('detailEventName').classList.add('editable');
+            
+            document.getElementById('detailDescription').readOnly = false;
+            document.getElementById('detailDescription').classList.add('editable');
+            
+            document.getElementById('detailQuantity').readOnly = false;
+            document.getElementById('detailQuantity').classList.add('editable');
+            
+            document.getElementById('detailAnimalSize').disabled = false;
+            document.getElementById('detailEnvironment').disabled = false;
+            
+            document.getElementById('detailLocation').readOnly = false;
+            document.getElementById('detailLocation').classList.add('editable');
+            
+            document.getElementById('detailGPS').readOnly = false;
+            document.getElementById('detailGPS').classList.add('editable');
+            
+            document.getElementById('detailNotes').readOnly = false;
+            document.getElementById('detailNotes').classList.add('editable');
+            
+            document.getElementById('detailReporter').readOnly = false;
+            document.getElementById('detailReporter').classList.add('editable');
+            
+            document.getElementById('detailPosition').readOnly = false;
+            document.getElementById('detailPosition').classList.add('editable');
+            
+            // จัดการแสดงส่วนต่างๆ ของรูปภาพ
+            document.getElementById('detailColorContainer').style.display = 'flex';
+            
+            // ถ้ามีรูปภาพแสดงอยู่ ให้แสดง controls
+            if (document.getElementById('detailImageDisplay').style.display === 'block') {
+                document.getElementById('detailImageControls').style.display = 'flex';
+                document.getElementById('detailImageUploadContainer').style.display = 'none';
+            } else {
+                // ถ้าไม่มีรูปภาพ ให้แสดง upload container
+                document.getElementById('detailImageControls').style.display = 'none';
+                document.getElementById('detailImageUploadContainer').style.display = 'block';
+                document.getElementById('detailNoImage').style.display = 'none';
+            }
+            
+            // Update color selection state
+            const currentColor = selectedDetailColor;
+            let colorFound = false;
+            document.querySelectorAll('#detailColorContainer .color-box:not(.color-picker-btn)').forEach(box => {
+                const boxColor = rgbToHex(box.style.backgroundColor);
+                if (boxColor === currentColor) {
+                    box.classList.add('selected');
+                    colorFound = true;
+                } else {
+                    box.classList.remove('selected');
+                }
+            });
+            
+            // If color not found in predefined colors, select custom color picker
+            if (!colorFound) {
+                document.querySelector('#detailColorContainer .color-picker-btn').classList.add('selected');
+            }
+            
+            // Show edit buttons, hide view buttons
+            document.getElementById('viewButtons').classList.add('hidden');
+            document.getElementById('editButtons').classList.remove('hidden');
+            
+            // Update modal title
+            document.getElementById('detailModalTitle').innerHTML = '<i class="fas fa-edit"></i> แก้ไขข้อมูล';
+        }
+
+        // Save Detail Changes
+        async function saveDetailChanges() {
+            if (!currentDetailId) {
+                Swal.fire('Error', 'ไม่สามารถระบุข้อมูลที่จะบันทึกได้', 'error');
+                return;
+            }
+
+            setButtonLoading('saveDetailButton', true);
+
+            try {
+                let imageUrl = originalDetailData['ลิงค์รูปภาพ'] || '';
+                
+                // Handle image upload if new image selected
+                if (currentDetailImageFile) {
+                    const uploadResult = await uploadImageToDrive(currentDetailImageFile);
+                    imageUrl = uploadResult.imageUrl;
+                }
+
+                const data = {
+                    action: 'update',
+                    id: currentDetailId,
+                    eventName: document.getElementById('detailEventName').value,
+                    description: document.getElementById('detailDescription').value,
+                    quantity: document.getElementById('detailQuantity').value,
+                    location: document.getElementById('detailLocation').value,
+                    animalSize: document.getElementById('detailAnimalSize').value,
+                    environment: document.getElementById('detailEnvironment').value,
+                    gps: document.getElementById('detailGPS').value,
+                    notes: document.getElementById('detailNotes').value,
+                    reporter: document.getElementById('detailReporter').value,
+                    position: document.getElementById('detailPosition').value,
+                    color: selectedDetailColor,
+                    imageUrl: imageUrl
+                };
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'สำเร็จ!',
+                        text: 'แก้ไขข้อมูลเรียบร้อยแล้ว',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    
+                    // Update original data
+                    const updatedItem = allData.find(item => item.ID === currentDetailId);
+                    if (updatedItem) {
+                        updatedItem['ชื่อเหตุการณ์'] = data.eventName;
+                        updatedItem['รายละเอียด'] = data.description;
+                        updatedItem['จำนวน'] = data.quantity;
+                        updatedItem['สถานที่เกิดเหตุ'] = data.location;
+                        updatedItem['ขนาดของสัตว์'] = data.animalSize;
+                        updatedItem['ข้อมูลสภาพแวดล้อม'] = data.environment;
+                        updatedItem['พิกัด GPS'] = data.gps;
+                        updatedItem['หมายเหตุ'] = data.notes;
+                        updatedItem['ผู้รายงาน'] = data.reporter;
+                        updatedItem['ตำแหน่ง'] = data.position;
+                        updatedItem['สี'] = data.color;
+                        updatedItem['ลิงค์รูปภาพ'] = data.imageUrl;
+                        originalDetailData = { ...updatedItem };
+                        
+                        // Update data hash to prevent unnecessary refresh
+                        lastDataHash = getDataHash(allData);
+                    }
+                    
+                    currentDetailImageFile = null;
+                    setViewMode();
+                    applyCurrentFilters();
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+            } finally {
+                setButtonLoading('saveDetailButton', false);
+            }
+        }
+
+        // Cancel Edit
+        async function cancelEdit() {
+            // Restore original values
+            document.getElementById('detailEventName').value = originalDetailData['ชื่อเหตุการณ์'] || '';
+            document.getElementById('detailDescription').value = originalDetailData['รายละเอียด'] || '';
+            document.getElementById('detailQuantity').value = originalDetailData['จำนวน'] || '';
+            document.getElementById('detailAnimalSize').value = originalDetailData['ขนาดของสัตว์'] || '';
+            document.getElementById('detailEnvironment').value = originalDetailData['ข้อมูลสภาพแวดล้อม'] || '';
+            document.getElementById('detailLocation').value = originalDetailData['สถานที่เกิดเหตุ'] || '';
+            document.getElementById('detailGPS').value = originalDetailData['พิกัด GPS'] || '';
+            document.getElementById('detailNotes').value = originalDetailData['หมายเหตุ'] || '';
+            document.getElementById('detailReporter').value = originalDetailData['ผู้รายงาน'] || '';
+            document.getElementById('detailPosition').value = originalDetailData['ตำแหน่ง'] || '';
+            
+            const originalColor = originalDetailData['สี'] || '#3b82f6';
+            selectedDetailColor = originalColor;
+            document.getElementById('detailColor').value = originalColor;
+            document.getElementById('detailColorBox').style.background = originalColor;
+            
+            // Restore original image
+            const originalImageUrl = await getOptimizedImageUrl(originalDetailData['ลิงค์รูปภาพ']);
+            if (originalImageUrl) {
+                document.getElementById('detailNoImage').style.display = 'none';
+                document.getElementById('detailImageDisplay').style.display = 'block';
+                document.getElementById('detailImagePreview').src = originalImageUrl;
+            } else {
+                document.getElementById('detailNoImage').style.display = 'block';
+                document.getElementById('detailImageDisplay').style.display = 'none';
+            }
+            
+            currentDetailImageFile = null;
+            setViewMode();
+        }
+
+        // Close Detail Modal
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.remove('active');
+            currentDetailId = null;
+            isEditMode = false;
+            originalDetailData = {};
+            currentDetailImageFile = null;
+        }
+
+        // Confirm Delete from Detail Modal
+        function confirmDeleteFromDetail() {
+            if (!currentDetailId) {
+                Swal.fire('Error', 'ไม่สามารถระบุข้อมูลที่จะลบได้', 'error');
+                return;
+            }
+            
+            pendingAction = 'delete';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordModal').classList.add('active');
+        }
+
+        // Close Password Modal
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.remove('active');
+            document.getElementById('passwordInput').value = '';
+        }
+
+        // Confirm Delete with Password - Enhanced to delete images from Google Drive
+        async function confirmDelete() {
+            const password = document.getElementById('passwordInput').value;
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            
+            if (password !== '1234') {
+                Swal.fire('Error', 'รหัสผ่านไม่ถูกต้อง', 'error');
+                return;
+            }
+            
+            // Set loading state
+            confirmBtn.classList.add('loading');
+            confirmBtn.disabled = true;
+            
+            // Simulate loading time for better UX
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            try {
+                // ลบข้อมูลผ่าน API (API จะจัดการลบรูปภาพเอง)
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        action: 'delete', 
+                        id: currentDetailId 
+                    })
+                });
+                
+                const deleteResult = await response.json();
+                
+                if (deleteResult.success) {
+                    closePasswordModal();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'ลบสำเร็จ!',
+                        text: 'ข้อมูลและรูปภาพถูกลบเรียบร้อยแล้ว',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    
+                    // Remove from local data
+                    allData = allData.filter(item => item.ID !== currentDetailId);
+                    lastDataHash = getDataHash(allData);
+                    
+                    closeDetailModal();
+                    applyCurrentFilters();
+                } else {
+                    Swal.fire('Error', deleteResult.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'ไม่สามารถลบข้อมูลได้', 'error');
+            } finally {
+                // Remove loading state
+                confirmBtn.classList.remove('loading');
+                confirmBtn.disabled = false;
+            }
+        }
+
+        // Convert RGB to Hex
+        function rgbToHex(rgb) {
+            if (rgb.startsWith('#')) return rgb;
+            const rgbMatch = rgb.match(/\d+/g);
+            if (!rgbMatch) return '#000000';
+            return '#' + rgbMatch.slice(0, 3).map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+        }
+
+        // Form Submit
+        document.getElementById('dataForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            setButtonLoading('saveButton', true);
+            
+            try {
+                let imageUrl = '';
+                
+                // Handle image upload if file selected
+                if (currentImageFile) {
+                    const uploadResult = await uploadImageToDrive(currentImageFile);
+                    imageUrl = uploadResult.imageUrl;
+                }
+                
+                const id = document.getElementById('formId').value;
+                const data = {
+                    action: id ? 'update' : 'create',
+                    eventName: document.getElementById('formEventName').value,
+                    description: document.getElementById('formDescription').value,
+                    quantity: document.getElementById('formQuantity').value,
+                    location: document.getElementById('formLocation').value,
+                    animalSize: document.getElementById('formAnimalSize').value,
+                    environment: document.getElementById('formEnvironment').value,
+                    gps: document.getElementById('formGPS').value,
+                    notes: document.getElementById('formNotes').value,
+                    reporter: document.getElementById('formReporter').value,
+                    position: document.getElementById('formPosition').value,
+                    color: selectedColor,
+                    imageUrl: imageUrl
+                };
+
+                if (id) {
+                    data.id = id;
+                }
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'สำเร็จ!',
+                        text: id ? 'แก้ไขข้อมูลเรียบร้อยแล้ว' : 'บันทึกข้อมูลเรียบร้อยแล้ว',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    closeFormModal();
+                    loadData(); // Force refresh after create/update
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+            } finally {
+                setButtonLoading('saveButton', false);
+            }
+        });
+
+        // Search Table
+        function searchTable() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            
+            if (filter === '') {
+                applyCurrentFilters();
+            } else {
+                filteredData = allData.filter(item => {
+                    return Object.values(item).some(value => {
+                        return value && value.toString().toLowerCase().includes(filter);
+                    });
+                });
+                
+                currentPage = 1;
+                updateTable();
+                updatePagination();
+            }
+        }
+
+        // Refresh Map
+        function refreshMap() {
+            loadData();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            loadData();
+            updateLastUpdateTime();
+            
+            // Auto refresh every 30 seconds (silent)
+            setInterval(() => loadData(true), 30000);
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal') || event.target.classList.contains('image-modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+
+        // Password input enter key
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                confirmDelete();
+            }
+        });
+    </script>
+</body>
+</html>
