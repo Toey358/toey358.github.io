@@ -1151,6 +1151,29 @@
             grid-column: span 2;
         }
 
+        /* DateTime Input Styles */
+        .datetime-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-family: 'Prompt', sans-serif;
+        }
+
+        .datetime-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: var(--focus-shadow);
+            transform: translateY(-1px);
+        }
+
+        .datetime-input:read-only {
+            background: #f8fafc;
+            cursor: not-allowed;
+        }
+
         /* Animations */
         @keyframes slideDown {
             from {
@@ -1297,7 +1320,7 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <h2><span class="header-icon"><i class="fas fa-paw"></i></span> Animal Tracking</h2>
+            <h2>Animal Tracking</h2>
             <p>ระบบบันทึกการพบสัตว์</p>
         </div>
         <nav class="sidebar-menu">
@@ -1605,6 +1628,7 @@
                     <div class="form-group">
                         <label class="form-label">วันที่บันทึก</label>
                         <input type="text" class="form-control" id="detailTimestamp" readonly>
+                        <input type="datetime-local" class="datetime-input" id="detailDateTimeEdit" style="display: none;">
                     </div>
                     <div class="form-group">
                         <label class="form-label">ชื่อเหตุการณ์</label>
@@ -1641,6 +1665,7 @@
                             <option value="มีเมฆมืดครึ่ง">มีเมฆมืดครึ่ง</option>
                             <option value="หมอกหนา">หมอกหนา</option>
                             <option value="ฝนตก">ฝนตก</option>
+                            <option value="มีลูกเห็บ">มีลูกเห็บ</option>
                             <option value="อื่นๆ">อื่นๆ</option>
                         </select>
                     </div>
@@ -1788,6 +1813,7 @@
         let lastDataHash = '';
         let currentImageFile = null;
         let currentDetailImageFile = null;
+        let pendingAction = null; // 'delete' หรือ 'deleteImage'
         let currentFilters = {
             period: 'all',
             location: 'all',
@@ -1973,7 +1999,7 @@
         }
 
         // Format Date and Time - Use AD year
-        function formatDateTime(timestamp) {
+       function formatDateTime(timestamp) {
             if (!timestamp) return '-';
             
             const date = new Date(timestamp);
@@ -1981,14 +2007,42 @@
                 return timestamp;
             }
             
-            // Use AD year (ค.ศ.)
-            return date.toLocaleString('en-GB', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            // Thai month abbreviations
+            const thaiMonths = [
+                'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
+                'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
+            ];
+            
+            const day = date.getDate();
+            const month = thaiMonths[date.getMonth()];
+            const year = date.getFullYear();
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            
+            return `${day} ${month} ${year} ${hours}:${minutes}`;
+        }
+
+        // Convert datetime-local value to proper format
+        function convertDateTimeLocal(dateTimeValue) {
+            if (!dateTimeValue) return new Date();
+            return new Date(dateTimeValue);
+        }
+
+        // Format date to datetime-local input
+        function formatToDateTimeLocal(timestamp) {
+            if (!timestamp) return '';
+            
+            const date = new Date(timestamp);
+            if (isNaN(date.getTime())) return '';
+            
+            // Format: YYYY-MM-DDTHH:mm
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
 
         // Update Year Filter - Use AD years
@@ -2018,12 +2072,15 @@
             });
         }
 
-        // Update Event Filter
+        // Update Event Filter - Fixed duplicate issues
         function updateEventFilter() {
-            const eventSet = new Set();
+            const eventMap = new Map();
             allData.forEach(item => {
                 if (item['ชื่อเหตุการณ์']) {
-                    eventSet.add(item['ชื่อเหตุการณ์']);
+                    const eventName = item['ชื่อเหตุการณ์'].trim();
+                    if (!eventMap.has(eventName)) {
+                        eventMap.set(eventName, true);
+                    }
                 }
             });
 
@@ -2031,7 +2088,7 @@
             const currentEvent = eventSelect.value;
             eventSelect.innerHTML = '<option value="all">ทั้งหมด</option>';
             
-            Array.from(eventSet).sort().forEach(event => {
+            Array.from(eventMap.keys()).sort().forEach(event => {
                 const option = document.createElement('option');
                 option.value = event;
                 option.textContent = event;
@@ -2042,12 +2099,15 @@
             });
         }
 
-        // Update Location Filter
+        // Update Location Filter - Fixed duplicate issues
         function updateLocationFilter() {
-            const locationSet = new Set();
+            const locationMap = new Map();
             allData.forEach(item => {
                 if (item['สถานที่เกิดเหตุ']) {
-                    locationSet.add(item['สถานที่เกิดเหตุ']);
+                    const locationName = item['สถานที่เกิดเหตุ'].trim();
+                    if (!locationMap.has(locationName)) {
+                        locationMap.set(locationName, true);
+                    }
                 }
             });
 
@@ -2055,7 +2115,7 @@
             const currentLocation = locationSelect.value;
             locationSelect.innerHTML = '<option value="all">ทั้งหมด</option>';
             
-            Array.from(locationSet).sort().forEach(location => {
+            Array.from(locationMap.keys()).sort().forEach(location => {
                 const option = document.createElement('option');
                 option.value = location;
                 option.textContent = location;
@@ -2123,7 +2183,7 @@
             filterData(true);
         }
 
-        // Filter Data
+        // Filter Data - Fixed to handle trimmed values
         function filterData(skipStore = false) {
             if (!skipStore) {
                 storeCurrentFilters();
@@ -2164,13 +2224,13 @@
                     }
                 }
                 
-                // Filter by location
-                if (location !== 'all' && item['สถานที่เกิดเหตุ'] !== location) {
+                // Filter by location (trim for comparison)
+                if (location !== 'all' && item['สถานที่เกิดเหตุ']?.trim() !== location) {
                     return false;
                 }
                 
-                // Filter by event
-                if (event !== 'all' && item['ชื่อเหตุการณ์'] !== event) {
+                // Filter by event (trim for comparison)
+                if (event !== 'all' && item['ชื่อเหตุการณ์']?.trim() !== event) {
                     return false;
                 }
                 
@@ -2366,7 +2426,7 @@
             updateDailyChart();
         }
 
-        // Update Location Chart
+        // Update Location Chart - Show top 10 locations
         function updateLocationChart() {
             const ctx = document.getElementById('locationChart').getContext('2d');
             
@@ -2377,10 +2437,10 @@
                 locationCounts[location] = (locationCounts[location] || 0) + 1;
             });
             
-            // Sort and get top locations
+            // Sort and get top 10 locations
             const sortedLocations = Object.entries(locationCounts)
                 .sort((a, b) => b[1] - a[1])
-                .slice(0, 7);
+                .slice(0, 10);
 
             if (locationChart) {
                 locationChart.destroy();
@@ -2400,7 +2460,10 @@
                             'rgba(139, 92, 246, 0.8)',
                             'rgba(236, 72, 153, 0.8)',
                             'rgba(99, 102, 241, 0.8)',
-                            'rgba(20, 184, 166, 0.8)'
+                            'rgba(20, 184, 166, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(251, 146, 60, 0.8)'
                         ],
                         borderColor: [
                             'rgb(59, 130, 246)',
@@ -2409,7 +2472,10 @@
                             'rgb(139, 92, 246)',
                             'rgb(236, 72, 153)',
                             'rgb(99, 102, 241)',
-                            'rgb(20, 184, 166)'
+                            'rgb(20, 184, 166)',
+                            'rgb(239, 68, 68)',
+                            'rgb(34, 197, 94)',
+                            'rgb(251, 146, 60)'
                         ],
                         borderWidth: 2
                     }]
@@ -2423,7 +2489,7 @@
                         },
                         title: {
                             display: true,
-                            text: 'จำนวนครั้งการพบสัตว์ตามสถานที่',
+                            text: 'จำนวนครั้งการพบสัตว์ตามสถานที่ (10 อันดับแรก)',
                             font: {
                                 size: 14,
                                 family: 'Prompt'
@@ -2452,7 +2518,7 @@
             });
         }
 
-        // Update Daily Chart
+        // Update Daily Chart - Fixed to show latest dates correctly
         function updateDailyChart() {
             const ctx = document.getElementById('dailyChart').getContext('2d');
             
@@ -2462,16 +2528,26 @@
                 if (item.Timestamp) {
                     const date = new Date(item.Timestamp);
                     if (!isNaN(date.getTime())) {
-                        const dateKey = date.toLocaleDateString('en-GB'); // Use AD format
+                        // Format date as YYYY-MM-DD for proper sorting
+                        const year = date.getFullYear();
+                        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                        const day = date.getDate().toString().padStart(2, '0');
+                        const dateKey = `${year}-${month}-${day}`;
                         dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + 1;
                     }
                 }
             });
             
-            // Sort dates and get last 7 days
+            // Sort dates and get last 7 days with data
             const sortedDates = Object.entries(dailyCounts)
-                .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+                .sort((a, b) => a[0].localeCompare(b[0]))
                 .slice(-7);
+
+            // Format dates for display
+            const formattedDates = sortedDates.map(([dateStr, count]) => {
+                const [year, month, day] = dateStr.split('-');
+                return [`${day}/${month}/${year}`, count];
+            });
 
             if (dailyChart) {
                 dailyChart.destroy();
@@ -2480,10 +2556,10 @@
             dailyChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: sortedDates.map(([date]) => date),
+                    labels: formattedDates.map(([date]) => date),
                     datasets: [{
                         label: 'จำนวนการรายงาน',
-                        data: sortedDates.map(([, count]) => count),
+                        data: formattedDates.map(([, count]) => count),
                         backgroundColor: 'rgba(99, 102, 241, 0.2)',
                         borderColor: 'rgb(99, 102, 241)',
                         borderWidth: 3,
@@ -2500,7 +2576,7 @@
                         },
                         title: {
                             display: true,
-                            text: 'จำนวนการรายงานรายวัน (7 วันล่าสุด)',
+                            text: 'จำนวนการรายงานรายวัน (7 วันล่าสุดที่มีข้อมูล)',
                             font: {
                                 size: 14,
                                 family: 'Prompt'
@@ -2743,128 +2819,16 @@
                 return;
             }
 
-            // ขอรหัสผ่านก่อนลบรูปภาพ
-            const { value: password } = await Swal.fire({
-                title: 'ยืนยันการลบรูปภาพ',
-                text: 'กรุณาใส่รหัสผ่านเพื่อยืนยันการลบรูปภาพ',
-                input: 'password',
-                inputPlaceholder: 'ใส่รหัสผ่าน (1234)',
-                inputAttributes: {
-                    maxlength: 4,
-                    autocapitalize: 'off',
-                    autocorrect: 'off',
-                    style: 'text-align: center; font-size: 1.2rem; letter-spacing: 0.2em;'
-                },
-                showCancelButton: true,
-                confirmButtonText: 'ยืนยัน',
-                cancelButtonText: 'ยกเลิก',
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#94a3b8',
-                inputValidator: (value) => {
-                    if (!value) {
-                        return 'กรุณาใส่รหัสผ่าน!';
-                    }
-                    if (value !== '1234') {
-                        return 'รหัสผ่านไม่ถูกต้อง!';
-                    }
-                }
-            });
-
-            if (!password) return; // ยกเลิกถ้าไม่ใส่รหัสผ่าน
-
-            try {
-                // แสดง loading สำหรับการลบรูปภาพ
-                Swal.fire({
-                    title: 'กำลังลบรูปภาพ...',
-                    html: '<div class="spinner" style="margin: 20px auto;"></div>',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    showConfirmButton: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-
-                // Get current image URL to delete from Drive
-                const currentItem = allData.find(item => item.ID === currentDetailId);
-                const imageUrl = currentItem ? currentItem['ลิงค์รูปภาพ'] : '';
-                
-                if (imageUrl) {
-                    // ลบรูปภาพจาก Google Drive ผ่าน API
-                    const deleteImageResponse = await fetch(API_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            action: 'deleteImage',
-                            imageUrlOrId: imageUrl
-                        })
-                    });
-                    
-                    const deleteImageResult = await deleteImageResponse.json();
-                    console.log('Delete image result:', deleteImageResult);
-                }
-
-                // อัพเดทข้อมูลใน Sheet โดยลบ imageUrl ออก
-                const updateResponse = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'update',
-                        id: currentDetailId,
-                        eventName: document.getElementById('detailEventName').value,
-                        description: document.getElementById('detailDescription').value,
-                        quantity: document.getElementById('detailQuantity').value,
-                        location: document.getElementById('detailLocation').value,
-                        animalSize: document.getElementById('detailAnimalSize').value,
-                        environment: document.getElementById('detailEnvironment').value,
-                        gps: document.getElementById('detailGPS').value,
-                        notes: document.getElementById('detailNotes').value,
-                        reporter: document.getElementById('detailReporter').value,
-                        position: document.getElementById('detailPosition').value,
-                        color: selectedDetailColor,
-                        imageUrl: '' // ลบ URL รูปภาพ
-                    })
-                });
-                
-                const updateResult = await updateResponse.json();
-                
-                if (updateResult.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'ลบรูปภาพสำเร็จ!',
-                        text: 'รูปภาพถูกลบออกจากระบบแล้ว',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                    
-                    // อัพเดท local data
-                    const updatedItem = allData.find(item => item.ID === currentDetailId);
-                    if (updatedItem) {
-                        updatedItem['ลิงค์รูปภาพ'] = '';
-                        originalDetailData['ลิงค์รูปภาพ'] = '';
-                    }
-                    
-                    // จัดการ UI
-                    currentDetailImageFile = null;
-                    document.getElementById('detailImageDisplay').style.display = 'none';
-                    document.getElementById('detailImageControls').style.display = 'none';
-                    document.getElementById('detailNoImage').style.display = 'none';
-                    document.getElementById('detailImageFileInput').value = '';
-                    
-                    // แสดง upload container ถ้าอยู่ในโหมดแก้ไข
-                    if (isEditMode) {
-                        document.getElementById('detailImageUploadContainer').style.display = 'block';
-                    } else {
-                        document.getElementById('detailNoImage').style.display = 'block';
-                    }
-                    
-                    // อัพเดท hash เพื่อป้องกันการ refresh ที่ไม่จำเป็น
-                    lastDataHash = getDataHash(allData);
-                } else {
-                    Swal.fire('Error', updateResult.message, 'error');
-                }
-            } catch (error) {
-                console.error('Error removing image:', error);
-                Swal.fire('Error', 'ไม่สามารถลบรูปภาพได้', 'error');
-            }
+            // ใช้ custom modal แทน SweetAlert
+            pendingAction = 'deleteImage';
+            document.getElementById('passwordInput').value = '';
+            
+            // เปลี่ยนข้อความใน modal สำหรับลบรูปภาพ
+            document.querySelector('#passwordModal h3').innerHTML = '<i class="fas fa-shield-alt"></i> ยืนยันการลบรูปภาพ';
+            document.querySelector('#passwordModal p').innerHTML = 'กรุณาใส่รหัสผ่านเพื่อยืนยันการลบรูปภาพ<br><small style="color: #94a3b8;">(รหัสผ่าน: 1234)</small>';
+            document.getElementById('confirmDeleteBtn').innerHTML = '<i class="fas fa-check"></i> ยืนยันการลบ';
+            
+            document.getElementById('passwordModal').classList.add('active');
         }
 
         // Upload Image to Google Drive via Apps Script
@@ -3024,6 +2988,7 @@
             // Fill detail form with readonly inputs
             document.getElementById('detailId').value = item.ID;
             document.getElementById('detailTimestamp').value = formatDateTime(item.Timestamp) || '-';
+            document.getElementById('detailDateTimeEdit').value = formatToDateTimeLocal(item.Timestamp);
             document.getElementById('detailEventName').value = item['ชื่อเหตุการณ์'] || '';
             document.getElementById('detailDescription').value = item['รายละเอียด'] || '';
             document.getElementById('detailQuantity').value = item['จำนวน'] || '';
@@ -3077,6 +3042,10 @@
         function setViewMode() {
             isEditMode = false;
             
+            // Hide datetime edit input, show text input
+            document.getElementById('detailTimestamp').style.display = 'block';
+            document.getElementById('detailDateTimeEdit').style.display = 'none';
+            
             // Make all inputs readonly
             document.getElementById('detailEventName').readOnly = true;
             document.getElementById('detailDescription').readOnly = true;
@@ -3113,6 +3082,10 @@
         // Enable Edit Mode
         function enableEditMode() {
             isEditMode = true;
+            
+            // Show datetime edit input, hide text input
+            document.getElementById('detailTimestamp').style.display = 'none';
+            document.getElementById('detailDateTimeEdit').style.display = 'block';
             
             // Make inputs editable
             document.getElementById('detailEventName').readOnly = false;
@@ -3182,7 +3155,7 @@
             document.getElementById('detailModalTitle').innerHTML = '<i class="fas fa-edit"></i> แก้ไขข้อมูล';
         }
 
-        // Save Detail Changes
+        // Save Detail Changes - Updated to handle datetime
         async function saveDetailChanges() {
             if (!currentDetailId) {
                 Swal.fire('Error', 'ไม่สามารถระบุข้อมูลที่จะบันทึกได้', 'error');
@@ -3200,9 +3173,19 @@
                     imageUrl = uploadResult.imageUrl;
                 }
 
+                // Get the datetime value
+                const dateTimeValue = document.getElementById('detailDateTimeEdit').value;
+                let timestamp = originalDetailData.Timestamp;
+                
+                // If datetime was edited, convert to proper format
+                if (dateTimeValue) {
+                    timestamp = convertDateTimeLocal(dateTimeValue).toISOString();
+                }
+
                 const data = {
                     action: 'update',
                     id: currentDetailId,
+                    timestamp: timestamp,
                     eventName: document.getElementById('detailEventName').value,
                     description: document.getElementById('detailDescription').value,
                     quantity: document.getElementById('detailQuantity').value,
@@ -3236,6 +3219,7 @@
                     // Update original data
                     const updatedItem = allData.find(item => item.ID === currentDetailId);
                     if (updatedItem) {
+                        updatedItem.Timestamp = timestamp;
                         updatedItem['ชื่อเหตุการณ์'] = data.eventName;
                         updatedItem['รายละเอียด'] = data.description;
                         updatedItem['จำนวน'] = data.quantity;
@@ -3253,6 +3237,9 @@
                         // Update data hash to prevent unnecessary refresh
                         lastDataHash = getDataHash(allData);
                     }
+                    
+                    // Update display
+                    document.getElementById('detailTimestamp').value = formatDateTime(timestamp);
                     
                     currentDetailImageFile = null;
                     setViewMode();
@@ -3281,6 +3268,7 @@
             document.getElementById('detailNotes').value = originalDetailData['หมายเหตุ'] || '';
             document.getElementById('detailReporter').value = originalDetailData['ผู้รายงาน'] || '';
             document.getElementById('detailPosition').value = originalDetailData['ตำแหน่ง'] || '';
+            document.getElementById('detailDateTimeEdit').value = formatToDateTimeLocal(originalDetailData.Timestamp);
             
             const originalColor = originalDetailData['สี'] || '#3b82f6';
             selectedDetailColor = originalColor;
@@ -3320,6 +3308,12 @@
             
             pendingAction = 'delete';
             document.getElementById('passwordInput').value = '';
+            
+            // เปลี่ยนข้อความใน modal สำหรับลบข้อมูล
+            document.querySelector('#passwordModal h3').innerHTML = '<i class="fas fa-shield-alt"></i> ยืนยันการลบข้อมูล';
+            document.querySelector('#passwordModal p').innerHTML = 'กรุณาใส่รหัสผ่านเพื่อยืนยันการลบข้อมูล<br><small style="color: #94a3b8;">(รหัสผ่าน: 1234)</small>';
+            document.getElementById('confirmDeleteBtn').innerHTML = '<i class="fas fa-check"></i> ยืนยันการลบ';
+            
             document.getElementById('passwordModal').classList.add('active');
         }
 
@@ -3329,7 +3323,7 @@
             document.getElementById('passwordInput').value = '';
         }
 
-        // Confirm Delete with Password - Enhanced to delete images from Google Drive
+        // Confirm Delete with Password - Enhanced to handle both data and image deletion
         async function confirmDelete() {
             const password = document.getElementById('passwordInput').value;
             const confirmBtn = document.getElementById('confirmDeleteBtn');
@@ -3347,44 +3341,146 @@
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             try {
-                // ลบข้อมูลผ่าน API (API จะจัดการลบรูปภาพเอง)
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ 
-                        action: 'delete', 
-                        id: currentDetailId 
-                    })
-                });
-                
-                const deleteResult = await response.json();
-                
-                if (deleteResult.success) {
-                    closePasswordModal();
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'ลบสำเร็จ!',
-                        text: 'ข้อมูลและรูปภาพถูกลบเรียบร้อยแล้ว',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                    
-                    // Remove from local data
-                    allData = allData.filter(item => item.ID !== currentDetailId);
-                    lastDataHash = getDataHash(allData);
-                    
-                    closeDetailModal();
-                    applyCurrentFilters();
-                } else {
-                    Swal.fire('Error', deleteResult.message, 'error');
+                if (pendingAction === 'deleteImage') {
+                    // ลบรูปภาพ
+                    await handleImageDeletion();
+                } else if (pendingAction === 'delete') {
+                    // ลบข้อมูลทั้งหมด
+                    await handleDataDeletion();
                 }
             } catch (error) {
                 console.error('Error:', error);
-                Swal.fire('Error', 'ไม่สามารถลบข้อมูลได้', 'error');
+                Swal.fire('Error', 'เกิดข้อผิดพลาดในการดำเนินการ', 'error');
             } finally {
                 // Remove loading state
                 confirmBtn.classList.remove('loading');
                 confirmBtn.disabled = false;
+                closePasswordModal();
+            }
+        }
+
+        // Handle Image Deletion
+        async function handleImageDeletion() {
+            // แสดง loading สำหรับการลบรูปภาพ
+            Swal.fire({
+                title: 'กำลังลบรูปภาพ...',
+                html: '<div class="spinner" style="margin: 20px auto;"></div>',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Get current image URL to delete from Drive
+            const currentItem = allData.find(item => item.ID === currentDetailId);
+            const imageUrl = currentItem ? currentItem['ลิงค์รูปภาพ'] : '';
+            
+            if (imageUrl) {
+                // ลบรูปภาพจาก Google Drive ผ่าน API
+                const deleteImageResponse = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'deleteImage',
+                        imageUrlOrId: imageUrl
+                    })
+                });
+                
+                const deleteImageResult = await deleteImageResponse.json();
+                console.log('Delete image result:', deleteImageResult);
+            }
+
+            // อัพเดทข้อมูลใน Sheet โดยลบ imageUrl ออก
+            const updateResponse = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'update',
+                    id: currentDetailId,
+                    eventName: document.getElementById('detailEventName').value,
+                    description: document.getElementById('detailDescription').value,
+                    quantity: document.getElementById('detailQuantity').value,
+                    location: document.getElementById('detailLocation').value,
+                    animalSize: document.getElementById('detailAnimalSize').value,
+                    environment: document.getElementById('detailEnvironment').value,
+                    gps: document.getElementById('detailGPS').value,
+                    notes: document.getElementById('detailNotes').value,
+                    reporter: document.getElementById('detailReporter').value,
+                    position: document.getElementById('detailPosition').value,
+                    color: selectedDetailColor,
+                    imageUrl: '' // ลบ URL รูปภาพ
+                })
+            });
+            
+            const updateResult = await updateResponse.json();
+            
+            if (updateResult.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'ลบรูปภาพสำเร็จ!',
+                    text: 'รูปภาพถูกลบออกจากระบบแล้ว',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                
+                // อัพเดท local data
+                const updatedItem = allData.find(item => item.ID === currentDetailId);
+                if (updatedItem) {
+                    updatedItem['ลิงค์รูปภาพ'] = '';
+                    originalDetailData['ลิงค์รูปภาพ'] = '';
+                }
+                
+                // จัดการ UI
+                currentDetailImageFile = null;
+                document.getElementById('detailImageDisplay').style.display = 'none';
+                document.getElementById('detailImageControls').style.display = 'none';
+                document.getElementById('detailNoImage').style.display = 'none';
+                document.getElementById('detailImageFileInput').value = '';
+                
+                // แสดง upload container ถ้าอยู่ในโหมดแก้ไข
+                if (isEditMode) {
+                    document.getElementById('detailImageUploadContainer').style.display = 'block';
+                } else {
+                    document.getElementById('detailNoImage').style.display = 'block';
+                }
+                
+                // อัพเดท hash เพื่อป้องกันการ refresh ที่ไม่จำเป็น
+                lastDataHash = getDataHash(allData);
+            } else {
+                Swal.fire('Error', updateResult.message, 'error');
+            }
+        }
+
+        // Handle Data Deletion  
+        async function handleDataDeletion() {
+            // ลบข้อมูลผ่าน API (API จะจัดการลบรูปภาพเอง)
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    action: 'delete', 
+                    id: currentDetailId 
+                })
+            });
+            
+            const deleteResult = await response.json();
+            
+            if (deleteResult.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'ลบสำเร็จ!',
+                    text: 'ข้อมูลและรูปภาพถูกลบเรียบร้อยแล้ว',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                
+                // Remove from local data
+                allData = allData.filter(item => item.ID !== currentDetailId);
+                lastDataHash = getDataHash(allData);
+                
+                closeDetailModal();
+                applyCurrentFilters();
+            } else {
+                Swal.fire('Error', deleteResult.message, 'error');
             }
         }
 
