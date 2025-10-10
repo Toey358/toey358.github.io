@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบเข้าสู่ระบบ</title>
+    <title>ระบบอนุมัติความปลอดภัย</title>
+    <link rel="icon" type="image/png" href="https://img.icons8.com/parakeet/96/check-file.png">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -114,6 +115,26 @@
             padding-right: 45px;
         }
         
+        /* iOS Fix - ให้ select, datepicker, timepicker มีขนาดเท่า input */
+        @supports (-webkit-touch-callout: none) {
+            .form-group select,
+            .form-group input.flatpickr-input {
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+                height: 46px;
+                line-height: normal;
+            }
+            
+            .form-group select {
+                background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+                background-repeat: no-repeat;
+                background-position: right 12px center;
+                background-size: 16px;
+                padding-right: 40px;
+            }
+        }
+        
         /* Flatpickr Custom Styles */
         .flatpickr-calendar {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -194,26 +215,26 @@
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #a8e6cf 0%, #81c995 100%);
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
             color: var(--white);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
 
         .btn-success:hover {
-            background: linear-gradient(135deg, #81c995 0%, #5fb878 100%);
-            box-shadow: 0 4px 15px rgba(129, 201, 149, 0.4);
+            background: linear-gradient(135deg, #229954 0%, #1e8449 100%);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.5);
             transform: translateY(-2px);
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #ffb3ba 0%, #ff8a95 100%);
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
             color: var(--white);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
 
         .btn-danger:hover {
-            background: linear-gradient(135deg, #ff8a95 0%, #ff6b7a 100%);
-            box-shadow: 0 4px 15px rgba(255, 138, 149, 0.4);
+            background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.5);
             transform: translateY(-2px);
         }
 
@@ -240,6 +261,35 @@
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-top: 20px;
+        }
+
+        /* SweetAlert2 Custom Styles - สีเข้ม */
+        .swal2-confirm {
+            background-color: #27ae60 !important;
+            border: none !important;
+            box-shadow: 0 2px 6px rgba(39, 174, 96, 0.4) !important;
+        }
+
+        .swal2-confirm:hover {
+            background-color: #229954 !important;
+        }
+
+        .swal2-cancel {
+            background-color: #95a5a6 !important;
+            border: none !important;
+        }
+
+        .swal2-cancel:hover {
+            background-color: #7f8c8d !important;
+        }
+
+        .swal2-deny {
+            background-color: #e74c3c !important;
+            border: none !important;
+        }
+
+        .swal2-deny:hover {
+            background-color: #c0392b !important;
         }
 
         /* Loading Spinner */
@@ -467,6 +517,15 @@
             font-size: 14px;
         }
 
+        /* Border radius สำหรับหัวตาราง */
+        thead tr th:first-child {
+            border-top-left-radius: 8px;
+        }
+
+        thead tr th:last-child {
+            border-top-right-radius: 8px;
+        }
+
         td {
             color: #2c3e50;
             font-size: 14px;
@@ -474,6 +533,55 @@
 
         tr:hover {
             background: #f8f9fa;
+        }
+
+        /* Pagination Styles */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+        }
+
+        .pagination-info {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #dfe6e9;
+            background: var(--white);
+            color: var(--primary-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: var(--secondary-color);
+            color: var(--white);
+            border-color: var(--secondary-color);
+        }
+
+        .pagination button.active {
+            background: var(--secondary-color);
+            color: var(--white);
+            border-color: var(--secondary-color);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .modal {
@@ -577,7 +685,7 @@
 
             .user-info {
                 width: 100%;
-                justify-content: center;
+                justify-content: flex-start;
             }
 
             .nav-btn {
@@ -596,12 +704,26 @@
                 padding: 25px;
             }
 
+            /* ขยายความกว้างตารางในมือถือ */
+            .data-table {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
             table {
-                font-size: 12px;
+                min-width: 800px;
+                font-size: 13px;
             }
 
             th, td {
-                padding: 8px;
+                padding: 10px 8px;
+                white-space: nowrap;
+            }
+
+            /* ทำให้คอลัมน์คำขออนุญาตกว้างขึ้น */
+            th:nth-child(3), td:nth-child(3) {
+                min-width: 200px;
+                white-space: normal;
             }
 
             .form-row {
@@ -614,6 +736,23 @@
 
             .btn-group {
                 grid-template-columns: 1fr;
+            }
+
+            .pagination-container {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .pagination {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .pagination button {
+                padding: 6px 10px;
+                font-size: 13px;
             }
         }
 
@@ -716,6 +855,10 @@
                     <tbody id="tableBody">
                     </tbody>
                 </table>
+                <div class="pagination-container" id="paginationContainer" style="display: none;">
+                    <div class="pagination-info" id="paginationInfo"></div>
+                    <div class="pagination" id="pagination"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -830,6 +973,111 @@
         let currentUser = null;
         let currentRequestId = null;
         let currentRequestData = null;
+        let allData = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let autoRefreshInterval = null;
+
+        // ฟังก์ชันสำหรับ format วันที่และเวลา
+        function formatDateTime(dateString) {
+            if (!dateString) return '-';
+            
+            try {
+                let date;
+                
+                if (dateString.includes('/') && dateString.includes(',')) {
+                    const parts = dateString.split(', ');
+                    const datePart = parts[0].split('/');
+                    const timePart = parts[1].split(':');
+                    
+                    const day = datePart[0].padStart(2, '0');
+                    const month = datePart[1].padStart(2, '0');
+                    const year = datePart[2];
+                    const hours = timePart[0].padStart(2, '0');
+                    const minutes = timePart[1].padStart(2, '0');
+                    
+                    return `${day}-${month}-${year} ${hours}:${minutes}`;
+                }
+                
+                date = new Date(dateString);
+                
+                if (isNaN(date.getTime())) {
+                    return dateString;
+                }
+                
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                
+                return `${day}-${month}-${year} ${hours}:${minutes}`;
+            } catch (error) {
+                return dateString;
+            }
+        }
+
+        // ฟังก์ชันสำหรับ format เฉพาะวันที่ (dd-mm-yyyy)
+        function formatDateOnly(dateString) {
+            if (!dateString) return '';
+            
+            try {
+                if (dateString.includes('/')) {
+                    const parts = dateString.split('/');
+                    if (parts.length === 3) {
+                        const day = parts[0].padStart(2, '0');
+                        const month = parts[1].padStart(2, '0');
+                        const year = parts[2];
+                        return `${day}-${month}-${year}`;
+                    }
+                }
+                
+                if (dateString.match(/^\d{2}-\d{2}-\d{4}$/)) {
+                    return dateString;
+                }
+                
+                const date = new Date(dateString);
+                
+                if (isNaN(date.getTime())) {
+                    return dateString;
+                }
+                
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                
+                return `${day}-${month}-${year}`;
+            } catch (error) {
+                return dateString;
+            }
+        }
+
+        // ฟังก์ชันสำหรับ format เฉพาะเวลา (HH:mm)
+        function formatTimeOnly(timeString) {
+            if (!timeString) return '';
+            
+            try {
+                if (timeString.match(/^\d{1,2}:\d{2}$/)) {
+                    const parts = timeString.split(':');
+                    const hours = parts[0].padStart(2, '0');
+                    const minutes = parts[1].padStart(2, '0');
+                    return `${hours}:${minutes}`;
+                }
+                
+                const date = new Date(timeString);
+                
+                if (isNaN(date.getTime())) {
+                    return timeString;
+                }
+                
+                const hours = date.getUTCHours().toString().padStart(2, '0');
+                const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+                
+                return `${hours}:${minutes}`;
+            } catch (error) {
+                return timeString;
+            }
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             const savedUser = sessionStorage.getItem('currentUser');
@@ -839,14 +1087,12 @@
                 loadData();
             }
             
-            // Initialize Date Picker (เฉพาะวันที่ ไม่มีเวลา)
             flatpickr("#refuelDate", {
                 dateFormat: "d/m/Y",
                 allowInput: false,
                 locale: "th"
             });
             
-            // Initialize Time Pickers (เฉพาะเวลา ไม่มีวันที่)
             flatpickr("#startTime", {
                 enableTime: true,
                 noCalendar: true,
@@ -960,6 +1206,30 @@
             const badge = document.getElementById('userBadge');
             badge.textContent = currentUser.status;
             badge.className = currentUser.status && currentUser.status.toLowerCase() === 'admin' ? 'user-badge badge-admin' : 'user-badge badge-user';
+            
+            // เริ่ม auto-refresh ทุก 30 วินาที
+            startAutoRefresh();
+        }
+
+        // ฟังก์ชันเริ่ม auto-refresh
+        function startAutoRefresh() {
+            // ล้าง interval เดิม (ถ้ามี)
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            // ตั้ง interval ใหม่ - refresh ทุก 30 วินาที
+            autoRefreshInterval = setInterval(() => {
+                loadData();
+            }, 30000); // 30000 ms = 30 วินาที
+        }
+
+        // ฟังก์ชันหยุด auto-refresh
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
         }
 
         async function loadData() {
@@ -977,31 +1247,39 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    displayData(result.data);
+                    allData = result.data;
+                    currentPage = 1;
+                    displayData();
                     loadingDiv.style.display = 'none';
                     tableDiv.style.display = 'table';
+                    document.getElementById('paginationContainer').style.display = 'flex';
                 }
             } catch (error) {
                 loadingDiv.innerHTML = '<div style="color: #e74c3c;"><span class="loading-spinner"></span>เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
             }
         }
 
-        function displayData(data) {
+        function displayData() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             
-            if (data.length === 0) {
+            if (allData.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #7f8c8d;">ยังไม่มีข้อมูล</td></tr>';
+                document.getElementById('paginationContainer').style.display = 'none';
                 return;
             }
             
-            data.forEach(row => {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = allData.slice(startIndex, endIndex);
+            
+            pageData.forEach(row => {
                 const tr = document.createElement('tr');
                 const statusClass = row.Status === 'Approved' ? 'status-approved' : 
                                    row.Status === 'Rejected' ? 'status-rejected' : 'status-pending';
                 tr.innerHTML = `
                     <td>${row.ID || ''}</td>
-                    <td>${row.Timestamp || ''}</td>
+                    <td>${formatDateTime(row.Timestamp)}</td>
                     <td>${row.คำขออนุญาต || ''}</td>
                     <td>${row.สายการบิน || ''}</td>
                     <td><span class="status-badge ${statusClass}">${row.Status || 'Pending'}</span></td>
@@ -1009,6 +1287,92 @@
                 `;
                 tbody.appendChild(tr);
             });
+            
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(allData.length / itemsPerPage);
+            const startItem = (currentPage - 1) * itemsPerPage + 1;
+            const endItem = Math.min(currentPage * itemsPerPage, allData.length);
+            
+            document.getElementById('paginationInfo').textContent = 
+                `แสดง ${startItem}-${endItem} จาก ${allData.length} รายการ`;
+            
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            
+            const prevBtn = document.createElement('button');
+            prevBtn.textContent = '< ก่อนหน้า';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayData();
+                }
+            };
+            pagination.appendChild(prevBtn);
+            
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            if (startPage > 1) {
+                const firstBtn = document.createElement('button');
+                firstBtn.textContent = '1';
+                firstBtn.onclick = () => {
+                    currentPage = 1;
+                    displayData();
+                };
+                pagination.appendChild(firstBtn);
+                
+                if (startPage > 2) {
+                    const dots = document.createElement('button');
+                    dots.textContent = '...';
+                    dots.disabled = true;
+                    pagination.appendChild(dots);
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.textContent = i;
+                if (i === currentPage) {
+                    pageBtn.classList.add('active');
+                }
+                pageBtn.onclick = () => {
+                    currentPage = i;
+                    displayData();
+                };
+                pagination.appendChild(pageBtn);
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const dots = document.createElement('button');
+                    dots.textContent = '...';
+                    dots.disabled = true;
+                    pagination.appendChild(dots);
+                }
+                
+                const lastBtn = document.createElement('button');
+                lastBtn.textContent = totalPages;
+                lastBtn.onclick = () => {
+                    currentPage = totalPages;
+                    displayData();
+                };
+                pagination.appendChild(lastBtn);
+            }
+            
+            const nextBtn = document.createElement('button');
+            nextBtn.textContent = 'ถัดไป >';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayData();
+                }
+            };
+            pagination.appendChild(nextBtn);
         }
 
         async function viewDetail(id) {
@@ -1057,7 +1421,7 @@
                     
                     <div class="form-group">
                         <label>วันที่บันทึก</label>
-                        <input type="text" value="${data.Timestamp}" readonly>
+                        <input type="text" value="${formatDateTime(data.Timestamp)}" readonly>
                     </div>
                     
                     <div class="form-group">
@@ -1094,25 +1458,20 @@
                     
                     <div class="form-group">
                         <label>วันที่ต้องการเติมน้ำมัน</label>
-                        <input type="text" id="detailRefuelDate" value="${data.วันที่ต้องการเติมน้ำมัน || ''}" ${readonly} placeholder="dd/MM/yyyy">
+                        <input type="text" id="detailRefuelDate" value="${formatDateOnly(data.วันที่ต้องการเติมน้ำมัน)}" ${readonly} placeholder="dd-mm-yyyy">
                     </div>
-            `;
-            
-            // แสดงช่องเวลาเฉพาะ Admin
-            if (isAdmin) {
-                html += `
+                    
                     <div class="form-row">
                         <div class="form-group">
                             <label>เริ่มเวลา</label>
-                            <input type="text" id="detailStartTime" value="${data.เริ่มเวลา || ''}" ${readonly} placeholder="HH:mm">
+                            <input type="text" id="detailStartTime" value="${formatTimeOnly(data.เริ่มเวลา)}" ${readonly} placeholder="HH:mm">
                         </div>
                         <div class="form-group">
                             <label>ถึงเวลา</label>
-                            <input type="text" id="detailEndTime" value="${data.ถึงเวลา || ''}" ${readonly} placeholder="HH:mm">
+                            <input type="text" id="detailEndTime" value="${formatTimeOnly(data.ถึงเวลา)}" ${readonly} placeholder="HH:mm">
                         </div>
                     </div>
-                `;
-            }
+            `;
             
             html += `
                     <div class="form-group">
@@ -1147,7 +1506,6 @@
                     </div>
             `;
             
-            // แสดงข้อมูลผู้อนุมัติ (ดึงจาก currentUser ถ้าเป็น Admin)
             if (isAdmin) {
                 html += `
                     <div class="form-row">
@@ -1176,7 +1534,6 @@
                 `;
             }
             
-            // ช่องหมายเหตุ - Admin แก้ไขได้, User อ่านอย่างเดียว
             const noteReadonly = isAdmin ? '' : 'readonly';
             html += `
                 <div class="form-group">
@@ -1185,7 +1542,6 @@
                 </div>
             `;
             
-            // ปุ่มสำหรับ Admin
             if (isAdmin && data.Status === 'Pending') {
                 html += `
                     <div class="btn-group">
@@ -1212,9 +1568,7 @@
             
             document.getElementById('detailContent').innerHTML = html;
             
-            // Initialize Flatpickr for Detail Modal
             if (isAdmin && !isApproved) {
-                // Date Picker (เฉพาะวันที่)
                 const detailRefuelDateElem = document.getElementById('detailRefuelDate');
                 if (detailRefuelDateElem) {
                     flatpickr("#detailRefuelDate", {
@@ -1224,7 +1578,6 @@
                     });
                 }
                 
-                // Time Pickers (เฉพาะเวลา)
                 const detailStartTimeElem = document.getElementById('detailStartTime');
                 if (detailStartTimeElem) {
                     flatpickr("#detailStartTime", {
@@ -1248,7 +1601,6 @@
                 }
             }
             
-            // เพิ่ม event listener สำหรับฟอร์ม
             if (isAdmin && !isApproved) {
                 document.getElementById('detailForm').addEventListener('submit', handleUpdate);
             }
@@ -1260,7 +1612,7 @@
                 text: 'คุณต้องการอนุมัติคำขอนี้หรือไม่?',
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#81c995',
+                confirmButtonColor: '#27ae60',
                 cancelButtonColor: '#95a5a6',
                 confirmButtonText: 'อนุมัติ',
                 cancelButtonText: 'ยกเลิก'
@@ -1272,14 +1624,14 @@
         }
 
         async function handleReject() {
-            // ดึงค่าจากช่องหมายเหตุ
             const note = document.getElementById('detailNote').value.trim();
             
             if (!note) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'กรุณากรอกหมายเหตุ',
-                    text: 'จำเป็นต้องระบุเหตุผลในการปฏิเสธในช่องหมายเหตุ'
+                    text: 'จำเป็นต้องระบุเหตุผลในการปฏิเสธในช่องหมายเหตุ',
+                    confirmButtonColor: '#27ae60'
                 });
                 return;
             }
@@ -1289,7 +1641,7 @@
                 text: 'คุณต้องการปฏิเสธคำขอนี้หรือไม่?',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#ff8a95',
+                confirmButtonColor: '#e74c3c',
                 cancelButtonColor: '#95a5a6',
                 confirmButtonText: 'ยืนยันปฏิเสธ',
                 cancelButtonText: 'ยกเลิก'
@@ -1300,10 +1652,6 @@
             }
         }
 
-        function toggleRejectNote() {
-            // ฟังก์ชันนี้ไม่ใช้แล้ว แต่เก็บไว้เผื่อมี reference เดิม
-        }
-
         async function updateStatus(status, note) {
             const spinner = document.getElementById(status === 'Approved' ? 'approveSpinner' : 'rejectSpinner');
             const text = document.getElementById(status === 'Approved' ? 'approveText' : 'rejectText');
@@ -1311,7 +1659,6 @@
             if (spinner) spinner.classList.add('active');
             if (text) text.textContent = 'กำลังดำเนินการ...';
             
-            // ถ้าเป็น Reject และยังไม่มี note ส่งมา ให้ดึงจากช่องหมายเหตุ
             if (status === 'Rejected' && !note) {
                 note = document.getElementById('detailNote')?.value.trim() || '';
             }
@@ -1347,14 +1694,16 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'เกิดข้อผิดพลาด',
-                        text: result.message
+                        text: result.message,
+                        confirmButtonColor: '#27ae60'
                     });
                 }
             } catch (error) {
                 Swal.fire({
                     icon: 'error',
                     title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถอัปเดตสถานะได้'
+                    text: 'ไม่สามารถอัปเดตสถานะได้',
+                    confirmButtonColor: '#27ae60'
                 });
             } finally {
                 if (spinner) spinner.classList.remove('active');
@@ -1371,7 +1720,6 @@
             if (updateSpinner) updateSpinner.classList.add('active');
             if (updateText) updateText.textContent = 'กำลังบันทึก...';
             
-            // Validate วันที่และเวลา
             const refuelDate = document.getElementById('detailRefuelDate').value.trim();
             const startTimeElem = document.getElementById('detailStartTime');
             const endTimeElem = document.getElementById('detailEndTime');
@@ -1382,7 +1730,8 @@
                 Swal.fire({
                     icon: 'warning',
                     title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
-                    text: 'โปรดเลือกวันที่และเวลาให้ครบถ้วน'
+                    text: 'โปรดเลือกวันที่และเวลาให้ครบถ้วน',
+                    confirmButtonColor: '#27ae60'
                 });
                 if (updateSpinner) updateSpinner.classList.remove('active');
                 if (updateText) updateText.textContent = 'บันทึกการแก้ไข';
@@ -1431,14 +1780,16 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'เกิดข้อผิดพลาด',
-                        text: result.message
+                        text: result.message,
+                        confirmButtonColor: '#27ae60'
                     });
                 }
             } catch (error) {
                 Swal.fire({
                     icon: 'error',
                     title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถแก้ไขข้อมูลได้'
+                    text: 'ไม่สามารถแก้ไขข้อมูลได้',
+                    confirmButtonColor: '#27ae60'
                 });
             } finally {
                 if (updateSpinner) updateSpinner.classList.remove('active');
@@ -1469,7 +1820,6 @@
             const addSpinner = document.getElementById('addSpinner');
             const addBtnText = document.getElementById('addBtnText');
             
-            // Validate วันที่และเวลา
             const refuelDate = document.getElementById('refuelDate').value.trim();
             const startTime = document.getElementById('startTime').value.trim();
             const endTime = document.getElementById('endTime').value.trim();
@@ -1478,7 +1828,8 @@
                 Swal.fire({
                     icon: 'warning',
                     title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
-                    text: 'โปรดเลือกวันที่และเวลาให้ครบถ้วน'
+                    text: 'โปรดเลือกวันที่และเวลาให้ครบถ้วน',
+                    confirmButtonColor: '#27ae60'
                 });
                 return;
             }
@@ -1528,14 +1879,16 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'เกิดข้อผิดพลาด',
-                        text: result.message
+                        text: result.message,
+                        confirmButtonColor: '#27ae60'
                     });
                 }
             } catch (error) {
                 Swal.fire({
                     icon: 'error',
                     title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถบันทึกข้อมูลได้'
+                    text: 'ไม่สามารถบันทึกข้อมูลได้',
+                    confirmButtonColor: '#27ae60'
                 });
             } finally {
                 addBtn.disabled = false;
@@ -1557,6 +1910,9 @@
             });
             
             if (result.isConfirmed) {
+                // หยุด auto-refresh
+                stopAutoRefresh();
+                
                 currentUser = null;
                 sessionStorage.removeItem('currentUser');
                 
@@ -1583,7 +1939,7 @@
                 closeAddModal();
             }
             if (event.target === detailModal) {
-                closeDetailModal();
+                closeDetailModal();ฟ
             }
         }
     </script>
