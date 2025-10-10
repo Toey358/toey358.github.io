@@ -2,13 +2,16 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบอนุมัติความปลอดภัย</title>
     <link rel="icon" type="image/png" href="https://img.icons8.com/parakeet/96/check-file.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ระบบคำขออนุญาต">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <!-- Flatpickr JS -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/th.js"></script>
     <style>
@@ -97,7 +100,7 @@
             padding: 12px 15px;
             border: 2px solid #dfe6e9;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 16px;
             transition: all 0.3s ease;
             outline: none;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -115,7 +118,6 @@
             padding-right: 45px;
         }
         
-        /* iOS Fix - ให้ select, datepicker, timepicker มีขนาดเท่า input */
         @supports (-webkit-touch-callout: none) {
             .form-group select,
             .form-group input.flatpickr-input {
@@ -135,7 +137,6 @@
             }
         }
         
-        /* Flatpickr Custom Styles */
         .flatpickr-calendar {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
@@ -263,36 +264,6 @@
             margin-top: 20px;
         }
 
-        /* SweetAlert2 Custom Styles - สีเข้ม */
-        .swal2-confirm {
-            background-color: #27ae60 !important;
-            border: none !important;
-            box-shadow: 0 2px 6px rgba(39, 174, 96, 0.4) !important;
-        }
-
-        .swal2-confirm:hover {
-            background-color: #229954 !important;
-        }
-
-        .swal2-cancel {
-            background-color: #95a5a6 !important;
-            border: none !important;
-        }
-
-        .swal2-cancel:hover {
-            background-color: #7f8c8d !important;
-        }
-
-        .swal2-deny {
-            background-color: #e74c3c !important;
-            border: none !important;
-        }
-
-        .swal2-deny:hover {
-            background-color: #c0392b !important;
-        }
-
-        /* Loading Spinner */
         .spinner {
             width: 16px;
             height: 16px;
@@ -311,7 +282,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Loading Spinner for Table */
         .loading-spinner {
             display: inline-block;
             width: 20px;
@@ -517,7 +487,6 @@
             font-size: 14px;
         }
 
-        /* Border radius สำหรับหัวตาราง */
         thead tr th:first-child {
             border-top-left-radius: 8px;
         }
@@ -535,7 +504,6 @@
             background: #f8f9fa;
         }
 
-        /* Pagination Styles */
         .pagination-container {
             display: flex;
             justify-content: space-between;
@@ -686,10 +654,15 @@
             .user-info {
                 width: 100%;
                 justify-content: flex-start;
+                height: 44px;
             }
 
             .nav-btn {
                 width: 100%;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .content {
@@ -704,7 +677,12 @@
                 padding: 25px;
             }
 
-            /* ขยายความกว้างตารางในมือถือ */
+            .form-group input,
+            .form-group textarea,
+            .form-group select {
+                font-size: 16px;
+            }
+
             .data-table {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
@@ -720,7 +698,6 @@
                 white-space: nowrap;
             }
 
-            /* ทำให้คอลัมน์คำขออนุญาตกว้างขึ้น */
             th:nth-child(3), td:nth-child(3) {
                 min-width: 200px;
                 white-space: normal;
@@ -732,6 +709,8 @@
 
             .modal-content {
                 padding: 20px;
+                width: 95%;
+                max-width: none;
             }
 
             .btn-group {
@@ -978,7 +957,6 @@
         const itemsPerPage = 10;
         let autoRefreshInterval = null;
 
-        // ฟังก์ชันสำหรับ format วันที่และเวลา
         function formatDateTime(dateString) {
             if (!dateString) return '-';
             
@@ -1017,7 +995,6 @@
             }
         }
 
-        // ฟังก์ชันสำหรับ format เฉพาะวันที่ (dd-mm-yyyy)
         function formatDateOnly(dateString) {
             if (!dateString) return '';
             
@@ -1052,7 +1029,6 @@
             }
         }
 
-        // ฟังก์ชันสำหรับ format เฉพาะเวลา (HH:mm)
         function formatTimeOnly(timeString) {
             if (!timeString) return '';
             
@@ -1079,6 +1055,13 @@
             }
         }
 
+        function updateThemeColor(color) {
+            let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+            if (metaThemeColor) {
+                metaThemeColor.setAttribute('content', color);
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             const savedUser = sessionStorage.getItem('currentUser');
             if (savedUser) {
@@ -1086,6 +1069,8 @@
                 showMainSystem();
                 loadData();
             }
+            
+            updateThemeColor('#ffffff');
             
             flatpickr("#refuelDate", {
                 dateFormat: "d/m/Y",
@@ -1202,29 +1187,26 @@
             document.body.style.alignItems = 'flex-start';
             document.body.style.background = '#f8f9fa';
             
+            updateThemeColor('#ffffff');
+            
             document.getElementById('userName').textContent = currentUser.name;
             const badge = document.getElementById('userBadge');
             badge.textContent = currentUser.status;
             badge.className = currentUser.status && currentUser.status.toLowerCase() === 'admin' ? 'user-badge badge-admin' : 'user-badge badge-user';
             
-            // เริ่ม auto-refresh ทุก 30 วินาที
             startAutoRefresh();
         }
 
-        // ฟังก์ชันเริ่ม auto-refresh
         function startAutoRefresh() {
-            // ล้าง interval เดิม (ถ้ามี)
             if (autoRefreshInterval) {
                 clearInterval(autoRefreshInterval);
             }
             
-            // ตั้ง interval ใหม่ - refresh ทุก 30 วินาที
             autoRefreshInterval = setInterval(() => {
                 loadData();
-            }, 30000); // 30000 ms = 30 วินาที
+            }, 30000);
         }
 
-        // ฟังก์ชันหยุด auto-refresh
         function stopAutoRefresh() {
             if (autoRefreshInterval) {
                 clearInterval(autoRefreshInterval);
@@ -1247,7 +1229,12 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    allData = result.data;
+                    // เรียงลำดับข้อมูลจากใหม่ไปเก่า (ตาม ID)
+                    allData = result.data.sort((a, b) => {
+                        const idA = parseInt(a.ID.replace('ID', ''));
+                        const idB = parseInt(b.ID.replace('ID', ''));
+                        return idB - idA; // เรียงจากมากไปน้อย (ใหม่ไปเก่า)
+                    });
                     currentPage = 1;
                     displayData();
                     loadingDiv.style.display = 'none';
@@ -1471,9 +1458,7 @@
                             <input type="text" id="detailEndTime" value="${formatTimeOnly(data.ถึงเวลา)}" ${readonly} placeholder="HH:mm">
                         </div>
                     </div>
-            `;
-            
-            html += `
+                    
                     <div class="form-group">
                         <label>เหตุจำเป็นที่ต้องดำเนินการ</label>
                         <textarea id="detailReason" ${readonly}>${data.เหตุจำเป็นที่ต้องดำเนินการ || ''}</textarea>
@@ -1910,7 +1895,6 @@
             });
             
             if (result.isConfirmed) {
-                // หยุด auto-refresh
                 stopAutoRefresh();
                 
                 currentUser = null;
@@ -1922,6 +1906,8 @@
                 document.body.style.background = 'var(--white)';
                 document.getElementById('loginForm').reset();
                 document.getElementById('navbarMenu').classList.remove('active');
+                
+                updateThemeColor('#ffffff');
                 
                 await Swal.fire({
                     icon: 'success',
@@ -1939,7 +1925,7 @@
                 closeAddModal();
             }
             if (event.target === detailModal) {
-                closeDetailModal();ฟ
+                closeDetailModal();
             }
         }
     </script>
