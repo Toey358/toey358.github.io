@@ -104,6 +104,30 @@
             transition: all 0.3s ease;
             outline: none;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 100%;
+            box-sizing: border-box;
+            line-height: 1.6;
+            min-height: 46px;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-group select {
+            padding: 14px 15px;
+            height: auto;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        .form-group select option {
+            padding: 10px;
+            line-height: 1.8;
         }
 
         .form-group input:read-only,
@@ -116,25 +140,6 @@
         .form-group input[type="password"],
         .form-group input[type="text"]:not([readonly]):not(.flatpickr-input) {
             padding-right: 45px;
-        }
-        
-        @supports (-webkit-touch-callout: none) {
-            .form-group select,
-            .form-group input.flatpickr-input {
-                -webkit-appearance: none;
-                -moz-appearance: none;
-                appearance: none;
-                height: 46px;
-                line-height: normal;
-            }
-            
-            .form-group select {
-                background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-                background-repeat: no-repeat;
-                background-position: right 12px center;
-                background-size: 16px;
-                padding-right: 40px;
-            }
         }
         
         .flatpickr-calendar {
@@ -415,6 +420,21 @@
             padding: 10px 15px;
             background: var(--light-bg);
             border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-info:hover {
+            background: #e8f4f8;
+            transform: translateY(-1px);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--secondary-color);
         }
 
         .user-info span {
@@ -578,6 +598,7 @@
             margin: auto;
             max-height: 90vh;
             overflow-y: auto;
+            overflow-x: hidden;
         }
 
         @keyframes slideIn {
@@ -711,6 +732,7 @@
                 padding: 20px;
                 width: 95%;
                 max-width: none;
+                overflow-x: hidden;
             }
 
             .btn-group {
@@ -801,7 +823,8 @@
                 <span></span>
             </button>
             <div class="navbar-menu" id="navbarMenu">
-                <div class="user-info">
+                <div class="user-info" onclick="openUserProfileModal()">
+                    <img id="userAvatar" src="https://img.icons8.com/color/96/user.png" alt="User Avatar" class="user-avatar">
                     <span id="userName">-</span>
                     <span class="user-badge" id="userBadge">User</span>
                 </div>
@@ -941,6 +964,19 @@
                 <button class="close-btn" onclick="closeDetailModal()">&times;</button>
             </div>
             <div id="detailContent">
+                <div class="loading">กำลังโหลดข้อมูล...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div class="modal" id="userProfileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>ข้อมูลผู้ใช้งาน</h2>
+                <button class="close-btn" onclick="closeUserProfileModal()">&times;</button>
+            </div>
+            <div id="userProfileContent">
                 <div class="loading">กำลังโหลดข้อมูล...</div>
             </div>
         </div>
@@ -1194,6 +1230,13 @@
             badge.textContent = currentUser.status;
             badge.className = currentUser.status && currentUser.status.toLowerCase() === 'admin' ? 'user-badge badge-admin' : 'user-badge badge-user';
             
+            const userAvatar = document.getElementById('userAvatar');
+            if (currentUser.imageUrl && currentUser.imageUrl.trim() !== '') {
+                userAvatar.src = `https://drive.google.com/thumbnail?id=${currentUser.imageUrl}&sz=w200`;
+            } else {
+                userAvatar.src = 'https://img.icons8.com/color/96/user.png';
+            }
+            
             startAutoRefresh();
         }
 
@@ -1229,11 +1272,10 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    // เรียงลำดับข้อมูลจากใหม่ไปเก่า (ตาม ID)
                     allData = result.data.sort((a, b) => {
                         const idA = parseInt(a.ID.replace('ID', ''));
                         const idB = parseInt(b.ID.replace('ID', ''));
-                        return idB - idA; // เรียงจากมากไปน้อย (ใหม่ไปเก่า)
+                        return idB - idA;
                     });
                     currentPage = 1;
                     displayData();
@@ -1788,6 +1830,298 @@
             currentRequestData = null;
         }
 
+        function openUserProfileModal() {
+            document.getElementById('userProfileModal').style.display = 'flex';
+            document.getElementById('navbarMenu').classList.remove('active');
+            displayUserProfile();
+        }
+
+        function closeUserProfileModal() {
+            document.getElementById('userProfileModal').style.display = 'none';
+        }
+
+        function displayUserProfile() {
+            const imageUrl = currentUser.imageUrl && currentUser.imageUrl.trim() !== '' 
+                ? `https://drive.google.com/thumbnail?id=${currentUser.imageUrl}&sz=w200`
+                : 'https://img.icons8.com/color/96/user.png';
+            
+            let html = `
+                <form id="userProfileForm">
+                    <div style="text-align: center; margin-bottom: 20px; position: relative;">
+                        <div style="position: relative; display: inline-block;">
+                            <img id="profileImagePreview" src="${imageUrl}" alt="Profile" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--secondary-color);">
+                            <label for="profileImageInput" style="position: absolute; bottom: 0; right: 0; background: var(--secondary-color); color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid white;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                            </label>
+                            <input type="file" id="profileImageInput" accept="image/*" style="display: none;" onchange="handleProfileImageChange(event)">
+                        </div>
+                        <p style="color: #7f8c8d; font-size: 12px; margin-top: 10px;">คลิกที่ไอคอนกล้องเพื่อเปลี่ยนรูปภาพ</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>ID</label>
+                        <input type="text" value="${currentUser.id}" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="profileUsername">ชื่อผู้ใช้</label>
+                        <input type="text" id="profileUsername" value="${currentUser.username}" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="profilePassword">รหัสผ่าน</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="profilePassword" value="${currentUser.password || '********'}" readonly>
+                            <button type="button" class="toggle-password" onclick="togglePassword('profilePassword')">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="profileName">ชื่อ</label>
+                        <input type="text" id="profileName" value="${currentUser.name}" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="profilePosition">ตำแหน่ง</label>
+                        <input type="text" id="profilePosition" value="${currentUser.position}" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>สถานะ</label>
+                        <input type="text" value="${currentUser.status}" readonly>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary" onclick="enableEditProfile()">
+                        <span id="editProfileText">แก้ไขข้อมูล</span>
+                    </button>
+                </form>
+            `;
+            
+            document.getElementById('userProfileContent').innerHTML = html;
+        }
+
+        async function handleProfileImageChange(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'ไฟล์ไม่ถูกต้อง',
+                    text: 'กรุณาเลือกไฟล์รูปภาพเท่านั้น',
+                    confirmButtonColor: '#27ae60'
+                });
+                return;
+            }
+            
+            if (file.size > 2 * 1024 * 1024) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'ไฟล์ใหญ่เกินไป',
+                    text: 'กรุณาเลือกไฟล์ที่มีขนาดไม่เกิน 2MB',
+                    confirmButtonColor: '#27ae60'
+                });
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('profileImagePreview').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            
+            Swal.fire({
+                title: 'กำลังอัปโหลดรูปภาพ...',
+                text: 'กรุณารอสักครู่',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            try {
+                const base64 = await fileToBase64(file);
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'uploadProfileImage',
+                        userId: currentUser.id,
+                        fileName: file.name,
+                        mimeType: file.type,
+                        base64Data: base64.split(',')[1]
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentUser.imageUrl = result.fileId;
+                    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    const userAvatar = document.getElementById('userAvatar');
+                    userAvatar.src = `https://drive.google.com/thumbnail?id=${result.fileId}&sz=w200`;
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'สำเร็จ!',
+                        text: 'อัปโหลดรูปภาพเรียบร้อยแล้ว',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                } else {
+                    const oldImageUrl = currentUser.imageUrl && currentUser.imageUrl.trim() !== '' 
+                        ? `https://drive.google.com/thumbnail?id=${currentUser.imageUrl}&sz=w200`
+                        : 'https://img.icons8.com/color/96/user.png';
+                    document.getElementById('profileImagePreview').src = oldImageUrl;
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: result.message,
+                        confirmButtonColor: '#27ae60'
+                    });
+                }
+            } catch (error) {
+                const oldImageUrl = currentUser.imageUrl && currentUser.imageUrl.trim() !== '' 
+                    ? `https://drive.google.com/thumbnail?id=${currentUser.imageUrl}&sz=w200`
+                    : 'https://img.icons8.com/color/96/user.png';
+                document.getElementById('profileImagePreview').src = oldImageUrl;
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'ไม่สามารถอัปโหลดรูปภาพได้',
+                    confirmButtonColor: '#27ae60'
+                });
+            }
+            
+            event.target.value = '';
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function enableEditProfile() {
+            const form = document.getElementById('userProfileForm');
+            const password = document.getElementById('profilePassword');
+            const name = document.getElementById('profileName');
+            const position = document.getElementById('profilePosition');
+            
+            password.removeAttribute('readonly');
+            name.removeAttribute('readonly');
+            position.removeAttribute('readonly');
+            
+            password.value = currentUser.password || '';
+            
+            // ลบปุ่มเดิม
+            const oldBtn = form.querySelector('button[type="button"]');
+            if (oldBtn) {
+                oldBtn.remove();
+            }
+            
+            // สร้างปุ่มใหม่ 2 ปุ่ม (บันทึก และ ยกเลิก)
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'btn-group';
+            btnGroup.innerHTML = `
+                <button type="button" class="btn btn-success" onclick="saveUserProfile()">
+                    <span class="spinner" id="updateProfileSpinner"></span>
+                    <span id="updateProfileText">บันทึกการแก้ไข</span>
+                </button>
+                <button type="button" class="btn btn-danger" onclick="closeUserProfileModal()">
+                    ยกเลิก
+                </button>
+            `;
+            form.appendChild(btnGroup);
+        }
+
+        async function saveUserProfile() {
+            const updateProfileSpinner = document.getElementById('updateProfileSpinner');
+            const updateProfileText = document.getElementById('updateProfileText');
+            
+            if (updateProfileSpinner) updateProfileSpinner.classList.add('active');
+            if (updateProfileText) updateProfileText.textContent = 'กำลังบันทึก...';
+            
+            const password = document.getElementById('profilePassword').value.trim();
+            const name = document.getElementById('profileName').value.trim();
+            const position = document.getElementById('profilePosition').value.trim();
+            
+            if (!password || !name || !position) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+                    confirmButtonColor: '#27ae60'
+                });
+                if (updateProfileSpinner) updateProfileSpinner.classList.remove('active');
+                if (updateProfileText) updateProfileText.textContent = 'บันทึกการแก้ไข';
+                return;
+            }
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'updateUserProfile',
+                        id: currentUser.id,
+                        password: password,
+                        name: name,
+                        position: position
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentUser.password = password;
+                    currentUser.name = name;
+                    currentUser.position = position;
+                    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    document.getElementById('userName').textContent = name;
+                    
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'สำเร็จ!',
+                        text: 'แก้ไขข้อมูลเรียบร้อยแล้ว',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    closeUserProfileModal();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: result.message,
+                        confirmButtonColor: '#27ae60'
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'ไม่สามารถแก้ไขข้อมูลได้',
+                    confirmButtonColor: '#27ae60'
+                });
+            } finally {
+                if (updateProfileSpinner) updateProfileSpinner.classList.remove('active');
+                if (updateProfileText) updateProfileText.textContent = 'บันทึกการแก้ไข';
+            }
+        }
+
         function openAddModal() {
             document.getElementById('addModal').style.display = 'flex';
             document.getElementById('navbarMenu').classList.remove('active');
@@ -1921,11 +2255,15 @@
         window.onclick = function(event) {
             const addModal = document.getElementById('addModal');
             const detailModal = document.getElementById('detailModal');
+            const userProfileModal = document.getElementById('userProfileModal');
             if (event.target === addModal) {
                 closeAddModal();
             }
             if (event.target === detailModal) {
                 closeDetailModal();
+            }
+            if (event.target === userProfileModal) {
+                closeUserProfileModal();
             }
         }
     </script>
