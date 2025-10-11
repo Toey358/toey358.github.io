@@ -10,7 +10,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="ระบบคำขออนุญาต">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/th.js"></script>
@@ -141,7 +140,6 @@
             padding-right: 45px;
         }
         
-        /* Flatpickr Styles - FIXED for iOS */
         .flatpickr-calendar {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             max-width: 100% !important;
@@ -164,7 +162,6 @@
             cursor: not-allowed !important;
         }
 
-        /* iOS specific adjustments */
         @supports (-webkit-touch-callout: none) {
             .flatpickr-input {
                 font-size: 16px !important;
@@ -813,7 +810,6 @@
     </style>
 </head>
 <body>
-    <!-- Login Page -->
     <div class="login-container" id="loginPage">
         <div class="login-header">
             <img src="https://img.icons8.com/parakeet/480/document.png" alt="System Icon" class="login-icon">
@@ -844,7 +840,6 @@
         </form>
     </div>
 
-    <!-- Main System -->
     <div class="main-system" id="mainSystem">
         <nav class="navbar">
             <div class="navbar-brand">
@@ -898,7 +893,6 @@
         </div>
     </div>
 
-    <!-- Modals -->
     <div class="modal" id="addModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1004,8 +998,6 @@
     </div>
     
 <script>
-    // วางโค้ดนี้ใน <script> tag ก่อนปิด </body>
-
 const API_URL = 'https://script.google.com/macros/s/AKfycbyC8ASq4j_TFb9dYqFtweUA8c-6J8kk4E5Y9vn8voXHt1kVdQgdrMNu2GOMf2x_vrz3gA/exec';
 
 let currentUser = null;
@@ -1015,8 +1007,6 @@ let allData = [];
 let currentPage = 1;
 const itemsPerPage = 10;
 let autoRefreshInterval = null;
-
-// ==================== ฟังก์ชันจัดรูปแบบวันที่และเวลา ====================
 
 function formatDateTime(dateString) {
     if (!dateString) return '-';
@@ -1096,8 +1086,6 @@ function updateThemeColor(color) {
     }
 }
 
-// ==================== เมื่อโหลดหน้าเว็บ ====================
-
 window.addEventListener('DOMContentLoaded', () => {
     const savedUser = sessionStorage.getItem('currentUser');
     if (savedUser) {
@@ -1107,7 +1095,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     updateThemeColor('#ffffff');
     
-    // Initialize Flatpickr
     flatpickr("#refuelDate", {
         dateFormat: "d/m/Y",
         allowInput: false,
@@ -1129,8 +1116,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// ==================== ฟังก์ชัน UI ====================
-
 function toggleMenu() {
     const menu = document.getElementById('navbarMenu');
     menu.classList.toggle('active');
@@ -1148,8 +1133,6 @@ function togglePassword(inputId) {
         toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`;
     }
 }
-
-// ==================== Login ====================
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1225,10 +1208,10 @@ function showMainSystem() {
         userAvatar.src = 'https://img.icons8.com/color/96/user.png';
     }
     
+    currentPage = 1;
+    
     startAutoRefresh();
 }
-
-// ==================== Auto Refresh ====================
 
 function startAutoRefresh() {
     if (autoRefreshInterval) {
@@ -1245,8 +1228,6 @@ function stopAutoRefresh() {
         autoRefreshInterval = null;
     }
 }
-
-// ==================== โหลดและแสดงข้อมูล ====================
 
 async function loadData() {
     const loadingDiv = document.getElementById('loadingData');
@@ -1267,7 +1248,6 @@ async function loadData() {
                 const idB = parseInt(b.ID.replace('ID', ''));
                 return idB - idA;
             });
-            currentPage = 1;
             displayData();
             loadingDiv.style.display = 'none';
             tableDiv.style.display = 'table';
@@ -1286,6 +1266,14 @@ function displayData() {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #7f8c8d;">ยังไม่มีข้อมูล</td></tr>';
         document.getElementById('paginationContainer').style.display = 'none';
         return;
+    }
+    
+    const totalPages = Math.ceil(allData.length / itemsPerPage);
+    if (currentPage > totalPages) {
+        currentPage = totalPages;
+    }
+    if (currentPage < 1) {
+        currentPage = 1;
     }
     
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -1391,8 +1379,6 @@ function updatePagination() {
     pagination.appendChild(nextBtn);
 }
 
-// ==================== User Profile Modal ====================
-
 function openUserProfileModal() {
     document.getElementById('userProfileModal').style.display = 'flex';
     document.getElementById('navbarMenu').classList.remove('active');
@@ -1467,7 +1453,6 @@ function enableEditProfile() {
     const name = document.getElementById('profileName');
     const position = document.getElementById('profilePosition');
     
-    // username ยังคง readonly (ไม่ให้แก้ไข)
     password.removeAttribute('readonly');
     name.removeAttribute('readonly');
     position.removeAttribute('readonly');
@@ -1649,8 +1634,6 @@ function fileToBase64(file) {
     });
 }
 
-// ==================== Add Request Modal ====================
-
 function openAddModal() {
     document.getElementById('addModal').style.display = 'flex';
     document.getElementById('navbarMenu').classList.remove('active');
@@ -1744,8 +1727,6 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
         addBtnText.textContent = 'บันทึกข้อมูล';
     }
 });
-
-// ==================== Detail Modal ====================
 
 async function viewDetail(id) {
     currentRequestId = id;
@@ -1874,7 +1855,6 @@ function displayDetailForm(data) {
             <input type="tel" id="detailPhoneNumber" value="${data.เบอร์โทรศัพท์ที่สามารถติดต่อได้ || ''}" ${readonly}>
         </div>`;
     
-    // แสดงข้อมูลผู้อนุมัติ
     if (isAdmin) {
         html += `
         <div class="form-row">
@@ -1901,7 +1881,6 @@ function displayDetailForm(data) {
         </div>`;
     }
     
-    // ช่องหมายเหตุ
     const noteReadonly = isAdmin ? '' : 'readonly';
     html += `
         <div class="form-group">
@@ -1909,7 +1888,6 @@ function displayDetailForm(data) {
             <textarea id="detailNote" ${noteReadonly} placeholder="${isAdmin ? 'กรอกหมายเหตุ (ถ้ามี)' : 'ไม่มีหมายเหตุ'}">${data.หมายเหตุ || ''}</textarea>
         </div>`;
     
-    // ปุ่มสำหรับ Admin
     if (isAdmin && data.Status === 'Pending') {
         html += `
         <div class="btn-group">
@@ -1934,7 +1912,6 @@ function displayDetailForm(data) {
     
     document.getElementById('detailContent').innerHTML = html;
     
-    // Initialize Flatpickr for Detail Modal
     if (isAdmin && !isApproved) {
         const detailRefuelDateElem = document.getElementById('detailRefuelDate');
         if (detailRefuelDateElem) {
@@ -1968,7 +1945,6 @@ function displayDetailForm(data) {
         }
     }
     
-    // เพิ่ม event listener สำหรับฟอร์ม
     if (isAdmin && !isApproved) {
         document.getElementById('detailForm').addEventListener('submit', handleUpdate);
     }
@@ -1979,8 +1955,6 @@ function closeDetailModal() {
     currentRequestId = null;
     currentRequestData = null;
 }
-
-// ==================== Approve/Reject ====================
 
 async function handleApprove() {
     const result = await Swal.fire({
@@ -2087,8 +2061,6 @@ async function updateStatus(status, note) {
     }
 }
 
-// ==================== Update Request ====================
-
 async function handleUpdate(e) {
     e.preventDefault();
     
@@ -2175,8 +2147,6 @@ async function handleUpdate(e) {
     }
 }
 
-// ==================== Logout ====================
-
 async function logout() {
     const result = await Swal.fire({
         title: 'ออกจากระบบ?',
@@ -2209,8 +2179,6 @@ async function logout() {
     }
 }
 
-// ==================== Modal Click Outside ====================
-
 window.onclick = function(event) {
     const addModal = document.getElementById('addModal');
     const detailModal = document.getElementById('detailModal');
@@ -2218,7 +2186,7 @@ window.onclick = function(event) {
     if (event.target === addModal) closeAddModal();
     if (event.target === detailModal) closeDetailModal();
     if (event.target === userProfileModal) closeUserProfileModal();
-} 
+}
 </script>
 </body>
 </html>
