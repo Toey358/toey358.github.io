@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบอนุมัติความปลอดภัย</title>
-    <link rel="icon" type="image/png" href="https://img.icons8.com/parakeet/96/check-file.png">
-    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="https://img.icons8.com/pulsar-gradient/96/health-graph.png">
     <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -108,8 +107,7 @@
             box-sizing: border-box;
             line-height: 1.6;
             min-height: 46px;
-            display: flex;
-            align-items: center;
+            display: block;
         }
 
         .form-group select {
@@ -142,16 +140,50 @@
             padding-right: 45px;
         }
         
+        /* Flatpickr Styles - FIXED for iOS */
         .flatpickr-calendar {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 100% !important;
         }
         
         .flatpickr-input {
-            cursor: pointer;
+            cursor: pointer !important;
+            padding: 12px 15px !important;
+            min-height: 46px !important;
+            height: 46px !important;
+            font-size: 16px !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            border: 2px solid #dfe6e9 !important;
+            border-radius: 8px !important;
         }
         
         .flatpickr-input:read-only {
-            cursor: not-allowed;
+            cursor: not-allowed !important;
+        }
+
+        /* iOS specific adjustments */
+        @supports (-webkit-touch-callout: none) {
+            .flatpickr-input {
+                font-size: 16px !important;
+                min-height: 48px !important;
+                height: 48px !important;
+            }
+            
+            .flatpickr-calendar {
+                width: calc(100vw - 40px) !important;
+                max-width: 400px !important;
+            }
+            
+            .flatpickr-months {
+                padding: 10px !important;
+            }
+            
+            .flatpickr-day {
+                height: 40px !important;
+                line-height: 40px !important;
+            }
         }
 
         .form-group textarea {
@@ -182,6 +214,7 @@
             transition: color 0.3s ease;
             width: 24px;
             height: 24px;
+            z-index: 10;
         }
 
         .toggle-password:hover {
@@ -422,6 +455,7 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
+            height: 44px;
         }
 
         .user-info:hover {
@@ -434,7 +468,6 @@
             height: 36px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid var(--secondary-color);
         }
 
         .user-info span {
@@ -782,7 +815,7 @@
     <!-- Login Page -->
     <div class="login-container" id="loginPage">
         <div class="login-header">
-            <img src="https://img.icons8.com/parakeet/96/check-file.png" alt="System Icon" class="login-icon">
+            <img src="https://img.icons8.com/pulsar-gradient/96/health-graph.png" alt="System Icon" class="login-icon">
             <h1>ระบบเข้าสู่ระบบ</h1>
             <p>กรุณาเข้าสู่ระบบเพื่อใช้งาน</p>
         </div>
@@ -814,7 +847,7 @@
     <div class="main-system" id="mainSystem">
         <nav class="navbar">
             <div class="navbar-brand">
-                <img src="https://img.icons8.com/parakeet/96/check-file.png" alt="System Icon">
+                <img src="https://img.icons8.com/pulsar-gradient/96/health-graph.png" alt="System Icon">
                 <h2>ระบบคำขออนุญาต</h2>
             </div>
             <button class="mobile-toggle" onclick="toggleMenu()">
@@ -854,8 +887,7 @@
                             <th>จัดการ</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody">
-                    </tbody>
+                    <tbody id="tableBody"></tbody>
                 </table>
                 <div class="pagination-container" id="paginationContainer" style="display: none;">
                     <div class="pagination-info" id="paginationInfo"></div>
@@ -865,7 +897,7 @@
         </div>
     </div>
 
-    <!-- Add Request Modal -->
+    <!-- Modals -->
     <div class="modal" id="addModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -884,12 +916,10 @@
                         <option value="ติดเครื่องยนต์หนึ่งเครื่องยนต์">5) ติดเครื่องยนต์หนึ่งเครื่องยนต์</option>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label for="airline">2. สายการบิน/ผู้ประกอบการ *</label>
                     <input type="text" id="airline" required>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="aircraftType">3. แบบอากาศยาน *</label>
@@ -900,12 +930,10 @@
                         <input type="text" id="flightNumber" required>
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label for="refuelDate">5. วันที่ต้องการเติมน้ำมัน (dd/MM/yyyy) *</label>
                     <input type="text" id="refuelDate" required placeholder="15/10/2025" readonly>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="startTime">6. เริ่มเวลา (24hr) *</label>
@@ -916,22 +944,18 @@
                         <input type="text" id="endTime" required placeholder="15:00" readonly>
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label for="reason">8. เหตุจำเป็นที่ต้องดำเนินการ *</label>
                     <textarea id="reason" required></textarea>
                 </div>
-
                 <div class="form-group">
                     <label for="safetyMeasures">9. ระบุมาตรการความปลอดภัยพอสังเขป *</label>
                     <textarea id="safetyMeasures" required></textarea>
                 </div>
-
                 <div class="form-group">
                     <label for="contactPerson">10. บุคคลที่สามารถติดต่อได้ *</label>
                     <input type="text" id="contactPerson" required>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="contactPosition">11. ตำแหน่ง *</label>
@@ -942,12 +966,10 @@
                         <input type="text" id="department" required>
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label for="phoneNumber">13. เบอร์โทรศัพท์ที่สามารถติดต่อได้ *</label>
                     <input type="tel" id="phoneNumber" required pattern="[0-9]{10}" placeholder="0812345678">
                 </div>
-
                 <button type="submit" class="btn btn-primary" id="addBtn">
                     <span class="spinner" id="addSpinner"></span>
                     <span id="addBtnText">บันทึกข้อมูล</span>
@@ -956,7 +978,6 @@
         </div>
     </div>
 
-    <!-- Detail Modal -->
     <div class="modal" id="detailModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -969,7 +990,6 @@
         </div>
     </div>
 
-    <!-- User Profile Modal -->
     <div class="modal" id="userProfileModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -981,1291 +1001,1223 @@
             </div>
         </div>
     </div>
+    
+<script>
+    // วางโค้ดนี้ใน <script> tag ก่อนปิด </body>
 
-    <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbyC8ASq4j_TFb9dYqFtweUA8c-6J8kk4E5Y9vn8voXHt1kVdQgdrMNu2GOMf2x_vrz3gA/exec';
-        
-        let currentUser = null;
-        let currentRequestId = null;
-        let currentRequestData = null;
-        let allData = [];
-        let currentPage = 1;
-        const itemsPerPage = 10;
-        let autoRefreshInterval = null;
+const API_URL = 'https://script.google.com/macros/s/AKfycbyC8ASq4j_TFb9dYqFtweUA8c-6J8kk4E5Y9vn8voXHt1kVdQgdrMNu2GOMf2x_vrz3gA/exec';
 
-        function formatDateTime(dateString) {
-            if (!dateString) return '-';
-            
-            try {
-                let date;
-                
-                if (dateString.includes('/') && dateString.includes(',')) {
-                    const parts = dateString.split(', ');
-                    const datePart = parts[0].split('/');
-                    const timePart = parts[1].split(':');
-                    
-                    const day = datePart[0].padStart(2, '0');
-                    const month = datePart[1].padStart(2, '0');
-                    const year = datePart[2];
-                    const hours = timePart[0].padStart(2, '0');
-                    const minutes = timePart[1].padStart(2, '0');
-                    
-                    return `${day}-${month}-${year} ${hours}:${minutes}`;
-                }
-                
-                date = new Date(dateString);
-                
-                if (isNaN(date.getTime())) {
-                    return dateString;
-                }
-                
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const year = date.getFullYear();
-                const hours = date.getHours().toString().padStart(2, '0');
-                const minutes = date.getMinutes().toString().padStart(2, '0');
-                
-                return `${day}-${month}-${year} ${hours}:${minutes}`;
-            } catch (error) {
-                return dateString;
-            }
+let currentUser = null;
+let currentRequestId = null;
+let currentRequestData = null;
+let allData = [];
+let currentPage = 1;
+const itemsPerPage = 10;
+let autoRefreshInterval = null;
+
+// ==================== ฟังก์ชันจัดรูปแบบวันที่และเวลา ====================
+
+function formatDateTime(dateString) {
+    if (!dateString) return '-';
+    try {
+        let date;
+        if (dateString.includes('/') && dateString.includes(',')) {
+            const parts = dateString.split(', ');
+            const datePart = parts[0].split('/');
+            const timePart = parts[1].split(':');
+            const day = datePart[0].padStart(2, '0');
+            const month = datePart[1].padStart(2, '0');
+            const year = datePart[2];
+            const hours = timePart[0].padStart(2, '0');
+            const minutes = timePart[1].padStart(2, '0');
+            return `${day}-${month}-${year} ${hours}:${minutes}`;
         }
+        date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${day}-${month}-${year} ${hours}:${minutes}`;
+    } catch (error) {
+        return dateString;
+    }
+}
 
-        function formatDateOnly(dateString) {
-            if (!dateString) return '';
-            
-            try {
-                if (dateString.includes('/')) {
-                    const parts = dateString.split('/');
-                    if (parts.length === 3) {
-                        const day = parts[0].padStart(2, '0');
-                        const month = parts[1].padStart(2, '0');
-                        const year = parts[2];
-                        return `${day}-${month}-${year}`;
-                    }
-                }
-                
-                if (dateString.match(/^\d{2}-\d{2}-\d{4}$/)) {
-                    return dateString;
-                }
-                
-                const date = new Date(dateString);
-                
-                if (isNaN(date.getTime())) {
-                    return dateString;
-                }
-                
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const year = date.getFullYear();
-                
+function formatDateOnly(dateString) {
+    if (!dateString) return '';
+    try {
+        if (dateString.includes('/')) {
+            const parts = dateString.split('/');
+            if (parts.length === 3) {
+                const day = parts[0].padStart(2, '0');
+                const month = parts[1].padStart(2, '0');
+                const year = parts[2];
                 return `${day}-${month}-${year}`;
-            } catch (error) {
-                return dateString;
             }
         }
+        if (dateString.match(/^\d{2}-\d{2}-\d{4}$/)) return dateString;
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    } catch (error) {
+        return dateString;
+    }
+}
 
-        function formatTimeOnly(timeString) {
-            if (!timeString) return '';
-            
-            try {
-                if (timeString.match(/^\d{1,2}:\d{2}$/)) {
-                    const parts = timeString.split(':');
-                    const hours = parts[0].padStart(2, '0');
-                    const minutes = parts[1].padStart(2, '0');
-                    return `${hours}:${minutes}`;
-                }
-                
-                const date = new Date(timeString);
-                
-                if (isNaN(date.getTime())) {
-                    return timeString;
-                }
-                
-                const hours = date.getUTCHours().toString().padStart(2, '0');
-                const minutes = date.getUTCMinutes().toString().padStart(2, '0');
-                
-                return `${hours}:${minutes}`;
-            } catch (error) {
-                return timeString;
-            }
+function formatTimeOnly(timeString) {
+    if (!timeString) return '';
+    try {
+        if (timeString.match(/^\d{1,2}:\d{2}$/)) {
+            const parts = timeString.split(':');
+            const hours = parts[0].padStart(2, '0');
+            const minutes = parts[1].padStart(2, '0');
+            return `${hours}:${minutes}`;
         }
+        const date = new Date(timeString);
+        if (isNaN(date.getTime())) return timeString;
+        const hours = date.getUTCHours().toString().padStart(2, '0');
+        const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+    } catch (error) {
+        return timeString;
+    }
+}
 
-        function updateThemeColor(color) {
-            let metaThemeColor = document.querySelector('meta[name="theme-color"]');
-            if (metaThemeColor) {
-                metaThemeColor.setAttribute('content', color);
-            }
-        }
+function updateThemeColor(color) {
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', color);
+    }
+}
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedUser = sessionStorage.getItem('currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                showMainSystem();
-                loadData();
-            }
-            
-            updateThemeColor('#ffffff');
-            
-            flatpickr("#refuelDate", {
-                dateFormat: "d/m/Y",
-                allowInput: false,
-                locale: "th"
-            });
-            
-            flatpickr("#startTime", {
-                enableTime: true,
-                noCalendar: true,
-                dateFormat: "H:i",
-                time_24hr: true,
-                allowInput: false
-            });
-            
-            flatpickr("#endTime", {
-                enableTime: true,
-                noCalendar: true,
-                dateFormat: "H:i",
-                time_24hr: true,
-                allowInput: false
-            });
+// ==================== เมื่อโหลดหน้าเว็บ ====================
+
+window.addEventListener('DOMContentLoaded', () => {
+    const savedUser = sessionStorage.getItem('currentUser');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        showMainSystem();
+        loadData();
+    }
+    updateThemeColor('#ffffff');
+    
+    // Initialize Flatpickr
+    flatpickr("#refuelDate", {
+        dateFormat: "d/m/Y",
+        allowInput: false,
+        locale: "th"
+    });
+    flatpickr("#startTime", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: true,
+        allowInput: false
+    });
+    flatpickr("#endTime", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: true,
+        allowInput: false
+    });
+});
+
+// ==================== ฟังก์ชัน UI ====================
+
+function toggleMenu() {
+    const menu = document.getElementById('navbarMenu');
+    menu.classList.toggle('active');
+}
+
+function togglePassword(inputId) {
+    const passwordInput = document.getElementById(inputId);
+    const toggleBtn = passwordInput.parentElement.querySelector('.toggle-password');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>`;
+    } else {
+        passwordInput.type = 'password';
+        toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`;
+    }
+}
+
+// ==================== Login ====================
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const loginBtn = document.getElementById('loginBtn');
+    const loginSpinner = document.getElementById('loginSpinner');
+    const loginBtnText = document.getElementById('loginBtnText');
+    
+    loginBtn.disabled = true;
+    loginSpinner.classList.add('active');
+    loginBtnText.textContent = 'กำลังเข้าสู่ระบบ...';
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'login',
+                username: username,
+                password: password
+            })
         });
-
-        function toggleMenu() {
-            const menu = document.getElementById('navbarMenu');
-            menu.classList.toggle('active');
+        const result = await response.json();
+        
+        if (result.success) {
+            currentUser = result.user;
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+            await Swal.fire({
+                icon: 'success',
+                title: 'เข้าสู่ระบบสำเร็จ!',
+                text: `ยินดีต้อนรับคุณ ${currentUser.name}`,
+                timer: 1500,
+                showConfirmButton: false
+            });
+            showMainSystem();
+            loadData();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'เข้าสู่ระบบไม่สำเร็จ',
+                text: result.message
+            });
         }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้'
+        });
+    } finally {
+        loginBtn.disabled = false;
+        loginSpinner.classList.remove('active');
+        loginBtnText.textContent = 'เข้าสู่ระบบ';
+    }
+});
 
-        function togglePassword(inputId) {
-            const passwordInput = document.getElementById(inputId);
-            const toggleBtn = passwordInput.nextElementSibling;
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleBtn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+function showMainSystem() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('mainSystem').style.display = 'block';
+    document.body.style.alignItems = 'flex-start';
+    document.body.style.background = '#f8f9fa';
+    updateThemeColor('#ffffff');
+    
+    document.getElementById('userName').textContent = currentUser.name;
+    const badge = document.getElementById('userBadge');
+    badge.textContent = currentUser.status;
+    badge.className = currentUser.status && currentUser.status.toLowerCase() === 'admin' ? 'user-badge badge-admin' : 'user-badge badge-user';
+    
+    const userAvatar = document.getElementById('userAvatar');
+    if (currentUser.imageUrl && currentUser.imageUrl.trim() !== '') {
+        userAvatar.src = `https://drive.google.com/thumbnail?id=${currentUser.imageUrl}&sz=w200`;
+    } else {
+        userAvatar.src = 'https://img.icons8.com/color/96/user.png';
+    }
+    
+    startAutoRefresh();
+}
+
+// ==================== Auto Refresh ====================
+
+function startAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+    autoRefreshInterval = setInterval(() => {
+        loadData();
+    }, 30000);
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+}
+
+// ==================== โหลดและแสดงข้อมูล ====================
+
+async function loadData() {
+    const loadingDiv = document.getElementById('loadingData');
+    const tableDiv = document.getElementById('dataTable');
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'getRequestData'
+            })
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            allData = result.data.sort((a, b) => {
+                const idA = parseInt(a.ID.replace('ID', ''));
+                const idB = parseInt(b.ID.replace('ID', ''));
+                return idB - idA;
+            });
+            currentPage = 1;
+            displayData();
+            loadingDiv.style.display = 'none';
+            tableDiv.style.display = 'table';
+            document.getElementById('paginationContainer').style.display = 'flex';
+        }
+    } catch (error) {
+        loadingDiv.innerHTML = '<div style="color: #e74c3c;"><span class="loading-spinner"></span>เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
+    }
+}
+
+function displayData() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    
+    if (allData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #7f8c8d;">ยังไม่มีข้อมูล</td></tr>';
+        document.getElementById('paginationContainer').style.display = 'none';
+        return;
+    }
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const pageData = allData.slice(startIndex, endIndex);
+    
+    pageData.forEach(row => {
+        const tr = document.createElement('tr');
+        const statusClass = row.Status === 'Approved' ? 'status-approved' : row.Status === 'Rejected' ? 'status-rejected' : 'status-pending';
+        tr.innerHTML = `
+            <td>${row.ID || ''}</td>
+            <td>${formatDateTime(row.Timestamp)}</td>
+            <td>${row.คำขออนุญาต || ''}</td>
+            <td>${row.สายการบิน || ''}</td>
+            <td><span class="status-badge ${statusClass}">${row.Status || 'Pending'}</span></td>
+            <td><button class="btn btn-info" onclick="viewDetail('${row.ID}')">ดูรายละเอียด</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    updatePagination();
+}
+
+function updatePagination() {
+    const totalPages = Math.ceil(allData.length / itemsPerPage);
+    const startItem = (currentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, allData.length);
+    
+    document.getElementById('paginationInfo').textContent = `แสดง ${startItem}-${endItem} จาก ${allData.length} รายการ`;
+    
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+    
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '< ก่อนหน้า';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => {
+        if (currentPage > 1) {
+            currentPage--;
+            displayData();
+        }
+    };
+    pagination.appendChild(prevBtn);
+    
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+    
+    if (startPage > 1) {
+        const firstBtn = document.createElement('button');
+        firstBtn.textContent = '1';
+        firstBtn.onclick = () => {
+            currentPage = 1;
+            displayData();
+        };
+        pagination.appendChild(firstBtn);
+        
+        if (startPage > 2) {
+            const dots = document.createElement('button');
+            dots.textContent = '...';
+            dots.disabled = true;
+            pagination.appendChild(dots);
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.textContent = i;
+        if (i === currentPage) {
+            pageBtn.classList.add('active');
+        }
+        pageBtn.onclick = () => {
+            currentPage = i;
+            displayData();
+        };
+        pagination.appendChild(pageBtn);
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const dots = document.createElement('button');
+            dots.textContent = '...';
+            dots.disabled = true;
+            pagination.appendChild(dots);
+        }
+        const lastBtn = document.createElement('button');
+        lastBtn.textContent = totalPages;
+        lastBtn.onclick = () => {
+            currentPage = totalPages;
+            displayData();
+        };
+        pagination.appendChild(lastBtn);
+    }
+    
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'ถัดไป >';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            displayData();
+        }
+    };
+    pagination.appendChild(nextBtn);
+}
+
+// ==================== User Profile Modal ====================
+
+function openUserProfileModal() {
+    document.getElementById('userProfileModal').style.display = 'flex';
+    document.getElementById('navbarMenu').classList.remove('active');
+    displayUserProfile();
+}
+
+function closeUserProfileModal() {
+    document.getElementById('userProfileModal').style.display = 'none';
+}
+
+function displayUserProfile() {
+    const imageUrl = currentUser.imageUrl && currentUser.imageUrl.trim() !== '' 
+        ? `https://drive.google.com/thumbnail?id=${currentUser.imageUrl}&sz=w200` 
+        : 'https://img.icons8.com/color/96/user.png';
+    
+    let html = `<form id="userProfileForm">
+        <div style="text-align: center; margin-bottom: 20px; position: relative;">
+            <div style="position: relative; display: inline-block;">
+                <img id="profileImagePreview" src="${imageUrl}" alt="Profile" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
+                <label for="profileImageInput" style="position: absolute; bottom: 0; right: 0; background: var(--secondary-color); color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid white;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
                     </svg>
-                `;
-            } else {
-                passwordInput.type = 'password';
-                toggleBtn.innerHTML = `
+                </label>
+                <input type="file" id="profileImageInput" accept="image/*" style="display: none;" onchange="handleProfileImageChange(event)">
+            </div>
+            <p style="color: #7f8c8d; font-size: 12px; margin-top: 10px;">คลิกที่ไอคอนกล้องเพื่อเปลี่ยนรูปภาพ</p>
+        </div>
+        <div class="form-group">
+            <label>ID</label>
+            <input type="text" value="${currentUser.id}" readonly>
+        </div>
+        <div class="form-group">
+            <label for="profileUsername">ชื่อผู้ใช้</label>
+            <input type="text" id="profileUsername" value="${currentUser.username}" readonly>
+        </div>
+        <div class="form-group">
+            <label for="profilePassword">รหัสผ่าน</label>
+            <div class="password-wrapper">
+                <input type="password" id="profilePassword" value="${currentUser.password || ''}" readonly>
+                <button type="button" class="toggle-password" onclick="togglePassword('profilePassword')">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
-                `;
-            }
-        }
+                </button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="profileName">ชื่อ</label>
+            <input type="text" id="profileName" value="${currentUser.name}" readonly>
+        </div>
+        <div class="form-group">
+            <label for="profilePosition">ตำแหน่ง</label>
+            <input type="text" id="profilePosition" value="${currentUser.position}" readonly>
+        </div>
+        <div class="form-group">
+            <label>สถานะ</label>
+            <input type="text" value="${currentUser.status}" readonly>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="enableEditProfile()">
+            <span id="editProfileText">แก้ไขข้อมูล</span>
+        </button>
+    </form>`;
+    
+    document.getElementById('userProfileContent').innerHTML = html;
+}
 
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const loginBtn = document.getElementById('loginBtn');
-            const loginSpinner = document.getElementById('loginSpinner');
-            const loginBtnText = document.getElementById('loginBtnText');
-            
-            loginBtn.disabled = true;
-            loginSpinner.classList.add('active');
-            loginBtnText.textContent = 'กำลังเข้าสู่ระบบ...';
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'login',
-                        username: username,
-                        password: password
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    currentUser = result.user;
-                    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'เข้าสู่ระบบสำเร็จ!',
-                        text: `ยินดีต้อนรับคุณ ${currentUser.name}`,
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                    
-                    showMainSystem();
-                    loadData();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'เข้าสู่ระบบไม่สำเร็จ',
-                        text: result.message
-                    });
-                }
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้'
-                });
-            } finally {
-                loginBtn.disabled = false;
-                loginSpinner.classList.remove('active');
-                loginBtnText.textContent = 'เข้าสู่ระบบ';
-            }
+function enableEditProfile() {
+    const password = document.getElementById('profilePassword');
+    const name = document.getElementById('profileName');
+    const position = document.getElementById('profilePosition');
+    
+    // username ยังคง readonly (ไม่ให้แก้ไข)
+    password.removeAttribute('readonly');
+    name.removeAttribute('readonly');
+    position.removeAttribute('readonly');
+    
+    const form = document.getElementById('userProfileForm');
+    const oldBtn = form.querySelector('button[type="button"]');
+    if (oldBtn) { oldBtn.remove(); }
+    
+    const btnGroup = document.createElement('div');
+    btnGroup.className = 'btn-group';
+    btnGroup.innerHTML = `
+        <button type="button" class="btn btn-success" onclick="saveUserProfile()">
+            <span class="spinner" id="updateProfileSpinner"></span>
+            <span id="updateProfileText">บันทึกการแก้ไข</span>
+        </button>
+        <button type="button" class="btn btn-danger" onclick="displayUserProfile()">ยกเลิก</button>
+    `;
+    form.appendChild(btnGroup);
+}
+
+async function saveUserProfile() {
+    const updateProfileSpinner = document.getElementById('updateProfileSpinner');
+    const updateProfileText = document.getElementById('updateProfileText');
+    if (updateProfileSpinner) updateProfileSpinner.classList.add('active');
+    if (updateProfileText) updateProfileText.textContent = 'กำลังบันทึก...';
+    
+    const password = document.getElementById('profilePassword').value.trim();
+    const name = document.getElementById('profileName').value.trim();
+    const position = document.getElementById('profilePosition').value.trim();
+    
+    if (!password || !name || !position) {
+        Swal.fire({ 
+            icon: 'warning', 
+            title: 'กรุณากรอกข้อมูลให้ครบถ้วน', 
+            confirmButtonColor: '#27ae60' 
         });
+        if (updateProfileSpinner) updateProfileSpinner.classList.remove('active');
+        if (updateProfileText) updateProfileText.textContent = 'บันทึกการแก้ไข';
+        return;
+    }
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'updateUserProfile',
+                id: currentUser.id,
+                password: password,
+                name: name,
+                position: position
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            currentUser.password = password;
+            currentUser.name = name;
+            currentUser.position = position;
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+            document.getElementById('userName').textContent = name;
+            
+            await Swal.fire({ 
+                icon: 'success', 
+                title: 'สำเร็จ!', 
+                text: 'แก้ไขข้อมูลเรียบร้อยแล้ว', 
+                timer: 1500, 
+                showConfirmButton: false 
+            });
+            closeUserProfileModal();
+        } else {
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'เกิดข้อผิดพลาด', 
+                text: result.message, 
+                confirmButtonColor: '#27ae60' 
+            });
+        }
+    } catch (error) {
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'เกิดข้อผิดพลาด', 
+            text: 'ไม่สามารถแก้ไขข้อมูลได้', 
+            confirmButtonColor: '#27ae60' 
+        });
+    } finally {
+        if (updateProfileSpinner) updateProfileSpinner.classList.remove('active');
+        if (updateProfileText) updateProfileText.textContent = 'บันทึกการแก้ไข';
+    }
+}
 
-        function showMainSystem() {
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('mainSystem').style.display = 'block';
-            document.body.style.alignItems = 'flex-start';
-            document.body.style.background = '#f8f9fa';
-            
-            updateThemeColor('#ffffff');
-            
-            document.getElementById('userName').textContent = currentUser.name;
-            const badge = document.getElementById('userBadge');
-            badge.textContent = currentUser.status;
-            badge.className = currentUser.status && currentUser.status.toLowerCase() === 'admin' ? 'user-badge badge-admin' : 'user-badge badge-user';
-            
+async function handleProfileImageChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+        Swal.fire({ icon: 'error', title: 'ไฟล์ไม่ถูกต้อง', text: 'กรุณาเลือกไฟล์รูปภาพเท่านั้น', confirmButtonColor: '#27ae60' });
+        return;
+    }
+    
+    if (file.size > 2 * 1024 * 1024) {
+        Swal.fire({ icon: 'error', title: 'ไฟล์ใหญ่เกินไป', text: 'กรุณาเลือกไฟล์ที่มีขนาดไม่เกิน 2MB', confirmButtonColor: '#27ae60' });
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('profileImagePreview').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    
+    Swal.fire({ 
+        title: 'กำลังอัปโหลดรูปภาพ...', 
+        text: 'กรุณารอสักครู่', 
+        allowOutsideClick: false, 
+        didOpen: () => { Swal.showLoading(); } 
+    });
+    
+    try {
+        const base64 = await fileToBase64(file);
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'uploadProfileImage',
+                userId: currentUser.id,
+                fileName: file.name,
+                mimeType: file.type,
+                base64Data: base64.split(',')[1]
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            currentUser.imageUrl = result.fileId;
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
             const userAvatar = document.getElementById('userAvatar');
-            if (currentUser.imageUrl && currentUser.imageUrl.trim() !== '') {
-                userAvatar.src = `https://drive.google.com/thumbnail?id=${currentUser.imageUrl}&sz=w200`;
-            } else {
-                userAvatar.src = 'https://img.icons8.com/color/96/user.png';
-            }
-            
-            startAutoRefresh();
-        }
-
-        function startAutoRefresh() {
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-            }
-            
-            autoRefreshInterval = setInterval(() => {
-                loadData();
-            }, 30000);
-        }
-
-        function stopAutoRefresh() {
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-                autoRefreshInterval = null;
-            }
-        }
-
-        async function loadData() {
-            const loadingDiv = document.getElementById('loadingData');
-            const tableDiv = document.getElementById('dataTable');
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'getRequestData'
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    allData = result.data.sort((a, b) => {
-                        const idA = parseInt(a.ID.replace('ID', ''));
-                        const idB = parseInt(b.ID.replace('ID', ''));
-                        return idB - idA;
-                    });
-                    currentPage = 1;
-                    displayData();
-                    loadingDiv.style.display = 'none';
-                    tableDiv.style.display = 'table';
-                    document.getElementById('paginationContainer').style.display = 'flex';
-                }
-            } catch (error) {
-                loadingDiv.innerHTML = '<div style="color: #e74c3c;"><span class="loading-spinner"></span>เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
-            }
-        }
-
-        function displayData() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            
-            if (allData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #7f8c8d;">ยังไม่มีข้อมูล</td></tr>';
-                document.getElementById('paginationContainer').style.display = 'none';
-                return;
-            }
-            
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const pageData = allData.slice(startIndex, endIndex);
-            
-            pageData.forEach(row => {
-                const tr = document.createElement('tr');
-                const statusClass = row.Status === 'Approved' ? 'status-approved' : 
-                                   row.Status === 'Rejected' ? 'status-rejected' : 'status-pending';
-                tr.innerHTML = `
-                    <td>${row.ID || ''}</td>
-                    <td>${formatDateTime(row.Timestamp)}</td>
-                    <td>${row.คำขออนุญาต || ''}</td>
-                    <td>${row.สายการบิน || ''}</td>
-                    <td><span class="status-badge ${statusClass}">${row.Status || 'Pending'}</span></td>
-                    <td><button class="btn btn-info" onclick="viewDetail('${row.ID}')">ดูรายละเอียด</button></td>
-                `;
-                tbody.appendChild(tr);
+            userAvatar.src = `https://drive.google.com/thumbnail?id=${result.fileId}&sz=w200`;
+            Swal.fire({ 
+                icon: 'success', 
+                title: 'สำเร็จ!', 
+                text: 'อัปโหลดรูปภาพเรียบร้อยแล้ว', 
+                timer: 1500, 
+                showConfirmButton: false 
             });
-            
-            updatePagination();
-        }
-
-        function updatePagination() {
-            const totalPages = Math.ceil(allData.length / itemsPerPage);
-            const startItem = (currentPage - 1) * itemsPerPage + 1;
-            const endItem = Math.min(currentPage * itemsPerPage, allData.length);
-            
-            document.getElementById('paginationInfo').textContent = 
-                `แสดง ${startItem}-${endItem} จาก ${allData.length} รายการ`;
-            
-            const pagination = document.getElementById('pagination');
-            pagination.innerHTML = '';
-            
-            const prevBtn = document.createElement('button');
-            prevBtn.textContent = '< ก่อนหน้า';
-            prevBtn.disabled = currentPage === 1;
-            prevBtn.onclick = () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    displayData();
-                }
-            };
-            pagination.appendChild(prevBtn);
-            
-            const startPage = Math.max(1, currentPage - 2);
-            const endPage = Math.min(totalPages, currentPage + 2);
-            
-            if (startPage > 1) {
-                const firstBtn = document.createElement('button');
-                firstBtn.textContent = '1';
-                firstBtn.onclick = () => {
-                    currentPage = 1;
-                    displayData();
-                };
-                pagination.appendChild(firstBtn);
-                
-                if (startPage > 2) {
-                    const dots = document.createElement('button');
-                    dots.textContent = '...';
-                    dots.disabled = true;
-                    pagination.appendChild(dots);
-                }
-            }
-            
-            for (let i = startPage; i <= endPage; i++) {
-                const pageBtn = document.createElement('button');
-                pageBtn.textContent = i;
-                if (i === currentPage) {
-                    pageBtn.classList.add('active');
-                }
-                pageBtn.onclick = () => {
-                    currentPage = i;
-                    displayData();
-                };
-                pagination.appendChild(pageBtn);
-            }
-            
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    const dots = document.createElement('button');
-                    dots.textContent = '...';
-                    dots.disabled = true;
-                    pagination.appendChild(dots);
-                }
-                
-                const lastBtn = document.createElement('button');
-                lastBtn.textContent = totalPages;
-                lastBtn.onclick = () => {
-                    currentPage = totalPages;
-                    displayData();
-                };
-                pagination.appendChild(lastBtn);
-            }
-            
-            const nextBtn = document.createElement('button');
-            nextBtn.textContent = 'ถัดไป >';
-            nextBtn.disabled = currentPage === totalPages;
-            nextBtn.onclick = () => {
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    displayData();
-                }
-            };
-            pagination.appendChild(nextBtn);
-        }
-
-        async function viewDetail(id) {
-            currentRequestId = id;
-            document.getElementById('detailModal').style.display = 'flex';
-            const detailContent = document.getElementById('detailContent');
-            detailContent.innerHTML = '<div class="loading"><span class="loading-spinner"></span>กำลังโหลดข้อมูล...</div>';
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'getRequestDetail',
-                        id: id
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    currentRequestData = result.data;
-                    displayDetailForm(result.data);
-                } else {
-                    detailContent.innerHTML = '<div style="text-align: center; color: #e74c3c;"><span class="loading-spinner"></span>ไม่พบข้อมูล</div>';
-                }
-            } catch (error) {
-                detailContent.innerHTML = '<div style="text-align: center; color: #e74c3c;"><span class="loading-spinner"></span>เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
-            }
-        }
-
-        function displayDetailForm(data) {
-            const isAdmin = currentUser.status && currentUser.status.toLowerCase() === 'admin';
-            const isApproved = data.Status === 'Approved';
-            const readonly = (!isAdmin || isApproved) ? 'readonly' : '';
-            const disabled = (!isAdmin || isApproved) ? 'disabled' : '';
-            
-            const statusClass = data.Status === 'Approved' ? 'status-approved' : 
-                               data.Status === 'Rejected' ? 'status-rejected' : 'status-pending';
-            
-            let html = `
-                <form id="detailForm">
-                    <div class="form-group">
-                        <label>ID</label>
-                        <input type="text" value="${data.ID}" readonly>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>วันที่บันทึก</label>
-                        <input type="text" value="${formatDateTime(data.Timestamp)}" readonly>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>สถานะ</label>
-                        <div><span class="status-badge ${statusClass}">${data.Status}</span></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>คำขออนุญาต</label>
-                        <select id="detailRequestType" ${disabled}>
-                            <option value="เติมน้ำมันขณะที่ไม่มีผู้โดยสารอยู่ในอากาศยาน" ${data.คำขออนุญาต === 'เติมน้ำมันขณะที่ไม่มีผู้โดยสารอยู่ในอากาศยาน' ? 'selected' : ''}>1) เติมน้ำมันขณะที่ไม่มีผู้โดยสารอยู่ในอากาศยาน</option>
-                            <option value="เติมน้ำมันขณะที่มีผู้โดยสารอยู่ในอากาศยาน" ${data.คำขออนุญาต === 'เติมน้ำมันขณะที่มีผู้โดยสารอยู่ในอากาศยาน' ? 'selected' : ''}>2) เติมน้ำมันขณะที่มีผู้โดยสารอยู่ในอากาศยาน</option>
-                            <option value="เติมน้ำมันขณะที่ผู้โดยสารขึ้นลงอากาศยาน" ${data.คำขออนุญาต === 'เติมน้ำมันขณะที่ผู้โดยสารขึ้นลงอากาศยาน' ? 'selected' : ''}>3) เติมน้ำมันขณะที่ผู้โดยสารขึ้นลงอากาศยาน</option>
-                            <option value="ทดสอบเครื่องยนต์" ${data.คำขออนุญาต === 'ทดสอบเครื่องยนต์' ? 'selected' : ''}>4) ทดสอบเครื่องยนต์</option>
-                            <option value="ติดเครื่องยนต์หนึ่งเครื่องยนต์" ${data.คำขออนุญาต === 'ติดเครื่องยนต์หนึ่งเครื่องยนต์' ? 'selected' : ''}>5) ติดเครื่องยนต์หนึ่งเครื่องยนต์</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>สายการบิน/ผู้ประกอบการ</label>
-                        <input type="text" id="detailAirline" value="${data.สายการบินหรือผู้ประกอบการ || ''}" ${readonly}>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>แบบอากาศยาน</label>
-                            <input type="text" id="detailAircraftType" value="${data.แบบอากาศยาน || ''}" ${readonly}>
-                        </div>
-                        <div class="form-group">
-                            <label>เที่ยวบิน</label>
-                            <input type="text" id="detailFlightNumber" value="${data.เที่ยวบิน || ''}" ${readonly}>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>วันที่ต้องการเติมน้ำมัน</label>
-                        <input type="text" id="detailRefuelDate" value="${formatDateOnly(data.วันที่ต้องการเติมน้ำมัน)}" ${readonly} placeholder="dd-mm-yyyy">
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>เริ่มเวลา</label>
-                            <input type="text" id="detailStartTime" value="${formatTimeOnly(data.เริ่มเวลา)}" ${readonly} placeholder="HH:mm">
-                        </div>
-                        <div class="form-group">
-                            <label>ถึงเวลา</label>
-                            <input type="text" id="detailEndTime" value="${formatTimeOnly(data.ถึงเวลา)}" ${readonly} placeholder="HH:mm">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>เหตุจำเป็นที่ต้องดำเนินการ</label>
-                        <textarea id="detailReason" ${readonly}>${data.เหตุจำเป็นที่ต้องดำเนินการ || ''}</textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>มาตรการความปลอดภัย</label>
-                        <textarea id="detailSafetyMeasures" ${readonly}>${data.ระบุมาตรการความปลอดภัยพอสังเขป || ''}</textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>บุคคลที่สามารถติดต่อได้</label>
-                        <input type="text" id="detailContactPerson" value="${data.บุคคลที่สามารถติดต่อได้ || ''}" ${readonly}>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>ตำแหน่ง</label>
-                            <input type="text" id="detailContactPosition" value="${data.ตำแหน่ง || ''}" ${readonly}>
-                        </div>
-                        <div class="form-group">
-                            <label>สังกัด</label>
-                            <input type="text" id="detailDepartment" value="${data.สังกัด || ''}" ${readonly}>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>เบอร์โทรศัพท์</label>
-                        <input type="tel" id="detailPhoneNumber" value="${data.เบอร์โทรศัพท์ที่สามารถติดต่อได้ || ''}" ${readonly}>
-                    </div>
-            `;
-            
-            if (isAdmin) {
-                html += `
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>ผู้อนุมัติ</label>
-                            <input type="text" value="${data.ผู้อนุมัติ || currentUser.name}" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>ตำแหน่งผู้อนุมัติ</label>
-                            <input type="text" value="${data.ตำแหน่งผู้อนุมัติ || currentUser.position}" readonly>
-                        </div>
-                    </div>
-                `;
-            } else if (data.ผู้อนุมัติ) {
-                html += `
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>ผู้อนุมัติ</label>
-                            <input type="text" value="${data.ผู้อนุมัติ}" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>ตำแหน่งผู้อนุมัติ</label>
-                            <input type="text" value="${data.ตำแหน่งผู้อนุมัติ}" readonly>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            const noteReadonly = isAdmin ? '' : 'readonly';
-            html += `
-                <div class="form-group">
-                    <label>หมายเหตุ</label>
-                    <textarea id="detailNote" ${noteReadonly} placeholder="${isAdmin ? 'กรอกหมายเหตุ (ถ้ามี)' : 'ไม่มีหมายเหตุ'}">${data.หมายเหตุ || ''}</textarea>
-                </div>
-            `;
-            
-            if (isAdmin && data.Status === 'Pending') {
-                html += `
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-success" onclick="handleApprove()">
-                            <span class="spinner" id="approveSpinner"></span>
-                            <span id="approveText">อนุมัติ</span>
-                        </button>
-                        <button type="button" class="btn btn-danger" onclick="handleReject()">
-                            <span class="spinner" id="rejectSpinner"></span>
-                            <span id="rejectText">ปฏิเสธ</span>
-                        </button>
-                    </div>
-                `;
-            } else if (isAdmin && !isApproved) {
-                html += `
-                    <button type="submit" class="btn btn-primary">
-                        <span class="spinner" id="updateSpinner"></span>
-                        <span id="updateText">บันทึกการแก้ไข</span>
-                    </button>
-                `;
-            }
-            
-            html += `</form>`;
-            
-            document.getElementById('detailContent').innerHTML = html;
-            
-            if (isAdmin && !isApproved) {
-                const detailRefuelDateElem = document.getElementById('detailRefuelDate');
-                if (detailRefuelDateElem) {
-                    flatpickr("#detailRefuelDate", {
-                        dateFormat: "d/m/Y",
-                        allowInput: false,
-                        locale: "th"
-                    });
-                }
-                
-                const detailStartTimeElem = document.getElementById('detailStartTime');
-                if (detailStartTimeElem) {
-                    flatpickr("#detailStartTime", {
-                        enableTime: true,
-                        noCalendar: true,
-                        dateFormat: "H:i",
-                        time_24hr: true,
-                        allowInput: false
-                    });
-                }
-                
-                const detailEndTimeElem = document.getElementById('detailEndTime');
-                if (detailEndTimeElem) {
-                    flatpickr("#detailEndTime", {
-                        enableTime: true,
-                        noCalendar: true,
-                        dateFormat: "H:i",
-                        time_24hr: true,
-                        allowInput: false
-                    });
-                }
-            }
-            
-            if (isAdmin && !isApproved) {
-                document.getElementById('detailForm').addEventListener('submit', handleUpdate);
-            }
-        }
-
-        async function handleApprove() {
-            const result = await Swal.fire({
-                title: 'ยืนยันการอนุมัติ?',
-                text: 'คุณต้องการอนุมัติคำขอนี้หรือไม่?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#27ae60',
-                cancelButtonColor: '#95a5a6',
-                confirmButtonText: 'อนุมัติ',
-                cancelButtonText: 'ยกเลิก'
-            });
-            
-            if (result.isConfirmed) {
-                await updateStatus('Approved', '');
-            }
-        }
-
-        async function handleReject() {
-            const note = document.getElementById('detailNote').value.trim();
-            
-            if (!note) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'กรุณากรอกหมายเหตุ',
-                    text: 'จำเป็นต้องระบุเหตุผลในการปฏิเสธในช่องหมายเหตุ',
-                    confirmButtonColor: '#27ae60'
-                });
-                return;
-            }
-            
-            const result = await Swal.fire({
-                title: 'ยืนยันการปฏิเสธ?',
-                text: 'คุณต้องการปฏิเสธคำขอนี้หรือไม่?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#e74c3c',
-                cancelButtonColor: '#95a5a6',
-                confirmButtonText: 'ยืนยันปฏิเสธ',
-                cancelButtonText: 'ยกเลิก'
-            });
-            
-            if (result.isConfirmed) {
-                await updateStatus('Rejected', note);
-            }
-        }
-
-        async function updateStatus(status, note) {
-            const spinner = document.getElementById(status === 'Approved' ? 'approveSpinner' : 'rejectSpinner');
-            const text = document.getElementById(status === 'Approved' ? 'approveText' : 'rejectText');
-            
-            if (spinner) spinner.classList.add('active');
-            if (text) text.textContent = 'กำลังดำเนินการ...';
-            
-            if (status === 'Rejected' && !note) {
-                note = document.getElementById('detailNote')?.value.trim() || '';
-            }
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'updateStatus',
-                        id: currentRequestId,
-                        status: status,
-                        approver: {
-                            name: currentUser.name,
-                            position: currentUser.position
-                        },
-                        note: note
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'สำเร็จ!',
-                        text: status === 'Approved' ? 'อนุมัติคำขอเรียบร้อยแล้ว' : 'ปฏิเสธคำขอเรียบร้อยแล้ว',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                    closeDetailModal();
-                    loadData();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด',
-                        text: result.message,
-                        confirmButtonColor: '#27ae60'
-                    });
-                }
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถอัปเดตสถานะได้',
-                    confirmButtonColor: '#27ae60'
-                });
-            } finally {
-                if (spinner) spinner.classList.remove('active');
-                if (text) text.textContent = status === 'Approved' ? 'อนุมัติ' : 'ปฏิเสธ';
-            }
-        }
-
-        async function handleUpdate(e) {
-            e.preventDefault();
-            
-            const updateSpinner = document.getElementById('updateSpinner');
-            const updateText = document.getElementById('updateText');
-            
-            if (updateSpinner) updateSpinner.classList.add('active');
-            if (updateText) updateText.textContent = 'กำลังบันทึก...';
-            
-            const refuelDate = document.getElementById('detailRefuelDate').value.trim();
-            const startTimeElem = document.getElementById('detailStartTime');
-            const endTimeElem = document.getElementById('detailEndTime');
-            const startTime = startTimeElem ? startTimeElem.value.trim() : '';
-            const endTime = endTimeElem ? endTimeElem.value.trim() : '';
-            
-            if (!refuelDate || !startTime || !endTime) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
-                    text: 'โปรดเลือกวันที่และเวลาให้ครบถ้วน',
-                    confirmButtonColor: '#27ae60'
-                });
-                if (updateSpinner) updateSpinner.classList.remove('active');
-                if (updateText) updateText.textContent = 'บันทึกการแก้ไข';
-                return;
-            }
-            
-            const updateData = {
-                requestType: document.getElementById('detailRequestType').value,
-                airline: document.getElementById('detailAirline').value,
-                aircraftType: document.getElementById('detailAircraftType').value,
-                flightNumber: document.getElementById('detailFlightNumber').value,
-                refuelDate: refuelDate,
-                startTime: startTime,
-                endTime: endTime,
-                reason: document.getElementById('detailReason').value,
-                safetyMeasures: document.getElementById('detailSafetyMeasures').value,
-                contactPerson: document.getElementById('detailContactPerson').value,
-                contactPosition: document.getElementById('detailContactPosition').value,
-                department: document.getElementById('detailDepartment').value,
-                phoneNumber: document.getElementById('detailPhoneNumber').value
-            };
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'updateRequest',
-                        id: currentRequestId,
-                        data: updateData
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'สำเร็จ!',
-                        text: 'แก้ไขข้อมูลเรียบร้อยแล้ว',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                    closeDetailModal();
-                    loadData();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด',
-                        text: result.message,
-                        confirmButtonColor: '#27ae60'
-                    });
-                }
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถแก้ไขข้อมูลได้',
-                    confirmButtonColor: '#27ae60'
-                });
-            } finally {
-                if (updateSpinner) updateSpinner.classList.remove('active');
-                if (updateText) updateText.textContent = 'บันทึกการแก้ไข';
-            }
-        }
-
-        function closeDetailModal() {
-            document.getElementById('detailModal').style.display = 'none';
-            currentRequestId = null;
-            currentRequestData = null;
-        }
-
-        function openUserProfileModal() {
-            document.getElementById('userProfileModal').style.display = 'flex';
-            document.getElementById('navbarMenu').classList.remove('active');
-            displayUserProfile();
-        }
-
-        function closeUserProfileModal() {
-            document.getElementById('userProfileModal').style.display = 'none';
-        }
-
-        function displayUserProfile() {
-            const imageUrl = currentUser.imageUrl && currentUser.imageUrl.trim() !== '' 
-                ? `https://drive.google.com/thumbnail?id=${currentUser.imageUrl}&sz=w200`
+        } else {
+            const oldImageUrl = currentUser.imageUrl && currentUser.imageUrl.trim() !== '' 
+                ? `https://drive.google.com/thumbnail?id=${currentUser.imageUrl}&sz=w200` 
                 : 'https://img.icons8.com/color/96/user.png';
-            
-            let html = `
-                <form id="userProfileForm">
-                    <div style="text-align: center; margin-bottom: 20px; position: relative;">
-                        <div style="position: relative; display: inline-block;">
-                            <img id="profileImagePreview" src="${imageUrl}" alt="Profile" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--secondary-color);">
-                            <label for="profileImageInput" style="position: absolute; bottom: 0; right: 0; background: var(--secondary-color); color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid white;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                    <circle cx="12" cy="13" r="4"></circle>
-                                </svg>
-                            </label>
-                            <input type="file" id="profileImageInput" accept="image/*" style="display: none;" onchange="handleProfileImageChange(event)">
-                        </div>
-                        <p style="color: #7f8c8d; font-size: 12px; margin-top: 10px;">คลิกที่ไอคอนกล้องเพื่อเปลี่ยนรูปภาพ</p>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>ID</label>
-                        <input type="text" value="${currentUser.id}" readonly>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="profileUsername">ชื่อผู้ใช้</label>
-                        <input type="text" id="profileUsername" value="${currentUser.username}" readonly>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="profilePassword">รหัสผ่าน</label>
-                        <div class="password-wrapper">
-                            <input type="password" id="profilePassword" value="${currentUser.password || '********'}" readonly>
-                            <button type="button" class="toggle-password" onclick="togglePassword('profilePassword')">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="profileName">ชื่อ</label>
-                        <input type="text" id="profileName" value="${currentUser.name}" readonly>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="profilePosition">ตำแหน่ง</label>
-                        <input type="text" id="profilePosition" value="${currentUser.position}" readonly>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>สถานะ</label>
-                        <input type="text" value="${currentUser.status}" readonly>
-                    </div>
-                    
-                    <button type="button" class="btn btn-primary" onclick="enableEditProfile()">
-                        <span id="editProfileText">แก้ไขข้อมูล</span>
-                    </button>
-                </form>
-            `;
-            
-            document.getElementById('userProfileContent').innerHTML = html;
-        }
-
-        async function handleProfileImageChange(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            if (!file.type.startsWith('image/')) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'ไฟล์ไม่ถูกต้อง',
-                    text: 'กรุณาเลือกไฟล์รูปภาพเท่านั้น',
-                    confirmButtonColor: '#27ae60'
-                });
-                return;
-            }
-            
-            if (file.size > 2 * 1024 * 1024) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'ไฟล์ใหญ่เกินไป',
-                    text: 'กรุณาเลือกไฟล์ที่มีขนาดไม่เกิน 2MB',
-                    confirmButtonColor: '#27ae60'
-                });
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('profileImagePreview').src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-            
-            Swal.fire({
-                title: 'กำลังอัปโหลดรูปภาพ...',
-                text: 'กรุณารอสักครู่',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            try {
-                const base64 = await fileToBase64(file);
-                
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'uploadProfileImage',
-                        userId: currentUser.id,
-                        fileName: file.name,
-                        mimeType: file.type,
-                        base64Data: base64.split(',')[1]
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    currentUser.imageUrl = result.fileId;
-                    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    
-                    const userAvatar = document.getElementById('userAvatar');
-                    userAvatar.src = `https://drive.google.com/thumbnail?id=${result.fileId}&sz=w200`;
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'สำเร็จ!',
-                        text: 'อัปโหลดรูปภาพเรียบร้อยแล้ว',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                } else {
-                    const oldImageUrl = currentUser.imageUrl && currentUser.imageUrl.trim() !== '' 
-                        ? `https://drive.google.com/thumbnail?id=${currentUser.imageUrl}&sz=w200`
-                        : 'https://img.icons8.com/color/96/user.png';
-                    document.getElementById('profileImagePreview').src = oldImageUrl;
-                    
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด',
-                        text: result.message,
-                        confirmButtonColor: '#27ae60'
-                    });
-                }
-            } catch (error) {
-                const oldImageUrl = currentUser.imageUrl && currentUser.imageUrl.trim() !== '' 
-                    ? `https://drive.google.com/thumbnail?id=${currentUser.imageUrl}&sz=w200`
-                    : 'https://img.icons8.com/color/96/user.png';
-                document.getElementById('profileImagePreview').src = oldImageUrl;
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถอัปโหลดรูปภาพได้',
-                    confirmButtonColor: '#27ae60'
-                });
-            }
-            
-            event.target.value = '';
-        }
-
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-                reader.readAsDataURL(file);
+            document.getElementById('profileImagePreview').src = oldImageUrl;
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'เกิดข้อผิดพลาด', 
+                text: result.message, 
+                confirmButtonColor: '#27ae60' 
             });
         }
-
-        function enableEditProfile() {
-            const form = document.getElementById('userProfileForm');
-            const password = document.getElementById('profilePassword');
-            const name = document.getElementById('profileName');
-            const position = document.getElementById('profilePosition');
-            
-            password.removeAttribute('readonly');
-            name.removeAttribute('readonly');
-            position.removeAttribute('readonly');
-            
-            password.value = currentUser.password || '';
-            
-            // ลบปุ่มเดิม
-            const oldBtn = form.querySelector('button[type="button"]');
-            if (oldBtn) {
-                oldBtn.remove();
-            }
-            
-            // สร้างปุ่มใหม่ 2 ปุ่ม (บันทึก และ ยกเลิก)
-            const btnGroup = document.createElement('div');
-            btnGroup.className = 'btn-group';
-            btnGroup.innerHTML = `
-                <button type="button" class="btn btn-success" onclick="saveUserProfile()">
-                    <span class="spinner" id="updateProfileSpinner"></span>
-                    <span id="updateProfileText">บันทึกการแก้ไข</span>
-                </button>
-                <button type="button" class="btn btn-danger" onclick="closeUserProfileModal()">
-                    ยกเลิก
-                </button>
-            `;
-            form.appendChild(btnGroup);
-        }
-
-        async function saveUserProfile() {
-            const updateProfileSpinner = document.getElementById('updateProfileSpinner');
-            const updateProfileText = document.getElementById('updateProfileText');
-            
-            if (updateProfileSpinner) updateProfileSpinner.classList.add('active');
-            if (updateProfileText) updateProfileText.textContent = 'กำลังบันทึก...';
-            
-            const password = document.getElementById('profilePassword').value.trim();
-            const name = document.getElementById('profileName').value.trim();
-            const position = document.getElementById('profilePosition').value.trim();
-            
-            if (!password || !name || !position) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
-                    confirmButtonColor: '#27ae60'
-                });
-                if (updateProfileSpinner) updateProfileSpinner.classList.remove('active');
-                if (updateProfileText) updateProfileText.textContent = 'บันทึกการแก้ไข';
-                return;
-            }
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'updateUserProfile',
-                        id: currentUser.id,
-                        password: password,
-                        name: name,
-                        position: position
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    currentUser.password = password;
-                    currentUser.name = name;
-                    currentUser.position = position;
-                    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    
-                    document.getElementById('userName').textContent = name;
-                    
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'สำเร็จ!',
-                        text: 'แก้ไขข้อมูลเรียบร้อยแล้ว',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                    closeUserProfileModal();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด',
-                        text: result.message,
-                        confirmButtonColor: '#27ae60'
-                    });
-                }
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถแก้ไขข้อมูลได้',
-                    confirmButtonColor: '#27ae60'
-                });
-            } finally {
-                if (updateProfileSpinner) updateProfileSpinner.classList.remove('active');
-                if (updateProfileText) updateProfileText.textContent = 'บันทึกการแก้ไข';
-            }
-        }
-
-        function openAddModal() {
-            document.getElementById('addModal').style.display = 'flex';
-            document.getElementById('navbarMenu').classList.remove('active');
-        }
-
-        function closeAddModal() {
-            document.getElementById('addModal').style.display = 'none';
-            document.getElementById('addForm').reset();
-        }
-
-        document.getElementById('addForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const addBtn = document.getElementById('addBtn');
-            const addSpinner = document.getElementById('addSpinner');
-            const addBtnText = document.getElementById('addBtnText');
-            
-            const refuelDate = document.getElementById('refuelDate').value.trim();
-            const startTime = document.getElementById('startTime').value.trim();
-            const endTime = document.getElementById('endTime').value.trim();
-            
-            if (!refuelDate || !startTime || !endTime) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
-                    text: 'โปรดเลือกวันที่และเวลาให้ครบถ้วน',
-                    confirmButtonColor: '#27ae60'
-                });
-                return;
-            }
-            
-            const newData = {
-                requestType: document.getElementById('requestType').value,
-                airline: document.getElementById('airline').value,
-                aircraftType: document.getElementById('aircraftType').value,
-                flightNumber: document.getElementById('flightNumber').value,
-                refuelDate: refuelDate,
-                startTime: startTime,
-                endTime: endTime,
-                reason: document.getElementById('reason').value,
-                safetyMeasures: document.getElementById('safetyMeasures').value,
-                contactPerson: document.getElementById('contactPerson').value,
-                contactPosition: document.getElementById('contactPosition').value,
-                department: document.getElementById('department').value,
-                phoneNumber: document.getElementById('phoneNumber').value
-            };
-            
-            addBtn.disabled = true;
-            addSpinner.classList.add('active');
-            addBtnText.textContent = 'กำลังบันทึก...';
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'addRequest',
-                        data: newData
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'สำเร็จ!',
-                        html: `บันทึกคำขออนุญาตเรียบร้อยแล้ว<br><strong>เลขที่: ${result.id}</strong>`,
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                    closeAddModal();
-                    loadData();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด',
-                        text: result.message,
-                        confirmButtonColor: '#27ae60'
-                    });
-                }
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถบันทึกข้อมูลได้',
-                    confirmButtonColor: '#27ae60'
-                });
-            } finally {
-                addBtn.disabled = false;
-                addSpinner.classList.remove('active');
-                addBtnText.textContent = 'บันทึกข้อมูล';
-            }
+    } catch (error) {
+        const oldImageUrl = currentUser.imageUrl && currentUser.imageUrl.trim() !== '' 
+            ? `https://drive.google.com/thumbnail?id=${currentUser.imageUrl}&sz=w200` 
+            : 'https://img.icons8.com/color/96/user.png';
+        document.getElementById('profileImagePreview').src = oldImageUrl;
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'เกิดข้อผิดพลาด', 
+            text: 'ไม่สามารถอัปโหลดรูปภาพได้', 
+            confirmButtonColor: '#27ae60' 
         });
+    }
+    event.target.value = '';
+}
 
-        async function logout() {
-            const result = await Swal.fire({
-                title: 'ออกจากระบบ?',
-                text: 'คุณต้องการออกจากระบบหรือไม่?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#e74c3c',
-                cancelButtonColor: '#95a5a6',
-                confirmButtonText: 'ออกจากระบบ',
-                cancelButtonText: 'ยกเลิก'
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+    });
+}
+
+// ==================== Add Request Modal ====================
+
+function openAddModal() {
+    document.getElementById('addModal').style.display = 'flex';
+    document.getElementById('navbarMenu').classList.remove('active');
+}
+
+function closeAddModal() {
+    document.getElementById('addModal').style.display = 'none';
+    document.getElementById('addForm').reset();
+}
+
+document.getElementById('addForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const addBtn = document.getElementById('addBtn');
+    const addSpinner = document.getElementById('addSpinner');
+    const addBtnText = document.getElementById('addBtnText');
+    
+    const refuelDate = document.getElementById('refuelDate').value.trim();
+    const startTime = document.getElementById('startTime').value.trim();
+    const endTime = document.getElementById('endTime').value.trim();
+    
+    if (!refuelDate || !startTime || !endTime) {
+        Swal.fire({ 
+            icon: 'warning', 
+            title: 'กรุณากรอกข้อมูลให้ครบถ้วน', 
+            text: 'โปรดเลือกวันที่และเวลาให้ครบถ้วน', 
+            confirmButtonColor: '#27ae60' 
+        });
+        return;
+    }
+    
+    const newData = {
+        requestType: document.getElementById('requestType').value,
+        airline: document.getElementById('airline').value,
+        aircraftType: document.getElementById('aircraftType').value,
+        flightNumber: document.getElementById('flightNumber').value,
+        refuelDate: refuelDate,
+        startTime: startTime,
+        endTime: endTime,
+        reason: document.getElementById('reason').value,
+        safetyMeasures: document.getElementById('safetyMeasures').value,
+        contactPerson: document.getElementById('contactPerson').value,
+        contactPosition: document.getElementById('contactPosition').value,
+        department: document.getElementById('department').value,
+        phoneNumber: document.getElementById('phoneNumber').value
+    };
+    
+    addBtn.disabled = true;
+    addSpinner.classList.add('active');
+    addBtnText.textContent = 'กำลังบันทึก...';
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'addRequest',
+                data: newData
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            await Swal.fire({ 
+                icon: 'success', 
+                title: 'สำเร็จ!', 
+                html: `บันทึกคำขออนุญาตเรียบร้อยแล้ว<br><strong>เลขที่: ${result.id}</strong>`, 
+                timer: 2000, 
+                showConfirmButton: false 
             });
-            
-            if (result.isConfirmed) {
-                stopAutoRefresh();
-                
-                currentUser = null;
-                sessionStorage.removeItem('currentUser');
-                
-                document.getElementById('mainSystem').style.display = 'none';
-                document.getElementById('loginPage').style.display = 'block';
-                document.body.style.alignItems = 'center';
-                document.body.style.background = 'var(--white)';
-                document.getElementById('loginForm').reset();
-                document.getElementById('navbarMenu').classList.remove('active');
-                
-                updateThemeColor('#ffffff');
-                
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'ออกจากระบบแล้ว',
-                    timer: 1000,
-                    showConfirmButton: false
-                });
-            }
+            closeAddModal();
+            loadData();
+        } else {
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'เกิดข้อผิดพลาด', 
+                text: result.message, 
+                confirmButtonColor: '#27ae60' 
+            });
         }
+    } catch (error) {
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'เกิดข้อผิดพลาด', 
+            text: 'ไม่สามารถบันทึกข้อมูลได้', 
+            confirmButtonColor: '#27ae60' 
+        });
+    } finally {
+        addBtn.disabled = false;
+        addSpinner.classList.remove('active');
+        addBtnText.textContent = 'บันทึกข้อมูล';
+    }
+});
 
-        window.onclick = function(event) {
-            const addModal = document.getElementById('addModal');
-            const detailModal = document.getElementById('detailModal');
-            const userProfileModal = document.getElementById('userProfileModal');
-            if (event.target === addModal) {
-                closeAddModal();
-            }
-            if (event.target === detailModal) {
-                closeDetailModal();
-            }
-            if (event.target === userProfileModal) {
-                closeUserProfileModal();
-            }
+// ==================== Detail Modal ====================
+
+async function viewDetail(id) {
+    currentRequestId = id;
+    document.getElementById('detailModal').style.display = 'flex';
+    const detailContent = document.getElementById('detailContent');
+    detailContent.innerHTML = '<div class="loading"><span class="loading-spinner"></span>กำลังโหลดข้อมูล...</div>';
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'getRequestDetail',
+                id: id
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            currentRequestData = result.data;
+            displayDetailForm(result.data);
+        } else {
+            detailContent.innerHTML = '<div style="text-align: center; color: #e74c3c;"><span class="loading-spinner"></span>ไม่พบข้อมูล</div>';
         }
-    </script>
+    } catch (error) {
+        detailContent.innerHTML = '<div style="text-align: center; color: #e74c3c;"><span class="loading-spinner"></span>เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
+    }
+}
+
+function displayDetailForm(data) {
+    const isAdmin = currentUser.status && currentUser.status.toLowerCase() === 'admin';
+    const isApproved = data.Status === 'Approved';
+    const readonly = (!isAdmin || isApproved) ? 'readonly' : '';
+    const disabled = (!isAdmin || isApproved) ? 'disabled' : '';
+    
+    const statusClass = data.Status === 'Approved' ? 'status-approved' : 
+                       data.Status === 'Rejected' ? 'status-rejected' : 'status-pending';
+    
+    let html = `<form id="detailForm">
+        <div class="form-group">
+            <label>ID</label>
+            <input type="text" value="${data.ID}" readonly>
+        </div>
+        
+        <div class="form-group">
+            <label>วันที่บันทึก</label>
+            <input type="text" value="${formatDateTime(data.Timestamp)}" readonly>
+        </div>
+        
+        <div class="form-group">
+            <label>สถานะ</label>
+            <div><span class="status-badge ${statusClass}">${data.Status}</span></div>
+        </div>
+        
+        <div class="form-group">
+            <label>คำขออนุญาต</label>
+            <select id="detailRequestType" ${disabled}>
+                <option value="เติมน้ำมันขณะที่ไม่มีผู้โดยสารอยู่ในอากาศยาน" ${data.คำขออนุญาต === 'เติมน้ำมันขณะที่ไม่มีผู้โดยสารอยู่ในอากาศยาน' ? 'selected' : ''}>1) เติมน้ำมันขณะที่ไม่มีผู้โดยสารอยู่ในอากาศยาน</option>
+                <option value="เติมน้ำมันขณะที่มีผู้โดยสารอยู่ในอากาศยาน" ${data.คำขออนุญาต === 'เติมน้ำมันขณะที่มีผู้โดยสารอยู่ในอากาศยาน' ? 'selected' : ''}>2) เติมน้ำมันขณะที่มีผู้โดยสารอยู่ในอากาศยาน</option>
+                <option value="เติมน้ำมันขณะที่ผู้โดยสารขึ้นลงอากาศยาน" ${data.คำขออนุญาต === 'เติมน้ำมันขณะที่ผู้โดยสารขึ้นลงอากาศยาน' ? 'selected' : ''}>3) เติมน้ำมันขณะที่ผู้โดยสารขึ้นลงอากาศยาน</option>
+                <option value="ทดสอบเครื่องยนต์" ${data.คำขออนุญาต === 'ทดสอบเครื่องยนต์' ? 'selected' : ''}>4) ทดสอบเครื่องยนต์</option>
+                <option value="ติดเครื่องยนต์หนึ่งเครื่องยนต์" ${data.คำขออนุญาต === 'ติดเครื่องยนต์หนึ่งเครื่องยนต์' ? 'selected' : ''}>5) ติดเครื่องยนต์หนึ่งเครื่องยนต์</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>สายการบิน/ผู้ประกอบการ</label>
+            <input type="text" id="detailAirline" value="${data.สายการบินหรือผู้ประกอบการ || ''}" ${readonly}>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>แบบอากาศยาน</label>
+                <input type="text" id="detailAircraftType" value="${data.แบบอากาศยาน || ''}" ${readonly}>
+            </div>
+            <div class="form-group">
+                <label>เที่ยวบิน</label>
+                <input type="text" id="detailFlightNumber" value="${data.เที่ยวบิน || ''}" ${readonly}>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>วันที่ต้องการเติมน้ำมัน</label>
+            <input type="text" id="detailRefuelDate" value="${formatDateOnly(data.วันที่ต้องการเติมน้ำมัน)}" ${readonly} placeholder="dd-mm-yyyy">
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>เริ่มเวลา</label>
+                <input type="text" id="detailStartTime" value="${formatTimeOnly(data.เริ่มเวลา)}" ${readonly} placeholder="HH:mm">
+            </div>
+            <div class="form-group">
+                <label>ถึงเวลา</label>
+                <input type="text" id="detailEndTime" value="${formatTimeOnly(data.ถึงเวลา)}" ${readonly} placeholder="HH:mm">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>เหตุจำเป็นที่ต้องดำเนินการ</label>
+            <textarea id="detailReason" ${readonly}>${data.เหตุจำเป็นที่ต้องดำเนินการ || ''}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>มาตรการความปลอดภัย</label>
+            <textarea id="detailSafetyMeasures" ${readonly}>${data.ระบุมาตรการความปลอดภัยพอสังเขป || ''}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>บุคคลที่สามารถติดต่อได้</label>
+            <input type="text" id="detailContactPerson" value="${data.บุคคลที่สามารถติดต่อได้ || ''}" ${readonly}>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>ตำแหน่ง</label>
+                <input type="text" id="detailContactPosition" value="${data.ตำแหน่ง || ''}" ${readonly}>
+            </div>
+            <div class="form-group">
+                <label>สังกัด</label>
+                <input type="text" id="detailDepartment" value="${data.สังกัด || ''}" ${readonly}>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>เบอร์โทรศัพท์</label>
+            <input type="tel" id="detailPhoneNumber" value="${data.เบอร์โทรศัพท์ที่สามารถติดต่อได้ || ''}" ${readonly}>
+        </div>`;
+    
+    // แสดงข้อมูลผู้อนุมัติ
+    if (isAdmin) {
+        html += `
+        <div class="form-row">
+            <div class="form-group">
+                <label>ผู้อนุมัติ</label>
+                <input type="text" value="${data.ผู้อนุมัติ || currentUser.name}" readonly>
+            </div>
+            <div class="form-group">
+                <label>ตำแหน่งผู้อนุมัติ</label>
+                <input type="text" value="${data.ตำแหน่งผู้อนุมัติ || currentUser.position}" readonly>
+            </div>
+        </div>`;
+    } else if (data.ผู้อนุมัติ) {
+        html += `
+        <div class="form-row">
+            <div class="form-group">
+                <label>ผู้อนุมัติ</label>
+                <input type="text" value="${data.ผู้อนุมัติ}" readonly>
+            </div>
+            <div class="form-group">
+                <label>ตำแหน่งผู้อนุมัติ</label>
+                <input type="text" value="${data.ตำแหน่งผู้อนุมัติ}" readonly>
+            </div>
+        </div>`;
+    }
+    
+    // ช่องหมายเหตุ
+    const noteReadonly = isAdmin ? '' : 'readonly';
+    html += `
+        <div class="form-group">
+            <label>หมายเหตุ</label>
+            <textarea id="detailNote" ${noteReadonly} placeholder="${isAdmin ? 'กรอกหมายเหตุ (ถ้ามี)' : 'ไม่มีหมายเหตุ'}">${data.หมายเหตุ || ''}</textarea>
+        </div>`;
+    
+    // ปุ่มสำหรับ Admin
+    if (isAdmin && data.Status === 'Pending') {
+        html += `
+        <div class="btn-group">
+            <button type="button" class="btn btn-success" onclick="handleApprove()">
+                <span class="spinner" id="approveSpinner"></span>
+                <span id="approveText">อนุมัติ</span>
+            </button>
+            <button type="button" class="btn btn-danger" onclick="handleReject()">
+                <span class="spinner" id="rejectSpinner"></span>
+                <span id="rejectText">ปฏิเสธ</span>
+            </button>
+        </div>`;
+    } else if (isAdmin && !isApproved) {
+        html += `
+        <button type="submit" class="btn btn-primary">
+            <span class="spinner" id="updateSpinner"></span>
+            <span id="updateText">บันทึกการแก้ไข</span>
+        </button>`;
+    }
+    
+    html += `</form>`;
+    
+    document.getElementById('detailContent').innerHTML = html;
+    
+    // Initialize Flatpickr for Detail Modal
+    if (isAdmin && !isApproved) {
+        const detailRefuelDateElem = document.getElementById('detailRefuelDate');
+        if (detailRefuelDateElem) {
+            flatpickr("#detailRefuelDate", {
+                dateFormat: "d/m/Y",
+                allowInput: false,
+                locale: "th"
+            });
+        }
+        
+        const detailStartTimeElem = document.getElementById('detailStartTime');
+        if (detailStartTimeElem) {
+            flatpickr("#detailStartTime", {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true,
+                allowInput: false
+            });
+        }
+        
+        const detailEndTimeElem = document.getElementById('detailEndTime');
+        if (detailEndTimeElem) {
+            flatpickr("#detailEndTime", {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true,
+                allowInput: false
+            });
+        }
+    }
+    
+    // เพิ่ม event listener สำหรับฟอร์ม
+    if (isAdmin && !isApproved) {
+        document.getElementById('detailForm').addEventListener('submit', handleUpdate);
+    }
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').style.display = 'none';
+    currentRequestId = null;
+    currentRequestData = null;
+}
+
+// ==================== Approve/Reject ====================
+
+async function handleApprove() {
+    const result = await Swal.fire({
+        title: 'ยืนยันการอนุมัติ?',
+        text: 'คุณต้องการอนุมัติคำขอนี้หรือไม่?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#27ae60',
+        cancelButtonColor: '#95a5a6',
+        confirmButtonText: 'อนุมัติ',
+        cancelButtonText: 'ยกเลิก'
+    });
+    
+    if (result.isConfirmed) {
+        await updateStatus('Approved', '');
+    }
+}
+
+async function handleReject() {
+    const note = document.getElementById('detailNote').value.trim();
+    
+    if (!note) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'กรุณากรอกหมายเหตุ',
+            text: 'จำเป็นต้องระบุเหตุผลในการปฏิเสธในช่องหมายเหตุ',
+            confirmButtonColor: '#27ae60'
+        });
+        return;
+    }
+    
+    const result = await Swal.fire({
+        title: 'ยืนยันการปฏิเสธ?',
+        text: 'คุณต้องการปฏิเสธคำขอนี้หรือไม่?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e74c3c',
+        cancelButtonColor: '#95a5a6',
+        confirmButtonText: 'ยืนยันปฏิเสธ',
+        cancelButtonText: 'ยกเลิก'
+    });
+    
+    if (result.isConfirmed) {
+        await updateStatus('Rejected', note);
+    }
+}
+
+async function updateStatus(status, note) {
+    const spinner = document.getElementById(status === 'Approved' ? 'approveSpinner' : 'rejectSpinner');
+    const text = document.getElementById(status === 'Approved' ? 'approveText' : 'rejectText');
+    
+    if (spinner) spinner.classList.add('active');
+    if (text) text.textContent = 'กำลังดำเนินการ...';
+    
+    if (status === 'Rejected' && !note) {
+        note = document.getElementById('detailNote')?.value.trim() || '';
+    }
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'updateStatus',
+                id: currentRequestId,
+                status: status,
+                approver: {
+                    name: currentUser.name,
+                    position: currentUser.position
+                },
+                note: note
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'สำเร็จ!',
+                text: status === 'Approved' ? 'อนุมัติคำขอเรียบร้อยแล้ว' : 'ปฏิเสธคำขอเรียบร้อยแล้ว',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            closeDetailModal();
+            loadData();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: result.message,
+                confirmButtonColor: '#27ae60'
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            text: 'ไม่สามารถอัปเดตสถานะได้',
+            confirmButtonColor: '#27ae60'
+        });
+    } finally {
+        if (spinner) spinner.classList.remove('active');
+        if (text) text.textContent = status === 'Approved' ? 'อนุมัติ' : 'ปฏิเสธ';
+    }
+}
+
+// ==================== Update Request ====================
+
+async function handleUpdate(e) {
+    e.preventDefault();
+    
+    const updateSpinner = document.getElementById('updateSpinner');
+    const updateText = document.getElementById('updateText');
+    
+    if (updateSpinner) updateSpinner.classList.add('active');
+    if (updateText) updateText.textContent = 'กำลังบันทึก...';
+    
+    const refuelDate = document.getElementById('detailRefuelDate').value.trim();
+    const startTimeElem = document.getElementById('detailStartTime');
+    const endTimeElem = document.getElementById('detailEndTime');
+    const startTime = startTimeElem ? startTimeElem.value.trim() : '';
+    const endTime = endTimeElem ? endTimeElem.value.trim() : '';
+    
+    if (!refuelDate || !startTime || !endTime) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+            text: 'โปรดเลือกวันที่และเวลาให้ครบถ้วน',
+            confirmButtonColor: '#27ae60'
+        });
+        if (updateSpinner) updateSpinner.classList.remove('active');
+        if (updateText) updateText.textContent = 'บันทึกการแก้ไข';
+        return;
+    }
+    
+    const updateData = {
+        requestType: document.getElementById('detailRequestType').value,
+        airline: document.getElementById('detailAirline').value,
+        aircraftType: document.getElementById('detailAircraftType').value,
+        flightNumber: document.getElementById('detailFlightNumber').value,
+        refuelDate: refuelDate,
+        startTime: startTime,
+        endTime: endTime,
+        reason: document.getElementById('detailReason').value,
+        safetyMeasures: document.getElementById('detailSafetyMeasures').value,
+        contactPerson: document.getElementById('detailContactPerson').value,
+        contactPosition: document.getElementById('detailContactPosition').value,
+        department: document.getElementById('detailDepartment').value,
+        phoneNumber: document.getElementById('detailPhoneNumber').value
+    };
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'updateRequest',
+                id: currentRequestId,
+                data: updateData
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'สำเร็จ!',
+                text: 'แก้ไขข้อมูลเรียบร้อยแล้ว',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            closeDetailModal();
+            loadData();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: result.message,
+                confirmButtonColor: '#27ae60'
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            text: 'ไม่สามารถแก้ไขข้อมูลได้',
+            confirmButtonColor: '#27ae60'
+        });
+    } finally {
+        if (updateSpinner) updateSpinner.classList.remove('active');
+        if (updateText) updateText.textContent = 'บันทึกการแก้ไข';
+    }
+}
+
+// ==================== Logout ====================
+
+async function logout() {
+    const result = await Swal.fire({
+        title: 'ออกจากระบบ?',
+        text: 'คุณต้องการออกจากระบบหรือไม่?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#e74c3c',
+        cancelButtonColor: '#95a5a6',
+        confirmButtonText: 'ออกจากระบบ',
+        cancelButtonText: 'ยกเลิก'
+    });
+    
+    if (result.isConfirmed) {
+        stopAutoRefresh();
+        currentUser = null;
+        sessionStorage.removeItem('currentUser');
+        document.getElementById('mainSystem').style.display = 'none';
+        document.getElementById('loginPage').style.display = 'block';
+        document.body.style.alignItems = 'center';
+        document.body.style.background = 'var(--white)';
+        document.getElementById('loginForm').reset();
+        document.getElementById('navbarMenu').classList.remove('active');
+        updateThemeColor('#ffffff');
+        await Swal.fire({ 
+            icon: 'success', 
+            title: 'ออกจากระบบแล้ว', 
+            timer: 1000, 
+            showConfirmButton: false 
+        });
+    }
+}
+
+// ==================== Modal Click Outside ====================
+
+window.onclick = function(event) {
+    const addModal = document.getElementById('addModal');
+    const detailModal = document.getElementById('detailModal');
+    const userProfileModal = document.getElementById('userProfileModal');
+    if (event.target === addModal) closeAddModal();
+    if (event.target === detailModal) closeDetailModal();
+    if (event.target === userProfileModal) closeUserProfileModal();
+} 
+</script>
 </body>
 </html>
