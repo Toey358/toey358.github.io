@@ -520,6 +520,83 @@
             overflow-x: auto;
         }
 
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 45px 12px 45px;
+            border: 2px solid #dfe6e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+            pointer-events: none;
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            cursor: pointer;
+            padding: 5px;
+            display: none;
+            transition: color 0.3s ease;
+        }
+
+        .clear-search:hover {
+            color: var(--danger-color);
+        }
+
+        .clear-search.active {
+            display: block;
+        }
+
+        .btn-search {
+            padding: 12px 24px;
+            background: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .btn-search:hover {
+            background: #2980b9;
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -735,6 +812,18 @@
                 font-size: 16px;
             }
 
+            .search-container {
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .btn-search {
+                width: 100%;
+            }
+
             .data-table {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
@@ -869,6 +958,21 @@
             </div>
 
             <div class="data-table">
+                <div class="search-container">
+                    <div class="search-box">
+                        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="ค้นหา ID, คำขออนุญาต, สายการบิน, สถานะ..." oninput="handleSearch()">
+                        <button class="clear-search" id="clearSearch" onclick="clearSearch()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
                 <div id="loadingData" class="loading">
                     <span class="loading-spinner"></span>กำลังโหลดข้อมูล...
                 </div>
@@ -1004,9 +1108,11 @@ let currentUser = null;
 let currentRequestId = null;
 let currentRequestData = null;
 let allData = [];
+let filteredData = [];
 let currentPage = 1;
 const itemsPerPage = 10;
 let autoRefreshInterval = null;
+let searchQuery = '';
 
 function formatDateTime(dateString) {
     if (!dateString) return '-';
@@ -1248,7 +1354,7 @@ async function loadData() {
                 const idB = parseInt(b.ID.replace('ID', ''));
                 return idB - idA;
             });
-            displayData();
+            applySearch();
             loadingDiv.style.display = 'none';
             tableDiv.style.display = 'table';
             document.getElementById('paginationContainer').style.display = 'flex';
@@ -1262,13 +1368,16 @@ function displayData() {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
     
-    if (allData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #7f8c8d;">ยังไม่มีข้อมูล</td></tr>';
+    const dataToDisplay = filteredData.length > 0 || searchQuery ? filteredData : allData;
+    
+    if (dataToDisplay.length === 0) {
+        const message = searchQuery ? 'ไม่พบข้อมูลที่ค้นหา' : 'ยังไม่มีข้อมูล';
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #7f8c8d;">${message}</td></tr>`;
         document.getElementById('paginationContainer').style.display = 'none';
         return;
     }
     
-    const totalPages = Math.ceil(allData.length / itemsPerPage);
+    const totalPages = Math.ceil(dataToDisplay.length / itemsPerPage);
     if (currentPage > totalPages) {
         currentPage = totalPages;
     }
@@ -1278,7 +1387,7 @@ function displayData() {
     
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const pageData = allData.slice(startIndex, endIndex);
+    const pageData = dataToDisplay.slice(startIndex, endIndex);
     
     pageData.forEach(row => {
         const tr = document.createElement('tr');
@@ -1298,11 +1407,12 @@ function displayData() {
 }
 
 function updatePagination() {
-    const totalPages = Math.ceil(allData.length / itemsPerPage);
+    const dataToDisplay = filteredData.length > 0 || searchQuery ? filteredData : allData;
+    const totalPages = Math.ceil(dataToDisplay.length / itemsPerPage);
     const startItem = (currentPage - 1) * itemsPerPage + 1;
-    const endItem = Math.min(currentPage * itemsPerPage, allData.length);
+    const endItem = Math.min(currentPage * itemsPerPage, dataToDisplay.length);
     
-    document.getElementById('paginationInfo').textContent = `แสดง ${startItem}-${endItem} จาก ${allData.length} รายการ`;
+    document.getElementById('paginationInfo').textContent = `แสดง ${startItem}-${endItem} จาก ${dataToDisplay.length} รายการ`;
     
     const pagination = document.getElementById('pagination');
     pagination.innerHTML = '';
@@ -1377,6 +1487,58 @@ function updatePagination() {
         }
     };
     pagination.appendChild(nextBtn);
+}
+
+function applySearch() {
+    if (!searchQuery.trim()) {
+        filteredData = [];
+        displayData();
+        return;
+    }
+    
+    const query = searchQuery.toLowerCase().trim();
+    filteredData = allData.filter(row => {
+        const id = (row.ID || '').toLowerCase();
+        const timestamp = formatDateTime(row.Timestamp).toLowerCase();
+        const requestType = (row.คำขออนุญาต || '').toLowerCase();
+        const airline = (row.สายการบิน || '').toLowerCase();
+        const status = (row.Status || 'Pending').toLowerCase();
+        
+        return id.includes(query) || 
+               timestamp.includes(query) ||
+               requestType.includes(query) || 
+               airline.includes(query) || 
+               status.includes(query);
+    });
+    
+    currentPage = 1;
+    displayData();
+}
+
+function handleSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('clearSearch');
+    
+    searchQuery = searchInput.value;
+    
+    if (searchQuery.trim()) {
+        clearBtn.classList.add('active');
+    } else {
+        clearBtn.classList.remove('active');
+    }
+    
+    applySearch();
+}
+
+function clearSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('clearSearch');
+    
+    searchInput.value = '';
+    searchQuery = '';
+    clearBtn.classList.remove('active');
+    
+    applySearch();
 }
 
 function openUserProfileModal() {
