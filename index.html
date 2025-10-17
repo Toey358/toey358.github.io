@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
     <title>Camera App - กล้องถ่ายรูป</title>
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="./manifest.json">
     <link rel="icon" type="image/png" href="https://img.icons8.com/external-flatarticons-blue-flatarticons/65/external-camera-brazilian-carnival-flatarticons-blue-flatarticons.png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/external-flatarticons-blue-flatarticons/65/external-camera-brazilian-carnival-flatarticons-blue-flatarticons.png">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -121,6 +121,8 @@
             align-items: center;
             position: relative;
             min-height: 120px;
+            gap: 20px;
+            overflow: visible;
         }
 
         .btn-secondary {
@@ -138,6 +140,7 @@
             justify-content: center;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
+            flex-shrink: 0;
         }
 
         .btn-secondary:active {
@@ -148,6 +151,7 @@
         .btn-secondary svg {
             width: 24px;
             height: 24px;
+            pointer-events: none;
         }
 
         .btn-capture {
@@ -163,7 +167,9 @@
             -webkit-appearance: none;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
-            z-index: 10;
+            z-index: 100;
+            flex-shrink: 0;
+            display: block;
         }
 
         .btn-capture:active {
@@ -178,6 +184,7 @@
             background: white;
             border-radius: 50%;
             z-index: 1;
+            pointer-events: none;
         }
 
         .flash-effect {
