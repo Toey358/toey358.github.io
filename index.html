@@ -2,8 +2,15 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
     <title>Camera App - กล้องถ่ายรูป</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="https://img.icons8.com/external-flatarticons-blue-flatarticons/65/external-camera-brazilian-carnival-flatarticons-blue-flatarticons.png">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/external-flatarticons-blue-flatarticons/65/external-camera-brazilian-carnival-flatarticons-blue-flatarticons.png">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
             margin: 0;
@@ -101,16 +108,19 @@
         }
 
         .overlay-info .emoji {
-            font-size: 14px;
+            width: 16px;
+            height: 16px;
+            color: #FFD700;
         }
 
         .controls-bar {
             background: #000;
-            padding: 30px 20px;
+            padding: 30px 20px 40px 20px;
             display: flex;
             justify-content: space-around;
             align-items: center;
             position: relative;
+            min-height: 120px;
         }
 
         .btn-secondary {
@@ -121,17 +131,23 @@
             backdrop-filter: blur(10px);
             border: 2px solid rgba(255, 255, 255, 0.3);
             color: white;
-            font-size: 24px;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .btn-secondary:active {
             transform: scale(0.9);
             background: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary svg {
+            width: 24px;
+            height: 24px;
         }
 
         .btn-capture {
@@ -144,10 +160,15 @@
             transition: all 0.1s ease;
             position: relative;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            -webkit-appearance: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            z-index: 10;
         }
 
         .btn-capture:active {
             transform: scale(0.85);
+            background: #f0f0f0;
         }
 
         .btn-capture::before {
@@ -156,6 +177,7 @@
             inset: 5px;
             background: white;
             border-radius: 50%;
+            z-index: 1;
         }
 
         .flash-effect {
@@ -279,26 +301,36 @@
             <div class="flash-effect" id="flash"></div>
             
             <div class="top-bar">
-                <div class="info-badge time" id="timeDisplay">00:00:00</div>
-                <div class="info-badge gps" id="gpsDisplay">📍 กำลังค้นหา...</div>
+                <div class="info-badge time" id="timeDisplay">
+                    <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
+                    <span>00:00:00</span>
+                </div>
+                <div class="info-badge gps" id="gpsDisplay">
+                    <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i>
+                    <span>กำลังค้นหา...</span>
+                </div>
             </div>
 
             <div class="overlay-info" id="overlayInfo">
                 <div>
-                    <span class="emoji">📅</span>
+                    <i data-lucide="calendar" class="emoji"></i>
                     <span id="datetime">--</span>
                 </div>
                 <div>
-                    <span class="emoji">📍</span>
+                    <i data-lucide="map-pin" class="emoji"></i>
                     <span id="location">รอข้อมูล GPS...</span>
                 </div>
             </div>
         </div>
 
         <div class="controls-bar">
-            <button class="btn-secondary" id="galleryBtn" title="คลังรูปภาพ">🖼️</button>
-            <button class="btn-capture" id="captureBtn"></button>
-            <button class="btn-secondary" id="flipBtn" title="สลับกล้อง">🔄</button>
+            <button class="btn-secondary" id="galleryBtn" title="คลังรูปภาพ">
+                <i data-lucide="images"></i>
+            </button>
+            <button class="btn-capture" id="captureBtn" aria-label="ถ่ายรูป"></button>
+            <button class="btn-secondary" id="flipBtn" title="สลับกล้อง">
+                <i data-lucide="refresh-cw"></i>
+            </button>
         </div>
     </div>
 
@@ -307,6 +339,9 @@
     </div>
 
     <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const captureBtn = document.getElementById('captureBtn');
@@ -335,7 +370,7 @@
                 second: '2-digit',
                 hour12: false 
             });
-            timeDisplay.textContent = timeStr;
+            timeDisplay.querySelector('span').textContent = timeStr;
             
             // อัพเดทวันที่เวลาด้านล่าง (แบบเต็ม)
             const options = { 
@@ -364,16 +399,26 @@
 
                 showToast('กำลังเปิดกล้อง...', true);
 
-                stream = await navigator.mediaDevices.getUserMedia({ 
+                const constraints = { 
                     video: { 
                         facingMode: facingMode,
                         width: { ideal: 1920 },
                         height: { ideal: 1080 }
                     },
                     audio: false
-                });
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
                 
                 video.srcObject = stream;
+                
+                // รอให้วิดีโอโหลดเสร็จก่อน
+                await new Promise(resolve => {
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        resolve();
+                    };
+                });
                 
                 showToast('✓ กล้องพร้อมใช้งาน');
             } catch (err) {
@@ -385,6 +430,7 @@
         // สลับกล้อง
         function flipCamera() {
             facingMode = facingMode === 'environment' ? 'user' : 'environment';
+            const icon = facingMode === 'environment' ? 'camera' : 'user';
             showToast(facingMode === 'environment' ? '📷 กล้องหลัง' : '🤳 กล้องหน้า');
             startCamera();
         }
@@ -400,12 +446,12 @@
                         const accuracy = position.coords.accuracy.toFixed(0);
                         
                         locationDisplay.textContent = `${lat}, ${lng} (±${accuracy}m)`;
-                        gpsDisplay.textContent = `📍 ${lat}, ${lng}`;
+                        gpsDisplay.querySelector('span').textContent = `${lat}, ${lng}`;
                     },
                     (error) => {
                         console.error('GPS Error:', error);
                         locationDisplay.textContent = 'ไม่สามารถรับตำแหน่งได้';
-                        gpsDisplay.textContent = '📍 ไม่พบตำแหน่ง';
+                        gpsDisplay.querySelector('span').textContent = 'ไม่พบตำแหน่ง';
                     },
                     {
                         enableHighAccuracy: true,
@@ -415,7 +461,7 @@
                 );
             } else {
                 locationDisplay.textContent = 'เบราว์เซอร์ไม่รองรับ GPS';
-                gpsDisplay.textContent = '📍 ไม่รองรับ';
+                gpsDisplay.querySelector('span').textContent = 'ไม่รองรับ';
             }
         }
 
@@ -430,7 +476,7 @@
             flash.classList.add('active');
             setTimeout(() => flash.classList.remove('active'), 150);
 
-            // เล่นเสียงชัตเตอร์ (ถ้าต้องการ)
+            // เล่นเสียงชัตเตอร์
             playShutterSound();
 
             // ตั้งค่า canvas
@@ -565,6 +611,11 @@
 
         // Event Listeners
         captureBtn.addEventListener('click', capturePhoto);
+        captureBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            capturePhoto();
+        });
+        
         flipBtn.addEventListener('click', flipCamera);
         galleryBtn.addEventListener('click', openGallery);
 
@@ -572,6 +623,16 @@
         document.addEventListener('gesturestart', function (e) {
             e.preventDefault();
         });
+
+        // ป้องกันการ double-tap zoom
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (e) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
 
         // เริ่มต้น
         startCamera();
