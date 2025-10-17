@@ -8,8 +8,8 @@
     <meta name="theme-color" content="#000000">
     <title>Camera App - กล้องถ่ายรูป</title>
     <link rel="manifest" href="./manifest.json">
-    <link rel="icon" type="image/png" href="https://img.icons8.com/external-flatarticons-blue-flatarticons/65/external-camera-brazilian-carnival-flatarticons-blue-flatarticons.png">
-    <link rel="apple-touch-icon" href="https://img.icons8.com/external-flatarticons-blue-flatarticons/65/external-camera-brazilian-carnival-flatarticons-blue-flatarticons.png">
+    <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/96/camera--v1.png">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/camera--v1.png">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -298,6 +298,188 @@
                 margin-right: 120px;
             }
         }
+
+        /* Photo Preview Modal */
+        .photo-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+
+        .photo-modal.show {
+            display: flex;
+        }
+
+        .photo-modal-header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .photo-modal-header h3 {
+            color: white;
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .btn-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-close:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0.9);
+        }
+
+        .photo-modal-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        .photo-preview {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .photo-modal-actions {
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-action {
+            flex: 1;
+            max-width: 150px;
+            padding: 15px 25px;
+            border-radius: 25px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-action.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-action.secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-action:active {
+            transform: scale(0.95);
+        }
+
+        .btn-action svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Gallery Modal */
+        .gallery-modal {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .gallery-modal.show {
+            display: flex;
+        }
+
+        .gallery-header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gallery-header h3 {
+            color: white;
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .gallery-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .gallery-item {
+            aspect-ratio: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.2s;
+        }
+
+        .gallery-item:active img {
+            transform: scale(0.95);
+        }
+
+        .gallery-empty {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 60px 20px;
+        }
+
+        .gallery-empty svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
     </style>
 </head>
 <body>
@@ -345,6 +527,45 @@
         <span id="toastMessage">กำลังเปิดกล้อง...</span>
     </div>
 
+    <!-- Photo Preview Modal -->
+    <div class="photo-modal" id="photoModal">
+        <div class="photo-modal-header">
+            <h3>รูปถ่ายของคุณ</h3>
+            <button class="btn-close" id="closePhotoModal">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="photo-modal-content">
+            <img class="photo-preview" id="photoPreview" alt="Photo preview">
+        </div>
+        <div class="photo-modal-actions">
+            <button class="btn-action secondary" id="shareBtn">
+                <i data-lucide="share-2"></i>
+                <span>แชร์</span>
+            </button>
+            <button class="btn-action primary" id="saveBtn">
+                <i data-lucide="download"></i>
+                <span>บันทึก</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Gallery Modal -->
+    <div class="gallery-modal" id="galleryModal">
+        <div class="gallery-header">
+            <h3>คลังรูปภาพ</h3>
+            <button class="btn-close" id="closeGalleryModal">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="gallery-content" id="galleryContent">
+            <div class="gallery-empty">
+                <i data-lucide="image-off"></i>
+                <p>ยังไม่มีรูปภาพ</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Initialize Lucide icons
         lucide.createIcons();
@@ -362,15 +583,71 @@
         const gpsDisplay = document.getElementById('gpsDisplay');
         const flash = document.getElementById('flash');
         
+        // Photo Modal Elements
+        const photoModal = document.getElementById('photoModal');
+        const photoPreview = document.getElementById('photoPreview');
+        const closePhotoModal = document.getElementById('closePhotoModal');
+        const shareBtn = document.getElementById('shareBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        
+        // Gallery Modal Elements
+        const galleryModal = document.getElementById('galleryModal');
+        const closeGalleryModal = document.getElementById('closeGalleryModal');
+        const galleryContent = document.getElementById('galleryContent');
+        
         let stream = null;
         let currentPosition = null;
-        let facingMode = 'environment'; // 'environment' = กล้องหลัง, 'user' = กล้องหน้า
+        let facingMode = 'environment';
+        let currentPhotoBlob = null;
+        let currentPhotoUrl = null;
+
+        // LocalStorage key for photos
+        const PHOTOS_KEY = 'camera_app_photos';
+
+        // ฟังก์ชันจัดการรูปภาพใน LocalStorage
+        function savePhotoToStorage(photoData) {
+            try {
+                let photos = JSON.parse(localStorage.getItem(PHOTOS_KEY) || '[]');
+                photos.unshift({
+                    id: Date.now(),
+                    data: photoData,
+                    timestamp: new Date().toISOString()
+                });
+                // เก็บแค่ 50 รูปล่าสุด
+                if (photos.length > 50) {
+                    photos = photos.slice(0, 50);
+                }
+                localStorage.setItem(PHOTOS_KEY, JSON.stringify(photos));
+                return true;
+            } catch (e) {
+                console.error('Cannot save to localStorage:', e);
+                return false;
+            }
+        }
+
+        function getPhotosFromStorage() {
+            try {
+                return JSON.parse(localStorage.getItem(PHOTOS_KEY) || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function deletePhotoFromStorage(photoId) {
+            try {
+                let photos = getPhotosFromStorage();
+                photos = photos.filter(p => p.id !== photoId);
+                localStorage.setItem(PHOTOS_KEY, JSON.stringify(photos));
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
 
         // ฟังก์ชันอัพเดทเวลา
         function updateDateTime() {
             const now = new Date();
             
-            // อัพเดทเวลาด้านบน (แบบสั้น)
             const timeStr = now.toLocaleTimeString('th-TH', { 
                 hour: '2-digit', 
                 minute: '2-digit',
@@ -379,7 +656,6 @@
             });
             timeDisplay.querySelector('span').textContent = timeStr;
             
-            // อัพเดทวันที่เวลาด้านล่าง (แบบเต็ม)
             const options = { 
                 year: 'numeric', 
                 month: 'long', 
@@ -392,14 +668,12 @@
             datetimeDisplay.textContent = now.toLocaleDateString('th-TH', options);
         }
 
-        // อัพเดทเวลาทุกวินาที
         setInterval(updateDateTime, 1000);
         updateDateTime();
 
         // เริ่มกล้อง
         async function startCamera() {
             try {
-                // หยุดกล้องเก่าถ้ามี
                 if (stream) {
                     stream.getTracks().forEach(track => track.stop());
                 }
@@ -416,10 +690,8 @@
                 };
 
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
-                
                 video.srcObject = stream;
                 
-                // รอให้วิดีโอโหลดเสร็จก่อน
                 await new Promise(resolve => {
                     video.onloadedmetadata = () => {
                         video.play();
@@ -437,7 +709,6 @@
         // สลับกล้อง
         function flipCamera() {
             facingMode = facingMode === 'environment' ? 'user' : 'environment';
-            const icon = facingMode === 'environment' ? 'camera' : 'user';
             showToast(facingMode === 'environment' ? '📷 กล้องหลัง' : '🤳 กล้องหน้า');
             startCamera();
         }
@@ -479,22 +750,16 @@
                 return;
             }
 
-            // เอฟเฟกต์แฟลช
             flash.classList.add('active');
             setTimeout(() => flash.classList.remove('active'), 150);
-
-            // เล่นเสียงชัตเตอร์
             playShutterSound();
 
-            // ตั้งค่า canvas
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
 
-            // วาดภาพจากวิดีโอ
             ctx.drawImage(video, 0, 0);
 
-            // เพิ่มข้อมูล timestamp และ GPS ลงในรูป
             const now = new Date();
             const dateTimeString = now.toLocaleString('th-TH', {
                 year: 'numeric',
@@ -513,7 +778,6 @@
                 locationString = `GPS: ${lat}, ${lng}`;
             }
 
-            // ตกแต่งข้อความ
             const padding = 25;
             const fontSize = Math.max(canvas.width / 35, 18);
             const lineHeight = fontSize * 1.6;
@@ -521,13 +785,11 @@
             ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
             ctx.textBaseline = 'top';
             
-            // วาดพื้นหลังกึ่งโปร่งใส
             const textWidth = Math.max(
                 ctx.measureText(dateTimeString).width,
                 ctx.measureText(locationString).width
             );
             
-            // สร้างเงาพื้นหลังไล่ระดับ
             const gradient = ctx.createLinearGradient(
                 0, 
                 canvas.height - (lineHeight * 2 + padding * 3),
@@ -540,7 +802,6 @@
             ctx.fillStyle = gradient;
             ctx.fillRect(0, canvas.height - (lineHeight * 2 + padding * 3), canvas.width, lineHeight * 2 + padding * 3);
 
-            // วาดข้อความ
             ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
             ctx.shadowBlur = 10;
             ctx.shadowOffsetX = 2;
@@ -560,19 +821,121 @@
                 canvas.height - (lineHeight + padding * 2)
             );
 
-            // แปลงเป็น blob และดาวน์โหลด
+            // แปลงเป็น blob และแสดง preview
             canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `photo_${Date.now()}.jpg`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-                showToast('✓ บันทึกรูปภาพสำเร็จ!');
+                currentPhotoBlob = blob;
+                currentPhotoUrl = URL.createObjectURL(blob);
+                
+                // แสดง preview modal
+                photoPreview.src = currentPhotoUrl;
+                photoModal.classList.add('show');
+                
+                // เก็บรูปลง localStorage
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    savePhotoToStorage(reader.result);
+                };
+                reader.readAsDataURL(blob);
+                
+                // Re-initialize icons
+                setTimeout(() => lucide.createIcons(), 100);
             }, 'image/jpeg', 0.95);
+        }
+
+        // บันทึกรูป
+        function savePhoto() {
+            if (!currentPhotoBlob) return;
+
+            const a = document.createElement('a');
+            a.href = currentPhotoUrl;
+            a.download = `photo_${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            showToast('✓ บันทึกรูปภาพสำเร็จ!');
+            photoModal.classList.remove('show');
+            
+            if (currentPhotoUrl) {
+                URL.revokeObjectURL(currentPhotoUrl);
+            }
+        }
+
+        // แชร์รูป
+        async function sharePhoto() {
+            if (!currentPhotoBlob) return;
+
+            try {
+                const file = new File([currentPhotoBlob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'รูปถ่ายจาก Camera App',
+                        text: 'แชร์รูปภาพพร้อม GPS และ Timestamp'
+                    });
+                    showToast('✓ แชร์สำเร็จ!');
+                } else {
+                    // Fallback: บันทึกรูปแทน
+                    savePhoto();
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Error sharing:', err);
+                    savePhoto();
+                }
+            }
+        }
+
+        // เปิด Gallery
+        function openGallery() {
+            const photos = getPhotosFromStorage();
+            
+            if (photos.length === 0) {
+                galleryContent.innerHTML = `
+                    <div class="gallery-empty">
+                        <i data-lucide="image-off"></i>
+                        <p>ยังไม่มีรูปภาพ</p>
+                        <p style="font-size: 14px; margin-top: 10px;">ถ่ายรูปเพื่อเริ่มต้น!</p>
+                    </div>
+                `;
+            } else {
+                galleryContent.innerHTML = `
+                    <div class="gallery-grid">
+                        ${photos.map(photo => `
+                            <div class="gallery-item" data-photo-id="${photo.id}">
+                                <img src="${photo.data}" alt="Photo">
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                // เพิ่ม event listener สำหรับแต่ละรูป
+                document.querySelectorAll('.gallery-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const photoId = parseInt(item.dataset.photoId);
+                        const photo = photos.find(p => p.id === photoId);
+                        if (photo) {
+                            photoPreview.src = photo.data;
+                            galleryModal.classList.remove('show');
+                            photoModal.classList.add('show');
+                            
+                            // สำหรับรูปจาก gallery ให้บันทึก/แชร์ใหม่ได้
+                            fetch(photo.data)
+                                .then(res => res.blob())
+                                .then(blob => {
+                                    currentPhotoBlob = blob;
+                                    currentPhotoUrl = photo.data;
+                                });
+                        }
+                    });
+                });
+            }
+            
+            galleryModal.classList.add('show');
+            
+            // Re-initialize icons
+            setTimeout(() => lucide.createIcons(), 100);
         }
 
         // เสียงชัตเตอร์
@@ -611,11 +974,6 @@
             }, 2000);
         }
 
-        // จัดการคลังรูปภาพ
-        function openGallery() {
-            showToast('ℹ️ ฟีเจอร์นี้ยังไม่พร้อมใช้งาน');
-        }
-
         // Event Listeners
         captureBtn.addEventListener('click', capturePhoto);
         captureBtn.addEventListener('touchend', (e) => {
@@ -625,13 +983,28 @@
         
         flipBtn.addEventListener('click', flipCamera);
         galleryBtn.addEventListener('click', openGallery);
+        
+        // Photo Modal Events
+        closePhotoModal.addEventListener('click', () => {
+            photoModal.classList.remove('show');
+            if (currentPhotoUrl) {
+                URL.revokeObjectURL(currentPhotoUrl);
+            }
+        });
+        
+        saveBtn.addEventListener('click', savePhoto);
+        shareBtn.addEventListener('click', sharePhoto);
+        
+        // Gallery Modal Events
+        closeGalleryModal.addEventListener('click', () => {
+            galleryModal.classList.remove('show');
+        });
 
         // ป้องกันการซูมในมือถือ
         document.addEventListener('gesturestart', function (e) {
             e.preventDefault();
         });
 
-        // ป้องกันการ double-tap zoom
         let lastTouchEnd = 0;
         document.addEventListener('touchend', function (e) {
             const now = Date.now();
