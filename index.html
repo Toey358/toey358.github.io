@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ติดตามรถ - Telematics v2</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,173 +16,332 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #ffffff;
             min-height: 100vh;
-            padding: 20px;
+            padding: 0;
+            color: #1a202c;
+            overflow-x: hidden;
+        }
+
+        .top-bar {
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+            padding: 16px 20px;
+            box-shadow: 0 4px 20px rgba(14, 165, 233, 0.15);
+        }
+
+        .top-bar-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .app-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-name {
+            color: white;
+        }
+
+        .app-name h1 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 2px;
+            letter-spacing: -0.3px;
+        }
+
+        .app-name p {
+            font-size: 12px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .notification-badge {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .notification-badge:active {
+            transform: scale(0.95);
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 2px solid #0ea5e9;
         }
 
         .container {
             max-width: 500px;
             margin: 0 auto;
-            background: white;
+            padding: 20px;
+        }
+
+        .status-banner {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px solid #bae6fd;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
+            padding: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 4px 16px rgba(14, 165, 233, 0.08);
         }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
+        .status-icon {
+            width: 56px;
+            height: 56px;
+            background: white;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
         }
 
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
+        .status-icon.active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            animation: pulse-green 2s infinite;
         }
 
-        .header p {
+        .status-icon.inactive {
+            background: #f1f5f9;
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+            50% { box-shadow: 0 4px 20px rgba(16, 185, 129, 0.5); }
+        }
+
+        .status-content h3 {
             font-size: 14px;
-            opacity: 0.9;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .form-section {
-            padding: 30px 20px;
+        .status-content p {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .status-content p.active {
+            color: #10b981;
+        }
+
+        .status-content p.inactive {
+            color: #64748b;
+        }
+
+        .section {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.04);
+            border: 1px solid #f1f5f9;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .section-title-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e40af;
         }
 
         .form-group {
             margin-bottom: 20px;
         }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .status-section {
-            background: #f8f9fa;
-            padding: 20px;
-            margin: 0 20px 20px 20px;
-            border-radius: 15px;
-        }
-
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .status-item:last-child {
-            border-bottom: none;
-        }
-
-        .status-label {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .status-value {
-            color: #333;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .status-active {
-            color: #10b981;
-        }
-
-        .status-inactive {
-            color: #ef4444;
-        }
-
-        .status-realtime {
-            color: #667eea;
-        }
-
-        .button-group {
-            padding: 0 20px 30px 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+        .form-label {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .btn:disabled {
-            opacity: 0.5;
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 16px 16px 48px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #1a202c;
+            background: #f8fafc;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .form-input:focus {
+            background: white;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+        }
+
+        .form-input:disabled {
+            background: #f1f5f9;
+            color: #94a3b8;
             cursor: not-allowed;
         }
 
-        .btn-start {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
-        .btn-start:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        .stat-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
         }
 
-        .btn-stop {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
+        .stat-card:active {
+            transform: scale(0.98);
         }
 
-        .btn-stop:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
         }
 
-        .btn-save {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
-        .btn-save:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        .stat-icon-small {
+            width: 28px;
+            height: 28px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
 
-        .map-preview {
-            height: 200px;
-            margin: 0 20px 20px 20px;
-            border-radius: 15px;
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1a202c;
+            line-height: 1;
+        }
+
+        .stat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: white;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-badge.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .stat-badge.inactive {
+            background: white;
+            color: #64748b;
+        }
+
+        .map-container {
+            height: 280px;
+            border-radius: 20px;
             overflow: hidden;
-            border: 2px solid #e0e0e0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 20px;
+            position: relative;
         }
 
         #map {
@@ -187,127 +349,409 @@
             width: 100%;
         }
 
+        .map-overlay {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: white;
+            padding: 8px 14px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            backdrop-filter: blur(10px);
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-start:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-stop:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-save {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(14, 165, 233, 0.3);
+        }
+
+        .btn-save:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+        }
+
         .alert {
-            margin: 0 20px 20px 20px;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 14px;
             display: none;
+            padding: 16px 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
         }
 
         .alert-success {
-            background: #d1fae5;
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
             color: #065f46;
-            border: 1px solid #10b981;
+            border: 2px solid #10b981;
         }
 
         .alert-error {
-            background: #fee2e2;
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
             color: #991b1b;
-            border: 1px solid #ef4444;
+            border: 2px solid #ef4444;
         }
 
         .alert-info {
-            background: #dbeafe;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
             color: #1e40af;
-            border: 1px solid #3b82f6;
+            border: 2px solid #3b82f6;
         }
 
-        .pulse {
+        .location-display {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .location-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .location-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .location-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .location-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a202c;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .timestamp {
+            text-align: center;
+            padding: 12px;
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .pulse-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: currentColor;
+            border-radius: 50%;
             animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
             0%, 100% {
                 opacity: 1;
+                transform: scale(1);
             }
             50% {
                 opacity: 0.5;
+                transform: scale(1.1);
             }
         }
 
-        .realtime-badge {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-left: 8px;
-            animation: pulse 2s infinite;
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%);
+            margin: 20px 0;
+        }
+
+        /* Floating animation for status icon */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .status-icon.active svg {
+            animation: float 3s ease-in-out infinite;
         }
     </style>
 </head>
 <body>
+    <div class="top-bar">
+        <div class="top-bar-content">
+            <div class="app-title">
+                <div class="app-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+                </div>
+                <div class="app-name">
+                    <h1>Vehicle Tracker</h1>
+                    <p>Real-time GPS Monitoring</p>
+                </div>
+            </div>
+            <div class="notification-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                <div class="notification-dot"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
-        <div class="header">
-            <h1>🚗 ระบบติดตามรถ</h1>
-            <p>Telematics Tracking System v2.0</p>
+        <div class="alert alert-success" id="alertSuccess">
+            <div class="alert-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <span id="successMessage"></span>
         </div>
 
-        <div class="form-section">
+        <div class="alert alert-error" id="alertError">
+            <div class="alert-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>
+            </div>
+            <span id="errorMessage"></span>
+        </div>
+
+        <div class="alert alert-info" id="alertInfo">
+            <div class="alert-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/></svg>
+            </div>
+            <span id="infoMessage"></span>
+        </div>
+
+        <div class="status-banner">
+            <div class="status-icon inactive" id="statusIcon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #94a3b8;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="status-content">
+                <h3>Tracking Status</h3>
+                <p class="inactive" id="trackingStatus">ไม่ได้ติดตาม</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <div class="section-title-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    </div>
+                    รายละเอียดรถ
+                </div>
+            </div>
+
             <div class="form-group">
-                <label for="vehicleType">ประเภทรถ</label>
-                <input type="text" id="vehicleType" placeholder="เช่น รถบรรทุก, รถตู้, รถเก๋ง">
+                <label class="form-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+                    ประเภทรถ
+                </label>
+                <div class="input-wrapper">
+                    <div class="input-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+                    </div>
+                    <input type="text" id="vehicleType" class="form-input" placeholder="รถบรรทุก, รถตู้, รถเก๋ง">
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="licensePlate">หมายเลขทะเบียน</label>
-                <input type="text" id="licensePlate" placeholder="เช่น กข 1234 กรุงเทพ">
+                <label class="form-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    หมายเลขทะเบียน
+                </label>
+                <div class="input-wrapper">
+                    <div class="input-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </div>
+                    <input type="text" id="licensePlate" class="form-input" placeholder="กข 1234 กรุงเทพ">
+                </div>
             </div>
         </div>
 
-        <div class="alert alert-success" id="alertSuccess"></div>
-        <div class="alert alert-error" id="alertError"></div>
-        <div class="alert alert-info" id="alertInfo"></div>
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <div class="section-title-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    </div>
+                    สถิติการติดตาม
+                </div>
+            </div>
 
-        <div class="status-section">
-            <div class="status-item">
-                <span class="status-label">สถานะ</span>
-                <span class="status-value status-inactive" id="trackingStatus">ไม่ได้ติดตาม</span>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-label">จุดบันทึก</span>
+                        <div class="stat-icon-small">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #0ea5e9;"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="pointCount">0</div>
+                    <div class="stat-badge inactive">
+                        <span class="pulse-dot"></span>
+                        Local Storage
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-label">Real-time</span>
+                        <div class="stat-icon-small">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                        </div>
+                    </div>
+                    <div class="stat-value">15s</div>
+                    <div class="stat-badge inactive" id="realtimeBadge">
+                        <span class="pulse-dot"></span>
+                        ไม่ทำงาน
+                    </div>
+                </div>
             </div>
-            <div class="status-item">
-                <span class="status-label">จุดที่บันทึกใน Local</span>
-                <span class="status-value" id="pointCount">0</span>
-            </div>
-            <div class="status-item">
-                <span class="status-label">อัปเดท Real-time</span>
-                <span class="status-value status-inactive" id="realtimeStatus">ไม่ทำงาน</span>
-            </div>
-            <div class="status-item">
-                <span class="status-label">พิกัดปัจจุบัน</span>
-                <span class="status-value" id="currentLocation">-</span>
-            </div>
-            <div class="status-item">
-                <span class="status-label">เวลาอัปเดทล่าสุด</span>
-                <span class="status-value" id="lastUpdate">-</span>
+
+            <div class="location-display">
+                <div class="location-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+                </div>
+                <div class="location-info">
+                    <div class="location-label">พิกัดปัจจุบัน</div>
+                    <div class="location-value" id="currentLocation">รอข้อมูล GPS...</div>
+                </div>
             </div>
         </div>
 
-        <div class="map-preview">
+        <div class="map-container">
             <div id="map"></div>
+            <div class="map-overlay">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                Live Map
+            </div>
         </div>
 
-        <div class="button-group">
+        <div class="action-buttons">
             <button class="btn btn-start" id="startBtn">
-                ▶️ เริ่มติดตาม
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                เริ่มติดตาม
             </button>
             <button class="btn btn-stop" id="stopBtn" disabled>
-                ⏸️ หยุดชั่วคราว
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></svg>
+                หยุด
+            </button>
+            <button class="btn btn-save" id="saveBtn" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                บันทึกประวัติการเดินทาง
             </button>
         </div>
 
-        <div class="button-group">
-            <button class="btn btn-save" id="saveBtn" disabled>
-                💾 บันทึกประวัติการเดินทาง
-            </button>
+        <div class="timestamp" id="lastUpdate">
+            อัปเดทล่าสุด: <span style="font-weight: 600;">-</span>
         </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // กำหนด URL ของ Google Apps Script Web App
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEDX2IOmLkoyjFbZPPq06BCIFrMRD3iBKf_2TmjjPKUmcG-DTp0U1RrGEJ2EELO9MW/exec';
 
         let map;
@@ -317,25 +761,30 @@
         let watchId = null;
         let currentRoute = [];
         let lastRealtimeUpdate = 0;
-        const REALTIME_INTERVAL = 15000; // อัปเดท real-time ทุก 15 วินาที
+        const REALTIME_INTERVAL = 15000;
 
-        // Initialize map
         function initMap() {
             map = L.map('map').setView([13.7563, 100.5018], 13);
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
+                attribution: '© OpenStreetMap'
             }).addTo(map);
 
-            marker = L.marker([13.7563, 100.5018]).addTo(map);
+            const customIcon = L.divIcon({
+                className: 'custom-marker',
+                html: '<div style="width: 32px; height: 32px; background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4); border: 3px solid white;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+
+            marker = L.marker([13.7563, 100.5018], { icon: customIcon }).addTo(map);
             polyline = L.polyline([], {
-                color: '#667eea',
+                color: '#0ea5e9',
                 weight: 4,
                 opacity: 0.8
             }).addTo(map);
         }
 
-        // Load saved data from localStorage
         function loadLocalData() {
             const saved = localStorage.getItem('currentRoute');
             if (saved) {
@@ -356,7 +805,6 @@
             if (licensePlate) document.getElementById('licensePlate').value = licensePlate;
         }
 
-        // Update map position
         function updateMap(lat, lng) {
             marker.setLatLng([lat, lng]);
             map.setView([lat, lng], 16);
@@ -365,13 +813,11 @@
                 `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
         }
 
-        // Update point count
         function updatePointCount() {
             document.getElementById('pointCount').textContent = currentRoute.length;
             document.getElementById('saveBtn').disabled = currentRoute.length === 0 || isTracking;
         }
 
-        // Send real-time position to Google Sheets
         async function sendRealtimePosition(position) {
             const vehicleType = document.getElementById('vehicleType').value;
             const licensePlate = document.getElementById('licensePlate').value;
@@ -388,7 +834,6 @@
                     timestamp: new Date().toISOString()
                 };
 
-                // ส่งข้อมูล real-time ไปยัง Google Sheets
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -398,9 +843,9 @@
                     body: JSON.stringify(locationData)
                 });
 
-                // อัปเดทสถานะ
-                document.getElementById('realtimeStatus').textContent = 'ทำงาน';
-                document.getElementById('realtimeStatus').className = 'status-value status-realtime pulse';
+                const badge = document.getElementById('realtimeBadge');
+                badge.className = 'stat-badge active';
+                badge.innerHTML = '<span class="pulse-dot"></span> ทำงาน';
                 
                 console.log('Real-time position updated successfully');
             } catch (error) {
@@ -408,7 +853,6 @@
             }
         }
 
-        // Save location data
         function saveLocation(position) {
             const vehicleType = document.getElementById('vehicleType').value;
             const licensePlate = document.getElementById('licensePlate').value;
@@ -429,22 +873,19 @@
                 timestamp: new Date().toISOString()
             };
 
-            // บันทึกใน Local Storage
             currentRoute.push(locationData);
             localStorage.setItem('currentRoute', JSON.stringify(currentRoute));
             localStorage.setItem('vehicleType', vehicleType);
             localStorage.setItem('licensePlate', licensePlate);
 
-            // อัปเดทแผนที่
             updateMap(position.coords.latitude, position.coords.longitude);
             polyline.setLatLngs(currentRoute.map(p => [p.latitude, p.longitude]));
             updatePointCount();
 
             const now = new Date();
-            document.getElementById('lastUpdate').textContent = 
-                now.toLocaleTimeString('th-TH');
+            document.getElementById('lastUpdate').innerHTML = 
+                `อัปเดทล่าสุด: <span style="font-weight: 600;">${now.toLocaleTimeString('th-TH')}</span>`;
 
-            // ส่งข้อมูล real-time ไปยัง Google Sheets (ทุก 15 วินาที)
             const currentTime = Date.now();
             if (currentTime - lastRealtimeUpdate >= REALTIME_INTERVAL) {
                 sendRealtimePosition(position);
@@ -452,7 +893,6 @@
             }
         }
 
-        // Start tracking
         function startTracking() {
             const vehicleType = document.getElementById('vehicleType').value;
             const licensePlate = document.getElementById('licensePlate').value;
@@ -468,8 +908,16 @@
             }
 
             isTracking = true;
-            document.getElementById('trackingStatus').textContent = 'กำลังติดตาม';
-            document.getElementById('trackingStatus').className = 'status-value status-active pulse';
+            
+            // Update status banner
+            const statusIcon = document.getElementById('statusIcon');
+            statusIcon.className = 'status-icon active';
+            statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+            
+            const trackingStatus = document.getElementById('trackingStatus');
+            trackingStatus.textContent = 'กำลังติดตาม';
+            trackingStatus.className = 'active';
+
             document.getElementById('startBtn').disabled = true;
             document.getElementById('stopBtn').disabled = false;
             document.getElementById('saveBtn').disabled = true;
@@ -488,10 +936,9 @@
                 }
             );
 
-            showAlert('เริ่มการติดตามแล้ว (Real-time ทุก 15 วินาที)', 'info');
+            showAlert('เริ่มการติดตามแล้ว (อัปเดททุก 15 วินาที)', 'info');
         }
 
-        // Stop tracking
         function stopTracking() {
             if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
@@ -499,20 +946,29 @@
             }
 
             isTracking = false;
-            document.getElementById('trackingStatus').textContent = 'หยุดชั่วคราว';
-            document.getElementById('trackingStatus').className = 'status-value status-inactive';
-            document.getElementById('realtimeStatus').textContent = 'ไม่ทำงาน';
-            document.getElementById('realtimeStatus').className = 'status-value status-inactive';
+            
+            // Update status banner
+            const statusIcon = document.getElementById('statusIcon');
+            statusIcon.className = 'status-icon inactive';
+            statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #94a3b8;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+            
+            const trackingStatus = document.getElementById('trackingStatus');
+            trackingStatus.textContent = 'หยุดชั่วคราว';
+            trackingStatus.className = 'inactive';
+
+            const badge = document.getElementById('realtimeBadge');
+            badge.className = 'stat-badge inactive';
+            badge.innerHTML = '<span class="pulse-dot"></span> ไม่ทำงาน';
+
             document.getElementById('startBtn').disabled = false;
             document.getElementById('stopBtn').disabled = true;
             document.getElementById('vehicleType').disabled = false;
             document.getElementById('licensePlate').disabled = false;
-            updatePointCount(); // อัปเดทสถานะปุ่มบันทึก
+            updatePointCount();
 
             showAlert('หยุดการติดตามชั่วคราว', 'success');
         }
 
-        // Save route history to Google Sheets
         async function saveRouteHistory() {
             if (currentRoute.length === 0) {
                 showAlert('ไม่มีข้อมูลให้บันทึก', 'error');
@@ -522,11 +978,16 @@
             const vehicleType = document.getElementById('vehicleType').value;
             const licensePlate = document.getElementById('licensePlate').value;
 
-            document.getElementById('saveBtn').disabled = true;
-            document.getElementById('saveBtn').textContent = '⏳ กำลังบันทึก...';
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            const originalHTML = saveBtn.innerHTML;
+            saveBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="pulse"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                กำลังบันทึก...
+            `;
 
             try {
-                const response = await fetch(SCRIPT_URL, {
+                await fetch(SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: {
@@ -543,23 +1004,21 @@
                     })
                 });
 
-                // Clear local storage after successful save
                 currentRoute = [];
                 localStorage.removeItem('currentRoute');
                 polyline.setLatLngs([]);
                 updatePointCount();
 
-                showAlert(`บันทึกประวัติการเดินทางสำเร็จ!`, 'success');
-                document.getElementById('saveBtn').textContent = '💾 บันทึกประวัติการเดินทาง';
+                showAlert('บันทึกประวัติการเดินทางสำเร็จ! 🎉', 'success');
+                saveBtn.innerHTML = originalHTML;
                 
             } catch (error) {
-                showAlert('เกิดข้อผิดพลาดในการบันทึก: ' + error.message, 'error');
-                document.getElementById('saveBtn').disabled = false;
-                document.getElementById('saveBtn').textContent = '💾 บันทึกประวัติการเดินทาง';
+                showAlert('เกิดข้อผิดพลาดในการบันทึก', 'error');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalHTML;
             }
         }
 
-        // Show alert
         function showAlert(message, type) {
             const alertSuccess = document.getElementById('alertSuccess');
             const alertError = document.getElementById('alertError');
@@ -570,26 +1029,24 @@
             alertInfo.style.display = 'none';
 
             if (type === 'success') {
-                alertSuccess.textContent = message;
-                alertSuccess.style.display = 'block';
+                document.getElementById('successMessage').textContent = message;
+                alertSuccess.style.display = 'flex';
                 setTimeout(() => alertSuccess.style.display = 'none', 3000);
             } else if (type === 'error') {
-                alertError.textContent = message;
-                alertError.style.display = 'block';
+                document.getElementById('errorMessage').textContent = message;
+                alertError.style.display = 'flex';
                 setTimeout(() => alertError.style.display = 'none', 5000);
             } else if (type === 'info') {
-                alertInfo.textContent = message;
-                alertInfo.style.display = 'block';
+                document.getElementById('infoMessage').textContent = message;
+                alertInfo.style.display = 'flex';
                 setTimeout(() => alertInfo.style.display = 'none', 4000);
             }
         }
 
-        // Event listeners
         document.getElementById('startBtn').addEventListener('click', startTracking);
         document.getElementById('stopBtn').addEventListener('click', stopTracking);
         document.getElementById('saveBtn').addEventListener('click', saveRouteHistory);
 
-        // Initialize
         window.addEventListener('load', () => {
             initMap();
             loadLocalData();
