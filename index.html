@@ -2,15 +2,9 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
-    <title>Camera App - กล้องถ่ายรูป</title>
-    <link rel="manifest" href="./manifest.json">
-    <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/96/camera--v1.png">
-    <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/camera--v1.png">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ติดตามรถ - Telematics v2</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * {
             margin: 0;
@@ -19,1014 +13,587 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            min-height: -webkit-fill-available;
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-            height: 100%;
+            padding: 20px;
         }
 
         .container {
-            width: 100vw;
-            height: 100vh;
-            height: -webkit-fill-available;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            background: #000;
-        }
-
-        .camera-viewport {
-            flex: 1;
-            position: relative;
-            background: #000;
-            overflow: hidden;
-            max-height: calc(100vh - 150px);
-        }
-
-        #video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        #canvas {
-            display: none;
-        }
-
-        .top-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            z-index: 10;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%);
-        }
-
-        .info-badge {
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            color: white;
-            padding: 8px 12px;
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
             border-radius: 20px;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .info-badge.time {
-            font-weight: 600;
-        }
-
-        .info-badge.gps {
-            max-width: 200px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
-        .overlay-info {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 15px 20px;
-            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            font-size: 12px;
-            z-index: 5;
+            padding: 30px 20px;
+            text-align: center;
         }
 
-        .overlay-info div {
-            margin: 3px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
         }
 
-        .overlay-info .emoji {
-            width: 16px;
-            height: 16px;
-            color: #FFD700;
-        }
-
-        .controls-bar {
-            background: #000;
-            padding: 30px 20px 40px 20px;
-            padding-bottom: max(40px, env(safe-area-inset-bottom));
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            position: relative;
-            min-height: 140px;
-            max-height: 140px;
-            gap: 20px;
-            overflow: visible;
-            flex-shrink: 0;
-            z-index: 10;
-        }
-
-        .btn-secondary {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-            flex-shrink: 0;
-        }
-
-        .btn-secondary:active {
-            transform: scale(0.9);
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .btn-secondary svg {
-            width: 24px;
-            height: 24px;
-            pointer-events: none;
-        }
-
-        .btn-capture {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: white;
-            border: 5px solid rgba(255, 255, 255, 0.3);
-            cursor: pointer;
-            transition: all 0.1s ease;
-            position: relative;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-            -webkit-appearance: none;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-            z-index: 100;
-            flex-shrink: 0;
-            display: block;
-        }
-
-        .btn-capture:active {
-            transform: scale(0.85);
-            background: #f0f0f0;
-        }
-
-        .btn-capture::before {
-            content: '';
-            position: absolute;
-            inset: 5px;
-            background: white;
-            border-radius: 50%;
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .flash-effect {
-            position: absolute;
-            inset: 0;
-            background: white;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.15s;
-            z-index: 100;
-        }
-
-        .flash-effect.active {
-            opacity: 1;
-        }
-
-        .status-toast {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 25px;
+        .header p {
             font-size: 14px;
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            gap: 10px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            opacity: 0.9;
         }
 
-        .status-toast.show {
-            display: flex;
-            animation: fadeInOut 2s ease;
+        .form-section {
+            padding: 30px 20px;
         }
 
-        @keyframes fadeInOut {
-            0%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
-            10%, 90% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .form-group {
+            margin-bottom: 20px;
         }
 
-        .loader {
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top: 2px solid white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
         }
 
-        .grid-overlay {
-            position: absolute;
-            inset: 0;
-            display: none;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            pointer-events: none;
-            z-index: 1;
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .grid-overlay.active {
-            display: grid;
+        .status-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 0 20px 20px 20px;
+            border-radius: 15px;
         }
 
-        .grid-line {
-            border: 0.5px solid rgba(255, 255, 255, 0.3);
-        }
-
-        @media (max-width: 600px) {
-            .top-bar {
-                padding: 15px;
-            }
-
-            .btn-capture {
-                width: 65px;
-                height: 65px;
-            }
-
-            .btn-secondary {
-                width: 45px;
-                height: 45px;
-                font-size: 20px;
-            }
-
-            .controls-bar {
-                padding: 25px 15px;
-            }
-        }
-
-        /* Landscape mode */
-        @media (orientation: landscape) and (max-height: 600px) {
-            .controls-bar {
-                position: absolute;
-                right: 0;
-                top: 0;
-                bottom: 0;
-                width: 120px;
-                flex-direction: column;
-                padding: 20px;
-            }
-
-            .camera-viewport {
-                margin-right: 120px;
-            }
-        }
-
-        /* Photo Preview Modal */
-        .photo-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            backdrop-filter: blur(10px);
-        }
-
-        .photo-modal.show {
-            display: flex;
-        }
-
-        .photo-modal-header {
-            padding: 15px 20px;
+        .status-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
         }
 
-        .photo-modal-header h3 {
-            color: white;
-            font-size: 18px;
-            margin: 0;
+        .status-item:last-child {
+            border-bottom: none;
         }
 
-        .btn-close {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
+        .status-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .status-value {
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .status-active {
+            color: #10b981;
+        }
+
+        .status-inactive {
+            color: #ef4444;
+        }
+
+        .status-realtime {
+            color: #667eea;
+        }
+
+        .button-group {
+            padding: 0 20px 30px 20px;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
+            gap: 10px;
         }
 
-        .btn-close:active {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(0.9);
-        }
-
-        .photo-modal-content {
+        .btn {
             flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            overflow: auto;
-        }
-
-        .photo-preview {
-            max-width: 100%;
-            max-height: 100%;
-            border-radius: 10px;
-            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
-        }
-
-        .photo-modal-actions {
-            padding: 20px;
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.5);
-        }
-
-        .btn-action {
-            flex: 1;
-            max-width: 150px;
-            padding: 15px 25px;
-            border-radius: 25px;
+            padding: 15px;
             border: none;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
         }
 
-        .btn-action.primary {
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-start:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-save {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
 
-        .btn-action.secondary {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+        .btn-save:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
 
-        .btn-action:active {
-            transform: scale(0.95);
-        }
-
-        .btn-action svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        /* Gallery Modal */
-        .gallery-modal {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-        }
-
-        .gallery-modal.show {
-            display: flex;
-        }
-
-        .gallery-header {
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.9);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .gallery-header h3 {
-            color: white;
-            font-size: 18px;
-            margin: 0;
-        }
-
-        .gallery-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .gallery-item {
-            aspect-ratio: 1;
-            border-radius: 10px;
+        .map-preview {
+            height: 200px;
+            margin: 0 20px 20px 20px;
+            border-radius: 15px;
             overflow: hidden;
-            cursor: pointer;
-            position: relative;
-            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #e0e0e0;
         }
 
-        .gallery-item img {
-            width: 100%;
+        #map {
             height: 100%;
-            object-fit: cover;
-            transition: transform 0.2s;
+            width: 100%;
         }
 
-        .gallery-item:active img {
-            transform: scale(0.95);
+        .alert {
+            margin: 0 20px 20px 20px;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            display: none;
         }
 
-        .gallery-empty {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.5);
-            padding: 60px 20px;
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
         }
 
-        .gallery-empty svg {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
-            opacity: 0.3;
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .realtime-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+            animation: pulse 2s infinite;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="camera-viewport">
-            <video id="video" autoplay playsinline></video>
-            <canvas id="canvas"></canvas>
-            <div class="flash-effect" id="flash"></div>
-            
-            <div class="top-bar">
-                <div class="info-badge time" id="timeDisplay">
-                    <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
-                    <span>00:00:00</span>
-                </div>
-                <div class="info-badge gps" id="gpsDisplay">
-                    <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i>
-                    <span>กำลังค้นหา...</span>
-                </div>
+        <div class="header">
+            <h1>🚗 ระบบติดตามรถ</h1>
+            <p>Telematics Tracking System v2.0</p>
+        </div>
+
+        <div class="form-section">
+            <div class="form-group">
+                <label for="vehicleType">ประเภทรถ</label>
+                <input type="text" id="vehicleType" placeholder="เช่น รถบรรทุก, รถตู้, รถเก๋ง">
             </div>
 
-            <div class="overlay-info" id="overlayInfo">
-                <div>
-                    <i data-lucide="calendar" class="emoji"></i>
-                    <span id="datetime">--</span>
-                </div>
-                <div>
-                    <i data-lucide="map-pin" class="emoji"></i>
-                    <span id="location">รอข้อมูล GPS...</span>
-                </div>
+            <div class="form-group">
+                <label for="licensePlate">หมายเลขทะเบียน</label>
+                <input type="text" id="licensePlate" placeholder="เช่น กข 1234 กรุงเทพ">
             </div>
         </div>
 
-        <div class="controls-bar">
-            <button class="btn-secondary" id="galleryBtn" title="คลังรูปภาพ">
-                <i data-lucide="images"></i>
-            </button>
-            <button class="btn-capture" id="captureBtn" aria-label="ถ่ายรูป"></button>
-            <button class="btn-secondary" id="flipBtn" title="สลับกล้อง">
-                <i data-lucide="refresh-cw"></i>
-            </button>
-        </div>
-    </div>
+        <div class="alert alert-success" id="alertSuccess"></div>
+        <div class="alert alert-error" id="alertError"></div>
+        <div class="alert alert-info" id="alertInfo"></div>
 
-    <div class="status-toast" id="statusToast">
-        <span id="toastMessage">กำลังเปิดกล้อง...</span>
-    </div>
-
-    <!-- Photo Preview Modal -->
-    <div class="photo-modal" id="photoModal">
-        <div class="photo-modal-header">
-            <h3>รูปถ่ายของคุณ</h3>
-            <button class="btn-close" id="closePhotoModal">
-                <i data-lucide="x"></i>
-            </button>
-        </div>
-        <div class="photo-modal-content">
-            <img class="photo-preview" id="photoPreview" alt="Photo preview">
-        </div>
-        <div class="photo-modal-actions">
-            <button class="btn-action secondary" id="shareBtn">
-                <i data-lucide="share-2"></i>
-                <span>แชร์</span>
-            </button>
-            <button class="btn-action primary" id="saveBtn">
-                <i data-lucide="download"></i>
-                <span>บันทึก</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Gallery Modal -->
-    <div class="gallery-modal" id="galleryModal">
-        <div class="gallery-header">
-            <h3>คลังรูปภาพ</h3>
-            <button class="btn-close" id="closeGalleryModal">
-                <i data-lucide="x"></i>
-            </button>
-        </div>
-        <div class="gallery-content" id="galleryContent">
-            <div class="gallery-empty">
-                <i data-lucide="image-off"></i>
-                <p>ยังไม่มีรูปภาพ</p>
+        <div class="status-section">
+            <div class="status-item">
+                <span class="status-label">สถานะ</span>
+                <span class="status-value status-inactive" id="trackingStatus">ไม่ได้ติดตาม</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">จุดที่บันทึกใน Local</span>
+                <span class="status-value" id="pointCount">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">อัปเดท Real-time</span>
+                <span class="status-value status-inactive" id="realtimeStatus">ไม่ทำงาน</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">พิกัดปัจจุบัน</span>
+                <span class="status-value" id="currentLocation">-</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">เวลาอัปเดทล่าสุด</span>
+                <span class="status-value" id="lastUpdate">-</span>
             </div>
         </div>
+
+        <div class="map-preview">
+            <div id="map"></div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-start" id="startBtn">
+                ▶️ เริ่มติดตาม
+            </button>
+            <button class="btn btn-stop" id="stopBtn" disabled>
+                ⏸️ หยุดชั่วคราว
+            </button>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-save" id="saveBtn" disabled>
+                💾 บันทึกประวัติการเดินทาง
+            </button>
+        </div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialize Lucide icons
-        lucide.createIcons();
+        // กำหนด URL ของ Google Apps Script Web App
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEDX2IOmLkoyjFbZPPq06BCIFrMRD3iBKf_2TmjjPKUmcG-DTp0U1RrGEJ2EELO9MW/exec';
 
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const captureBtn = document.getElementById('captureBtn');
-        const flipBtn = document.getElementById('flipBtn');
-        const galleryBtn = document.getElementById('galleryBtn');
-        const statusToast = document.getElementById('statusToast');
-        const toastMessage = document.getElementById('toastMessage');
-        const datetimeDisplay = document.getElementById('datetime');
-        const locationDisplay = document.getElementById('location');
-        const timeDisplay = document.getElementById('timeDisplay');
-        const gpsDisplay = document.getElementById('gpsDisplay');
-        const flash = document.getElementById('flash');
-        
-        // Photo Modal Elements
-        const photoModal = document.getElementById('photoModal');
-        const photoPreview = document.getElementById('photoPreview');
-        const closePhotoModal = document.getElementById('closePhotoModal');
-        const shareBtn = document.getElementById('shareBtn');
-        const saveBtn = document.getElementById('saveBtn');
-        
-        // Gallery Modal Elements
-        const galleryModal = document.getElementById('galleryModal');
-        const closeGalleryModal = document.getElementById('closeGalleryModal');
-        const galleryContent = document.getElementById('galleryContent');
-        
-        let stream = null;
-        let currentPosition = null;
-        let facingMode = 'environment';
-        let currentPhotoBlob = null;
-        let currentPhotoUrl = null;
+        let map;
+        let marker;
+        let polyline;
+        let isTracking = false;
+        let watchId = null;
+        let currentRoute = [];
+        let lastRealtimeUpdate = 0;
+        const REALTIME_INTERVAL = 15000; // อัปเดท real-time ทุก 15 วินาที
 
-        // LocalStorage key for photos
-        const PHOTOS_KEY = 'camera_app_photos';
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([13.7563, 100.5018], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
 
-        // ฟังก์ชันจัดการรูปภาพใน LocalStorage
-        function savePhotoToStorage(photoData) {
+            marker = L.marker([13.7563, 100.5018]).addTo(map);
+            polyline = L.polyline([], {
+                color: '#667eea',
+                weight: 4,
+                opacity: 0.8
+            }).addTo(map);
+        }
+
+        // Load saved data from localStorage
+        function loadLocalData() {
+            const saved = localStorage.getItem('currentRoute');
+            if (saved) {
+                currentRoute = JSON.parse(saved);
+                updatePointCount();
+                
+                if (currentRoute.length > 0) {
+                    const lastPoint = currentRoute[currentRoute.length - 1];
+                    updateMap(lastPoint.latitude, lastPoint.longitude);
+                    polyline.setLatLngs(currentRoute.map(p => [p.latitude, p.longitude]));
+                }
+            }
+
+            const vehicleType = localStorage.getItem('vehicleType');
+            const licensePlate = localStorage.getItem('licensePlate');
+            
+            if (vehicleType) document.getElementById('vehicleType').value = vehicleType;
+            if (licensePlate) document.getElementById('licensePlate').value = licensePlate;
+        }
+
+        // Update map position
+        function updateMap(lat, lng) {
+            marker.setLatLng([lat, lng]);
+            map.setView([lat, lng], 16);
+            
+            document.getElementById('currentLocation').textContent = 
+                `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        }
+
+        // Update point count
+        function updatePointCount() {
+            document.getElementById('pointCount').textContent = currentRoute.length;
+            document.getElementById('saveBtn').disabled = currentRoute.length === 0 || isTracking;
+        }
+
+        // Send real-time position to Google Sheets
+        async function sendRealtimePosition(position) {
+            const vehicleType = document.getElementById('vehicleType').value;
+            const licensePlate = document.getElementById('licensePlate').value;
+
             try {
-                let photos = JSON.parse(localStorage.getItem(PHOTOS_KEY) || '[]');
-                photos.unshift({
-                    id: Date.now(),
-                    data: photoData,
+                const locationData = {
+                    action: 'updateCurrentPosition',
+                    vehicleType: vehicleType,
+                    licensePlate: licensePlate,
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                    speed: position.coords.speed,
                     timestamp: new Date().toISOString()
-                });
-                // เก็บแค่ 50 รูปล่าสุด
-                if (photos.length > 50) {
-                    photos = photos.slice(0, 50);
-                }
-                localStorage.setItem(PHOTOS_KEY, JSON.stringify(photos));
-                return true;
-            } catch (e) {
-                console.error('Cannot save to localStorage:', e);
-                return false;
-            }
-        }
-
-        function getPhotosFromStorage() {
-            try {
-                return JSON.parse(localStorage.getItem(PHOTOS_KEY) || '[]');
-            } catch (e) {
-                return [];
-            }
-        }
-
-        function deletePhotoFromStorage(photoId) {
-            try {
-                let photos = getPhotosFromStorage();
-                photos = photos.filter(p => p.id !== photoId);
-                localStorage.setItem(PHOTOS_KEY, JSON.stringify(photos));
-                return true;
-            } catch (e) {
-                return false;
-            }
-        }
-
-        // ฟังก์ชันอัพเดทเวลา
-        function updateDateTime() {
-            const now = new Date();
-            
-            const timeStr = now.toLocaleTimeString('th-TH', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false 
-            });
-            timeDisplay.querySelector('span').textContent = timeStr;
-            
-            const options = { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric', 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit',
-                hour12: false 
-            };
-            datetimeDisplay.textContent = now.toLocaleDateString('th-TH', options);
-        }
-
-        setInterval(updateDateTime, 1000);
-        updateDateTime();
-
-        // เริ่มกล้อง
-        async function startCamera() {
-            try {
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
-
-                showToast('กำลังเปิดกล้อง...', true);
-
-                const constraints = { 
-                    video: { 
-                        facingMode: facingMode,
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    },
-                    audio: false
                 };
 
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = stream;
-                
-                await new Promise(resolve => {
-                    video.onloadedmetadata = () => {
-                        video.play();
-                        resolve();
-                    };
+                // ส่งข้อมูล real-time ไปยัง Google Sheets
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(locationData)
                 });
+
+                // อัปเดทสถานะ
+                document.getElementById('realtimeStatus').textContent = 'ทำงาน';
+                document.getElementById('realtimeStatus').className = 'status-value status-realtime pulse';
                 
-                showToast('✓ กล้องพร้อมใช้งาน');
-            } catch (err) {
-                console.error('Error accessing camera:', err);
-                showToast('✗ ไม่สามารถเข้าถึงกล้องได้');
+                console.log('Real-time position updated successfully');
+            } catch (error) {
+                console.error('Error sending real-time position:', error);
             }
         }
 
-        // สลับกล้อง
-        function flipCamera() {
-            facingMode = facingMode === 'environment' ? 'user' : 'environment';
-            showToast(facingMode === 'environment' ? '📷 กล้องหลัง' : '🤳 กล้องหน้า');
-            startCamera();
-        }
+        // Save location data
+        function saveLocation(position) {
+            const vehicleType = document.getElementById('vehicleType').value;
+            const licensePlate = document.getElementById('licensePlate').value;
 
-        // ขอตำแหน่ง GPS
-        function getLocation() {
-            if ('geolocation' in navigator) {
-                navigator.geolocation.watchPosition(
-                    (position) => {
-                        currentPosition = position;
-                        const lat = position.coords.latitude.toFixed(6);
-                        const lng = position.coords.longitude.toFixed(6);
-                        const accuracy = position.coords.accuracy.toFixed(0);
-                        
-                        locationDisplay.textContent = `${lat}, ${lng} (±${accuracy}m)`;
-                        gpsDisplay.querySelector('span').textContent = `${lat}, ${lng}`;
-                    },
-                    (error) => {
-                        console.error('GPS Error:', error);
-                        locationDisplay.textContent = 'ไม่สามารถรับตำแหน่งได้';
-                        gpsDisplay.querySelector('span').textContent = 'ไม่พบตำแหน่ง';
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        maximumAge: 0,
-                        timeout: 5000
-                    }
-                );
-            } else {
-                locationDisplay.textContent = 'เบราว์เซอร์ไม่รองรับ GPS';
-                gpsDisplay.querySelector('span').textContent = 'ไม่รองรับ';
-            }
-        }
-
-        // ถ่ายรูป
-        function capturePhoto() {
-            if (!stream) {
-                showToast('✗ กล้องยังไม่พร้อม');
+            if (!vehicleType || !licensePlate) {
+                showAlert('กรุณากรอกประเภทรถและหมายเลขทะเบียน', 'error');
+                stopTracking();
                 return;
             }
 
-            flash.classList.add('active');
-            setTimeout(() => flash.classList.remove('active'), 150);
-            playShutterSound();
+            const locationData = {
+                vehicleType: vehicleType,
+                licensePlate: licensePlate,
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                speed: position.coords.speed,
+                timestamp: new Date().toISOString()
+            };
 
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
+            // บันทึกใน Local Storage
+            currentRoute.push(locationData);
+            localStorage.setItem('currentRoute', JSON.stringify(currentRoute));
+            localStorage.setItem('vehicleType', vehicleType);
+            localStorage.setItem('licensePlate', licensePlate);
 
-            ctx.drawImage(video, 0, 0);
+            // อัปเดทแผนที่
+            updateMap(position.coords.latitude, position.coords.longitude);
+            polyline.setLatLngs(currentRoute.map(p => [p.latitude, p.longitude]));
+            updatePointCount();
 
             const now = new Date();
-            const dateTimeString = now.toLocaleString('th-TH', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            });
+            document.getElementById('lastUpdate').textContent = 
+                now.toLocaleTimeString('th-TH');
 
-            let locationString = 'GPS: ไม่มีข้อมูล';
-            if (currentPosition) {
-                const lat = currentPosition.coords.latitude.toFixed(6);
-                const lng = currentPosition.coords.longitude.toFixed(6);
-                locationString = `GPS: ${lat}, ${lng}`;
-            }
-
-            const padding = 25;
-            const fontSize = Math.max(canvas.width / 35, 18);
-            const lineHeight = fontSize * 1.6;
-            
-            ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
-            ctx.textBaseline = 'top';
-            
-            const textWidth = Math.max(
-                ctx.measureText(dateTimeString).width,
-                ctx.measureText(locationString).width
-            );
-            
-            const gradient = ctx.createLinearGradient(
-                0, 
-                canvas.height - (lineHeight * 2 + padding * 3),
-                0,
-                canvas.height
-            );
-            gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.8)');
-            
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, canvas.height - (lineHeight * 2 + padding * 3), canvas.width, lineHeight * 2 + padding * 3);
-
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-            ctx.shadowBlur = 10;
-            ctx.shadowOffsetX = 2;
-            ctx.shadowOffsetY = 2;
-            
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillText(
-                dateTimeString, 
-                padding, 
-                canvas.height - (lineHeight * 2 + padding * 2)
-            );
-            
-            ctx.fillStyle = '#FFD700';
-            ctx.fillText(
-                locationString, 
-                padding, 
-                canvas.height - (lineHeight + padding * 2)
-            );
-
-            // แปลงเป็น blob และแสดง preview
-            canvas.toBlob((blob) => {
-                currentPhotoBlob = blob;
-                currentPhotoUrl = URL.createObjectURL(blob);
-                
-                // แสดง preview modal
-                photoPreview.src = currentPhotoUrl;
-                photoModal.classList.add('show');
-                
-                // เก็บรูปลง localStorage
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    savePhotoToStorage(reader.result);
-                };
-                reader.readAsDataURL(blob);
-                
-                // Re-initialize icons
-                setTimeout(() => lucide.createIcons(), 100);
-            }, 'image/jpeg', 0.95);
-        }
-
-        // บันทึกรูป
-        function savePhoto() {
-            if (!currentPhotoBlob) return;
-
-            const a = document.createElement('a');
-            a.href = currentPhotoUrl;
-            a.download = `photo_${Date.now()}.jpg`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-
-            showToast('✓ บันทึกรูปภาพสำเร็จ!');
-            photoModal.classList.remove('show');
-            
-            if (currentPhotoUrl) {
-                URL.revokeObjectURL(currentPhotoUrl);
+            // ส่งข้อมูล real-time ไปยัง Google Sheets (ทุก 15 วินาที)
+            const currentTime = Date.now();
+            if (currentTime - lastRealtimeUpdate >= REALTIME_INTERVAL) {
+                sendRealtimePosition(position);
+                lastRealtimeUpdate = currentTime;
             }
         }
 
-        // แชร์รูป
-        async function sharePhoto() {
-            if (!currentPhotoBlob) return;
+        // Start tracking
+        function startTracking() {
+            const vehicleType = document.getElementById('vehicleType').value;
+            const licensePlate = document.getElementById('licensePlate').value;
+
+            if (!vehicleType || !licensePlate) {
+                showAlert('กรุณากรอกประเภทรถและหมายเลขทะเบียน', 'error');
+                return;
+            }
+
+            if (!navigator.geolocation) {
+                showAlert('เบราว์เซอร์ไม่รองรับ GPS', 'error');
+                return;
+            }
+
+            isTracking = true;
+            document.getElementById('trackingStatus').textContent = 'กำลังติดตาม';
+            document.getElementById('trackingStatus').className = 'status-value status-active pulse';
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('saveBtn').disabled = true;
+            document.getElementById('vehicleType').disabled = true;
+            document.getElementById('licensePlate').disabled = true;
+
+            watchId = navigator.geolocation.watchPosition(
+                saveLocation,
+                (error) => {
+                    showAlert('ไม่สามารถรับตำแหน่งได้: ' + error.message, 'error');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                }
+            );
+
+            showAlert('เริ่มการติดตามแล้ว (Real-time ทุก 15 วินาที)', 'info');
+        }
+
+        // Stop tracking
+        function stopTracking() {
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+
+            isTracking = false;
+            document.getElementById('trackingStatus').textContent = 'หยุดชั่วคราว';
+            document.getElementById('trackingStatus').className = 'status-value status-inactive';
+            document.getElementById('realtimeStatus').textContent = 'ไม่ทำงาน';
+            document.getElementById('realtimeStatus').className = 'status-value status-inactive';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('vehicleType').disabled = false;
+            document.getElementById('licensePlate').disabled = false;
+            updatePointCount(); // อัปเดทสถานะปุ่มบันทึก
+
+            showAlert('หยุดการติดตามชั่วคราว', 'success');
+        }
+
+        // Save route history to Google Sheets
+        async function saveRouteHistory() {
+            if (currentRoute.length === 0) {
+                showAlert('ไม่มีข้อมูลให้บันทึก', 'error');
+                return;
+            }
+
+            const vehicleType = document.getElementById('vehicleType').value;
+            const licensePlate = document.getElementById('licensePlate').value;
+
+            document.getElementById('saveBtn').disabled = true;
+            document.getElementById('saveBtn').textContent = '⏳ กำลังบันทึก...';
 
             try {
-                const file = new File([currentPhotoBlob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-                
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: 'รูปถ่ายจาก Camera App',
-                        text: 'แชร์รูปภาพพร้อม GPS และ Timestamp'
-                    });
-                    showToast('✓ แชร์สำเร็จ!');
-                } else {
-                    // Fallback: บันทึกรูปแทน
-                    savePhoto();
-                }
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.error('Error sharing:', err);
-                    savePhoto();
-                }
-            }
-        }
-
-        // เปิด Gallery
-        function openGallery() {
-            const photos = getPhotosFromStorage();
-            
-            if (photos.length === 0) {
-                galleryContent.innerHTML = `
-                    <div class="gallery-empty">
-                        <i data-lucide="image-off"></i>
-                        <p>ยังไม่มีรูปภาพ</p>
-                        <p style="font-size: 14px; margin-top: 10px;">ถ่ายรูปเพื่อเริ่มต้น!</p>
-                    </div>
-                `;
-            } else {
-                galleryContent.innerHTML = `
-                    <div class="gallery-grid">
-                        ${photos.map(photo => `
-                            <div class="gallery-item" data-photo-id="${photo.id}">
-                                <img src="${photo.data}" alt="Photo">
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                
-                // เพิ่ม event listener สำหรับแต่ละรูป
-                document.querySelectorAll('.gallery-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        const photoId = parseInt(item.dataset.photoId);
-                        const photo = photos.find(p => p.id === photoId);
-                        if (photo) {
-                            photoPreview.src = photo.data;
-                            galleryModal.classList.remove('show');
-                            photoModal.classList.add('show');
-                            
-                            // สำหรับรูปจาก gallery ให้บันทึก/แชร์ใหม่ได้
-                            fetch(photo.data)
-                                .then(res => res.blob())
-                                .then(blob => {
-                                    currentPhotoBlob = blob;
-                                    currentPhotoUrl = photo.data;
-                                });
-                        }
-                    });
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'saveRouteHistory',
+                        vehicleType: vehicleType,
+                        licensePlate: licensePlate,
+                        route: currentRoute,
+                        startTime: currentRoute[0].timestamp,
+                        endTime: currentRoute[currentRoute.length - 1].timestamp,
+                        totalPoints: currentRoute.length
+                    })
                 });
+
+                // Clear local storage after successful save
+                currentRoute = [];
+                localStorage.removeItem('currentRoute');
+                polyline.setLatLngs([]);
+                updatePointCount();
+
+                showAlert(`บันทึกประวัติการเดินทางสำเร็จ!`, 'success');
+                document.getElementById('saveBtn').textContent = '💾 บันทึกประวัติการเดินทาง';
+                
+            } catch (error) {
+                showAlert('เกิดข้อผิดพลาดในการบันทึก: ' + error.message, 'error');
+                document.getElementById('saveBtn').disabled = false;
+                document.getElementById('saveBtn').textContent = '💾 บันทึกประวัติการเดินทาง';
             }
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const alertSuccess = document.getElementById('alertSuccess');
+            const alertError = document.getElementById('alertError');
+            const alertInfo = document.getElementById('alertInfo');
             
-            galleryModal.classList.add('show');
-            
-            // Re-initialize icons
-            setTimeout(() => lucide.createIcons(), 100);
-        }
+            alertSuccess.style.display = 'none';
+            alertError.style.display = 'none';
+            alertInfo.style.display = 'none';
 
-        // เสียงชัตเตอร์
-        function playShutterSound() {
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = 800;
-                oscillator.type = 'sine';
-                
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.1);
-            } catch (e) {
-                // ไม่สามารถเล่นเสียงได้
+            if (type === 'success') {
+                alertSuccess.textContent = message;
+                alertSuccess.style.display = 'block';
+                setTimeout(() => alertSuccess.style.display = 'none', 3000);
+            } else if (type === 'error') {
+                alertError.textContent = message;
+                alertError.style.display = 'block';
+                setTimeout(() => alertError.style.display = 'none', 5000);
+            } else if (type === 'info') {
+                alertInfo.textContent = message;
+                alertInfo.style.display = 'block';
+                setTimeout(() => alertInfo.style.display = 'none', 4000);
             }
         }
 
-        // แสดง Toast
-        function showToast(message, loading = false) {
-            if (loading) {
-                toastMessage.innerHTML = `<div class="loader"></div>${message}`;
-            } else {
-                toastMessage.textContent = message;
-            }
-            statusToast.classList.add('show');
-            setTimeout(() => {
-                statusToast.classList.remove('show');
-            }, 2000);
-        }
+        // Event listeners
+        document.getElementById('startBtn').addEventListener('click', startTracking);
+        document.getElementById('stopBtn').addEventListener('click', stopTracking);
+        document.getElementById('saveBtn').addEventListener('click', saveRouteHistory);
 
-        // Event Listeners
-        captureBtn.addEventListener('click', capturePhoto);
-        captureBtn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            capturePhoto();
+        // Initialize
+        window.addEventListener('load', () => {
+            initMap();
+            loadLocalData();
         });
-        
-        flipBtn.addEventListener('click', flipCamera);
-        galleryBtn.addEventListener('click', openGallery);
-        
-        // Photo Modal Events
-        closePhotoModal.addEventListener('click', () => {
-            photoModal.classList.remove('show');
-            if (currentPhotoUrl) {
-                URL.revokeObjectURL(currentPhotoUrl);
-            }
-        });
-        
-        saveBtn.addEventListener('click', savePhoto);
-        shareBtn.addEventListener('click', sharePhoto);
-        
-        // Gallery Modal Events
-        closeGalleryModal.addEventListener('click', () => {
-            galleryModal.classList.remove('show');
-        });
-
-        // ป้องกันการซูมในมือถือ
-        document.addEventListener('gesturestart', function (e) {
-            e.preventDefault();
-        });
-
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function (e) {
-            const now = Date.now();
-            if (now - lastTouchEnd <= 300) {
-                e.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, false);
-
-        // เริ่มต้น
-        startCamera();
-        getLocation();
     </script>
 </body>
 </html>
