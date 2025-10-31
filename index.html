@@ -566,12 +566,6 @@
             }
         }
 
-        .divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%);
-            margin: 20px 0;
-        }
-
         @keyframes float {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-5px); }
@@ -591,7 +585,7 @@
                 </div>
                 <div class="app-name">
                     <h1>Vehicle Tracker</h1>
-                    <p>Real-time GPS • Updates every second</p>
+                    <p>Real-time GPS • Path Tracking</p>
                 </div>
             </div>
             <div class="notification-badge">
@@ -725,7 +719,7 @@
             <div id="map"></div>
             <div class="map-overlay">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-                Live Map
+                Live Map + Path
             </div>
         </div>
 
@@ -773,13 +767,12 @@ const firebaseConfig = {
 
         let map;
         let marker;
-        let polyline;
+        let polyline; // ✅ เส้นทางการเคลื่อนที่
         let isTracking = false;
         let watchId = null;
         let currentRoute = [];
         let lastFirebaseUpdate = 0;
         
-        // ✅ เปลี่ยนจาก 60000 (1 นาที) เป็น 1000 (1 วินาที)
         const FIREBASE_INTERVAL = 1000; // 1 วินาที
         const LOCAL_STORAGE_INTERVAL = 3000; // 3 วินาที
         let localStorageTimer = null;
@@ -800,10 +793,13 @@ const firebaseConfig = {
             });
 
             marker = L.marker([13.7563, 100.5018], { icon: customIcon }).addTo(map);
+            
+            // ✅ สร้าง polyline สำหรับแสดงเส้นทาง
             polyline = L.polyline([], {
                 color: '#0ea5e9',
                 weight: 4,
-                opacity: 0.8
+                opacity: 0.8,
+                smoothFactor: 1
             }).addTo(map);
         }
 
@@ -816,6 +812,8 @@ const firebaseConfig = {
                 if (currentRoute.length > 0) {
                     const lastPoint = currentRoute[currentRoute.length - 1];
                     updateMap(lastPoint.latitude, lastPoint.longitude);
+                    
+                    // ✅ แสดงเส้นทางที่บันทึกไว้
                     polyline.setLatLngs(currentRoute.map(p => [p.latitude, p.longitude]));
                 }
             }
@@ -828,8 +826,11 @@ const firebaseConfig = {
         }
 
         function updateMap(lat, lng) {
-            marker.setLatLng([lat, lng]);
-            map.setView([lat, lng], 16);
+            const newLatLng = [lat, lng];
+            
+            // ✅ อัปเดทตำแหน่ง marker
+            marker.setLatLng(newLatLng);
+            map.setView(newLatLng, 16);
             
             document.getElementById('currentLocation').textContent = 
                 `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
@@ -840,7 +841,6 @@ const firebaseConfig = {
             document.getElementById('saveBtn').disabled = currentRoute.length === 0 || isTracking;
         }
 
-        // ✅ ฟังก์ชันส่งข้อมูลไป Firebase
         async function sendToFirebase(position) {
             const vehicleType = document.getElementById('vehicleType').value;
             const licensePlate = document.getElementById('licensePlate').value;
@@ -897,7 +897,10 @@ const firebaseConfig = {
             localStorage.setItem('licensePlate', licensePlate);
 
             updateMap(position.coords.latitude, position.coords.longitude);
+            
+            // ✅ อัปเดทเส้นทาง polyline
             polyline.setLatLngs(currentRoute.map(p => [p.latitude, p.longitude]));
+            
             updatePointCount();
 
             const now = new Date();
@@ -935,7 +938,7 @@ const firebaseConfig = {
             document.getElementById('vehicleType').disabled = true;
             document.getElementById('licensePlate').disabled = true;
 
-            // ✅ ส่งไป Firebase ทันที
+            // ส่งไป Firebase ทันที
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     sendToFirebase(position);
@@ -951,7 +954,7 @@ const firebaseConfig = {
                 }
             );
 
-            // ✅ ใช้ setInterval เพื่อส่งไป Firebase ทุก 1 วินาที
+            // ส่งไป Firebase ทุก 1 วินาที
             firebaseTimer = setInterval(() => {
                 navigator.geolocation.getCurrentPosition(
                     sendToFirebase,
@@ -964,9 +967,9 @@ const firebaseConfig = {
                         maximumAge: 0
                     }
                 );
-            }, FIREBASE_INTERVAL); // ทุก 1 วินาที
+            }, FIREBASE_INTERVAL);
 
-            // บันทึก local ทุก 3 วินาที
+            // บันทึก local + อัปเดท map ทุก 3 วินาที
             localStorageTimer = setInterval(() => {
                 navigator.geolocation.getCurrentPosition(
                     saveToLocalStorage,
@@ -981,7 +984,7 @@ const firebaseConfig = {
                 );
             }, LOCAL_STORAGE_INTERVAL);
 
-            showAlert('เริ่มการติดตามแล้ว (Firebase: 1s, Local: 3s)', 'info');
+            showAlert('เริ่มการติดตามแล้ว (Firebase: 1s, Path: 3s)', 'info');
         }
 
         function stopTracking() {
@@ -1015,7 +1018,7 @@ const firebaseConfig = {
             document.getElementById('licensePlate').disabled = false;
             updatePointCount();
 
-            showAlert('หยุดการติดตามชั่วคราว', 'success');
+            showAlert('หยุดการติดตามชั่วคราว (เส้นทางยังคงอยู่)', 'success');
         }
 
         async function saveRouteHistory() {
@@ -1053,6 +1056,7 @@ const firebaseConfig = {
                     })
                 });
 
+                // ✅ ล้างข้อมูลและเส้นทาง
                 currentRoute = [];
                 localStorage.removeItem('currentRoute');
                 polyline.setLatLngs([]);
