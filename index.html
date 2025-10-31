@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ติดตามรถ - Telematics v2</title>
+    <title>ติดตามรถ - Telematics v2 (Firebase)</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -572,7 +572,6 @@
             margin: 20px 0;
         }
 
-        /* Floating animation for status icon */
         @keyframes float {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-5px); }
@@ -592,7 +591,7 @@
                 </div>
                 <div class="app-name">
                     <h1>Vehicle Tracker</h1>
-                    <p>Real-time GPS Monitoring</p>
+                    <p>Real-time GPS Monitoring (Firebase)</p>
                 </div>
             </div>
             <div class="notification-badge">
@@ -692,19 +691,19 @@
                     <div class="stat-value" id="pointCount">0</div>
                     <div class="stat-badge inactive">
                         <span class="pulse-dot"></span>
-                        Local Storage
+                        Local (3s)
                     </div>
                 </div>
 
                 <div class="stat-card">
                     <div class="stat-header">
-                        <span class="stat-label">Real-time</span>
+                        <span class="stat-label">Firebase</span>
                         <div class="stat-icon-small">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
                         </div>
                     </div>
-                    <div class="stat-value">15s</div>
-                    <div class="stat-badge inactive" id="realtimeBadge">
+                    <div class="stat-value">60s</div>
+                    <div class="stat-badge inactive" id="firebaseBadge">
                         <span class="pulse-dot"></span>
                         ไม่ทำงาน
                     </div>
@@ -750,9 +749,31 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEDX2IOmLkoyjFbZPPq06BCIFrMRD3iBKf_2TmjjPKUmcG-DTp0U1RrGEJ2EELO9MW/exec';
+        // ⚠️ ใส่ Firebase Config ของคุณที่นี่
+       const firebaseConfig = {
+  apiKey: "AIzaSyDczlfTJc4hI5BD9-utiOmGEdx1es38ya0",
+  authDomain: "telematic-f6a5a.firebaseapp.com",
+  databaseURL: "https://telematic-f6a5a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "telematic-f6a5a",
+  storageBucket: "telematic-f6a5a.firebasestorage.app",
+  messagingSenderId: "426976429007",
+  appId: "1:426976429007:web:64e3abfce2dcc6d5c788ba",
+  measurementId: "G-JWG01H8DGH"
+};
+
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Google Apps Script URL (สำหรับบันทึก Route History เท่านั้น)
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzw7AKriFwVprlxjvvoSCIs0RxPuaZ0rj9Hch9jeHjbFwqPtwZ5xFPR_i18V_bOTFM/exec';
 
         let map;
         let marker;
@@ -760,8 +781,10 @@
         let isTracking = false;
         let watchId = null;
         let currentRoute = [];
-        let lastRealtimeUpdate = 0;
-        const REALTIME_INTERVAL = 15000;
+        let lastFirebaseUpdate = 0;
+        const FIREBASE_INTERVAL = 60000; // 1 นาที
+        const LOCAL_STORAGE_INTERVAL = 3000; // 3 วินาที
+        let localStorageTimer = null;
 
         function initMap() {
             map = L.map('map').setView([13.7563, 100.5018], 13);
@@ -818,42 +841,37 @@
             document.getElementById('saveBtn').disabled = currentRoute.length === 0 || isTracking;
         }
 
-        async function sendRealtimePosition(position) {
+        async function sendToFirebase(position) {
             const vehicleType = document.getElementById('vehicleType').value;
             const licensePlate = document.getElementById('licensePlate').value;
 
             try {
+                const vehicleKey = licensePlate.replace(/\s+/g, '_');
                 const locationData = {
-                    action: 'updateCurrentPosition',
                     vehicleType: vehicleType,
                     licensePlate: licensePlate,
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy,
-                    speed: position.coords.speed,
-                    timestamp: new Date().toISOString()
+                    accuracy: position.coords.accuracy || 0,
+                    speed: position.coords.speed || 0,
+                    timestamp: new Date().toISOString(),
+                    lastUpdated: new Date().toISOString()
                 };
 
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(locationData)
-                });
+                await database.ref('vehicles/' + vehicleKey).set(locationData);
 
-                const badge = document.getElementById('realtimeBadge');
+                const badge = document.getElementById('firebaseBadge');
                 badge.className = 'stat-badge active';
                 badge.innerHTML = '<span class="pulse-dot"></span> ทำงาน';
                 
-                console.log('Real-time position updated successfully');
+                console.log('Firebase updated successfully');
             } catch (error) {
-                console.error('Error sending real-time position:', error);
+                console.error('Error updating Firebase:', error);
+                showAlert('ไม่สามารถอัปเดท Firebase: ' + error.message, 'error');
             }
         }
 
-        function saveLocation(position) {
+        function saveToLocalStorage(position) {
             const vehicleType = document.getElementById('vehicleType').value;
             const licensePlate = document.getElementById('licensePlate').value;
 
@@ -886,10 +904,11 @@
             document.getElementById('lastUpdate').innerHTML = 
                 `อัปเดทล่าสุด: <span style="font-weight: 600;">${now.toLocaleTimeString('th-TH')}</span>`;
 
+            // ส่งไป Firebase ทุก 1 นาที
             const currentTime = Date.now();
-            if (currentTime - lastRealtimeUpdate >= REALTIME_INTERVAL) {
-                sendRealtimePosition(position);
-                lastRealtimeUpdate = currentTime;
+            if (currentTime - lastFirebaseUpdate >= FIREBASE_INTERVAL) {
+                sendToFirebase(position);
+                lastFirebaseUpdate = currentTime;
             }
         }
 
@@ -924,8 +943,15 @@
             document.getElementById('vehicleType').disabled = true;
             document.getElementById('licensePlate').disabled = true;
 
+            // เริ่ม watchPosition เพื่อดูตำแหน่งแบบ real-time
             watchId = navigator.geolocation.watchPosition(
-                saveLocation,
+                (position) => {
+                    // ส่งไป Firebase ทันทีในครั้งแรก
+                    if (lastFirebaseUpdate === 0) {
+                        sendToFirebase(position);
+                        lastFirebaseUpdate = Date.now();
+                    }
+                },
                 (error) => {
                     showAlert('ไม่สามารถรับตำแหน่งได้: ' + error.message, 'error');
                 },
@@ -936,13 +962,33 @@
                 }
             );
 
-            showAlert('เริ่มการติดตามแล้ว (อัปเดททุก 15 วินาที)', 'info');
+            // ใช้ setInterval เพื่อบันทึกพิกัดทุก 3 วินาที
+            localStorageTimer = setInterval(() => {
+                navigator.geolocation.getCurrentPosition(
+                    saveToLocalStorage,
+                    (error) => {
+                        console.error('Error getting position:', error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            }, LOCAL_STORAGE_INTERVAL);
+
+            showAlert('เริ่มการติดตามแล้ว (บันทึกทุก 3 วินาที, Firebase ทุก 1 นาที)', 'info');
         }
 
         function stopTracking() {
             if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
+            }
+
+            if (localStorageTimer) {
+                clearInterval(localStorageTimer);
+                localStorageTimer = null;
             }
 
             isTracking = false;
@@ -956,7 +1002,7 @@
             trackingStatus.textContent = 'หยุดชั่วคราว';
             trackingStatus.className = 'inactive';
 
-            const badge = document.getElementById('realtimeBadge');
+            const badge = document.getElementById('firebaseBadge');
             badge.className = 'stat-badge inactive';
             badge.innerHTML = '<span class="pulse-dot"></span> ไม่ทำงาน';
 
@@ -987,6 +1033,7 @@
             `;
 
             try {
+                // บันทึกใน Google Sheets (Route History)
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
