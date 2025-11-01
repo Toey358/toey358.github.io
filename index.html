@@ -1250,6 +1250,17 @@ const firebaseConfig = {
             const vehicleType = document.getElementById('vehicleType').value;
             const licensePlate = document.getElementById('licensePlate').value;
 
+            // ✅ คำนวณความเร็วเฉลี่ย (km/h)
+            const speeds = currentRoute
+                .filter(point => point.speed && point.speed > 0)
+                .map(point => point.speed * 3.6); // แปลง m/s เป็น km/h
+            
+            let averageSpeed = 0;
+            if (speeds.length > 0) {
+                const totalSpeed = speeds.reduce((sum, speed) => sum + speed, 0);
+                averageSpeed = Math.round((totalSpeed / speeds.length) * 10) / 10; // ปัดทศนิยม 1 ตำแหน่ง
+            }
+
             const saveBtn = document.getElementById('saveBtn');
             saveBtn.disabled = true;
             const originalHTML = saveBtn.innerHTML;
@@ -1272,7 +1283,8 @@ const firebaseConfig = {
                         route: currentRoute,
                         startTime: currentRoute[0].timestamp,
                         endTime: currentRoute[currentRoute.length - 1].timestamp,
-                        totalPoints: currentRoute.length
+                        totalPoints: currentRoute.length,
+                        averageSpeed: averageSpeed // ✅ ส่งความเร็วเฉลี่ยไปด้วย
                     })
                 });
 
@@ -1284,7 +1296,7 @@ const firebaseConfig = {
                 polyline.setLatLngs([]);
                 updatePointCount();
 
-                showAlert('บันทึกประวัติการเดินทางสำเร็จ! 🎉', 'success');
+                showAlert(`บันทึกสำเร็จ! 🎉 (เร็วเฉลี่ย: ${averageSpeed} km/h)`, 'success');
                 saveBtn.innerHTML = originalHTML;
                 
             } catch (error) {
