@@ -730,7 +730,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
                         </div>
                     </div>
-                    <div class="stat-value">1s</div>
+                    <div class="stat-value">3s</div>
                     <div class="stat-badge inactive" id="firebaseBadge">
                         <span class="pulse-dot"></span>
                         ไม่ทำงาน
@@ -848,8 +848,9 @@ const firebaseConfig = {
         // ✅ Wake Lock เพื่อป้องกันหน้าจอปิดอัตโนมัติ
         let wakeLock = null;
         
-        const FIREBASE_INTERVAL = 1000;
-        const LOCAL_STORAGE_INTERVAL = 3000;
+        // ✅ เปลี่ยนเป็น 3 วินาทีทั้งคู่ เพื่อให้ GPS มีเวลาประมวลผลให้แม่นยำ
+        const FIREBASE_INTERVAL = 3000; // 3 วินาที
+        const LOCAL_STORAGE_INTERVAL = 3000; // 3 วินาที
         let localStorageTimer = null;
         let firebaseTimer = null;
 
@@ -1061,7 +1062,7 @@ const firebaseConfig = {
 
                 const badge = document.getElementById('firebaseBadge');
                 badge.className = 'stat-badge active';
-                badge.innerHTML = '<span class="pulse-dot"></span> ทำงาน (1s)';
+                badge.innerHTML = '<span class="pulse-dot"></span> ทำงาน (3s)';
                 
                 // ✅ อัปเดต GPS quality
                 updateGPSQuality(position.coords.accuracy);
@@ -1199,7 +1200,7 @@ const firebaseConfig = {
                 );
             }, LOCAL_STORAGE_INTERVAL);
 
-            showAlert('เริ่มการติดตามแล้ว (GPS Filtering: ON)', 'info');
+            showAlert('เริ่มการติดตามแล้ว (Firebase: 3s, Path: 3s)', 'info');
         }
 
         function stopTracking() {
