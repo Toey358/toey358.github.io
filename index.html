@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ติดตามรถ - Telematics v2 (Firebase)</title>
+    <title>ติดตามรถ - Telematics v2 (Firebase + Kalman Filter)</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -364,7 +364,6 @@
             backdrop-filter: blur(10px);
         }
 
-        /* ✅ GPS Quality Indicator */
         .gps-quality {
             position: absolute;
             top: 12px;
@@ -384,6 +383,29 @@
         .gps-quality.good { color: #0ea5e9; background: #dbeafe; }
         .gps-quality.fair { color: #f59e0b; background: #fef3c7; }
         .gps-quality.poor { color: #dc2626; background: #fee2e2; }
+
+        /* ✅ Kalman Filter Badge */
+        .kalman-badge {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+            z-index: 1000;
+            font-size: 11px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .kalman-badge.active {
+            display: flex;
+        }
 
         .action-buttons {
             display: grid;
@@ -612,7 +634,7 @@
                 </div>
                 <div class="app-name">
                     <h1>Vehicle Tracker</h1>
-                    <p>Real-time GPS • Screen Wake Lock</p>
+                    <p>Real-time GPS • Kalman Filter</p>
                 </div>
             </div>
             <div class="notification-badge">
@@ -771,7 +793,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
                 </div>
                 <div class="location-info">
-                    <div class="location-label">พิกัดปัจจุบัน</div>
+                    <div class="location-label">พิกัดปัจจุบัน (Kalman Filtered)</div>
                     <div class="location-value" id="currentLocation">รอข้อมูล GPS...</div>
                 </div>
             </div>
@@ -785,6 +807,11 @@
             </div>
             <div class="gps-quality" id="gpsQuality">
                 GPS: --
+            </div>
+            <!-- ✅ Kalman Filter Badge -->
+            <div class="kalman-badge" id="kalmanBadge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>
+                Kalman ON
             </div>
         </div>
 
@@ -830,33 +857,65 @@ const firebaseConfig = {
 
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzw7AKriFwVprlxjvvoSCIs0RxPuaZ0rj9Hch9jeHjbFwqPtwZ5xFPR_i18V_bOTFM/exec';
 
-        // ✅ GPS Filtering Parameters
-        const GPS_ACCURACY_THRESHOLD = 50; // เมตร - ถ้า accuracy มากกว่านี้จะไม่เอา
-        const GPS_MAX_JUMP_DISTANCE = 100; // เมตร - ถ้าเคลื่อนที่เกินนี้ใน 3 วินาที จะไม่เอา
-        const GPS_MIN_ACCURACY_FOR_SAVE = 30; // เมตร - accuracy ที่ดีที่สุดสำหรับบันทึก
+        // GPS Filtering Parameters
+        const GPS_ACCURACY_THRESHOLD = 50;
+        const GPS_MAX_JUMP_DISTANCE = 100;
+
+        // ✅ Kalman Filter Implementation
+        class KalmanFilter {
+            constructor(processNoise = 0.01, measurementNoise = 4, estimationError = 1) {
+                this.q = processNoise;        // Process noise (ค่ายิ่งต่ำ ยิ่ง smooth)
+                this.r = measurementNoise;     // Measurement noise (ค่ายิ่งสูง ยิ่งกรองมาก)
+                this.p = estimationError;      // Estimation error
+                this.x = null;                 // Estimated value
+                this.k = 0;                    // Kalman gain
+            }
+
+            filter(measurement) {
+                if (this.x === null) {
+                    this.x = measurement;
+                    return measurement;
+                }
+
+                // Prediction
+                this.p = this.p + this.q;
+
+                // Update
+                this.k = this.p / (this.p + this.r);
+                this.x = this.x + this.k * (measurement - this.x);
+                this.p = (1 - this.k) * this.p;
+
+                return this.x;
+            }
+
+            reset() {
+                this.x = null;
+                this.p = 1;
+                this.k = 0;
+            }
+        }
+
+        // ✅ สร้าง Kalman Filter แยกสำหรับ lat และ lng
+        const kalmanLat = new KalmanFilter(0.01, 4, 1);
+        const kalmanLng = new KalmanFilter(0.01, 4, 1);
 
         let map;
         let marker;
         let polyline;
         let isTracking = false;
-        let watchId = null;
         let currentRoute = [];
-        let lastFirebaseUpdate = 0;
-        let lastValidPosition = null; // ✅ เก็บตำแหน่งที่ถูกต้องล่าสุด
-        let filteredCount = 0; // ✅ นับจำนวนข้อมูลที่ถูกตัดทิ้ง
+        let lastValidPosition = null;
+        let filteredCount = 0;
         
-        // ✅ Wake Lock เพื่อป้องกันหน้าจอปิดอัตโนมัติ
         let wakeLock = null;
         
-        // ✅ เปลี่ยนเป็น 3 วินาทีทั้งคู่ เพื่อให้ GPS มีเวลาประมวลผลให้แม่นยำ
-        const FIREBASE_INTERVAL = 3000; // 3 วินาที
-        const LOCAL_STORAGE_INTERVAL = 3000; // 3 วินาที
+        const FIREBASE_INTERVAL = 3000;
+        const LOCAL_STORAGE_INTERVAL = 3000;
         let localStorageTimer = null;
         let firebaseTimer = null;
 
-        // ✅ คำนวณระยะห่างระหว่างจุด (Haversine formula)
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // Earth radius in meters
+            const R = 6371e3;
             const φ1 = lat1 * Math.PI / 180;
             const φ2 = lat2 * Math.PI / 180;
             const Δφ = (lat2 - lat1) * Math.PI / 180;
@@ -867,17 +926,15 @@ const firebaseConfig = {
                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-            return R * c; // Distance in meters
+            return R * c;
         }
 
-        // ✅ ฟังก์ชันเปิด Wake Lock (ป้องกันหน้าจอปิด)
         async function requestWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
                     wakeLock = await navigator.wakeLock.request('screen');
                     console.log('🔒 Wake Lock activated - screen will stay on');
                     
-                    // รีเซ็ต wake lock เมื่อหน้าจอมองเห็นอีกครั้ง
                     wakeLock.addEventListener('release', () => {
                         console.log('🔓 Wake Lock released');
                     });
@@ -890,7 +947,6 @@ const firebaseConfig = {
             }
         }
 
-        // ✅ ฟังก์ชันปิด Wake Lock
         async function releaseWakeLock() {
             if (wakeLock !== null) {
                 try {
@@ -903,20 +959,17 @@ const firebaseConfig = {
             }
         }
 
-        // ✅ ตรวจสอบว่า GPS position ถูกต้องหรือไม่
         function isValidGPSPosition(position) {
             const accuracy = position.coords.accuracy;
             
-            // ตรวจสอบ accuracy
             if (accuracy > GPS_ACCURACY_THRESHOLD) {
-                console.warn(`⚠️ GPS accuracy too low: ${accuracy.toFixed(1)}m (threshold: ${GPS_ACCURACY_THRESHOLD}m)`);
+                console.warn(`⚠️ GPS accuracy too low: ${accuracy.toFixed(1)}m`);
                 filteredCount++;
                 updateFilteredCount();
                 showAlert(`GPS แม่นยำต่ำเกินไป (${accuracy.toFixed(0)}m) - ข้อมูลถูกข้าม`, 'warning', 2000);
                 return false;
             }
 
-            // ตรวจสอบการกระโดดของตำแหน่ง
             if (lastValidPosition) {
                 const distance = calculateDistance(
                     lastValidPosition.latitude,
@@ -926,7 +979,7 @@ const firebaseConfig = {
                 );
 
                 if (distance > GPS_MAX_JUMP_DISTANCE) {
-                    console.warn(`⚠️ GPS jump detected: ${distance.toFixed(1)}m (threshold: ${GPS_MAX_JUMP_DISTANCE}m)`);
+                    console.warn(`⚠️ GPS jump detected: ${distance.toFixed(1)}m`);
                     filteredCount++;
                     updateFilteredCount();
                     showAlert(`GPS โดดไปโดดมา (${distance.toFixed(0)}m) - ข้อมูลถูกข้าม`, 'warning', 2000);
@@ -937,7 +990,19 @@ const firebaseConfig = {
             return true;
         }
 
-        // ✅ อัปเดท GPS quality indicator
+        // ✅ ฟังก์ชันใช้ Kalman Filter กรอง GPS
+        function applyKalmanFilter(lat, lng) {
+            const filteredLat = kalmanLat.filter(lat);
+            const filteredLng = kalmanLng.filter(lng);
+            
+            console.log(`📊 Kalman: Raw (${lat.toFixed(6)}, ${lng.toFixed(6)}) → Filtered (${filteredLat.toFixed(6)}, ${filteredLng.toFixed(6)})`);
+            
+            return {
+                latitude: filteredLat,
+                longitude: filteredLng
+            };
+        }
+
         function updateGPSQuality(accuracy) {
             const qualityEl = document.getElementById('gpsQuality');
             const accuracyValue = document.getElementById('accuracyValue');
@@ -978,7 +1043,6 @@ const firebaseConfig = {
         }
 
         function initMap() {
-            // ✅ ค่าเริ่มต้น: ท่าอากาศยานอุดรธานี (17.3864, 102.7884)
             map = L.map('map').setView([17.3864, 102.7884], 13);
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1037,10 +1101,15 @@ const firebaseConfig = {
         }
 
         async function sendToFirebase(position) {
-            // ✅ ตรวจสอบความถูกต้องของ GPS
             if (!isValidGPSPosition(position)) {
-                return; // ข้ามการส่งข้อมูลนี้
+                return;
             }
+
+            // ✅ ใช้ Kalman Filter กรองพิกัด
+            const filtered = applyKalmanFilter(
+                position.coords.latitude,
+                position.coords.longitude
+            );
 
             const vehicleType = document.getElementById('vehicleType').value;
             const licensePlate = document.getElementById('licensePlate').value;
@@ -1050,12 +1119,13 @@ const firebaseConfig = {
                 const locationData = {
                     vehicleType: vehicleType,
                     licensePlate: licensePlate,
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
+                    latitude: filtered.latitude,    // ✅ ใช้ค่าที่กรองแล้ว
+                    longitude: filtered.longitude,  // ✅ ใช้ค่าที่กรองแล้ว
                     accuracy: position.coords.accuracy || 0,
                     speed: position.coords.speed || 0,
                     timestamp: new Date().toISOString(),
-                    lastUpdated: new Date().toISOString()
+                    lastUpdated: new Date().toISOString(),
+                    kalmanFiltered: true  // ✅ บอกว่าข้อมูลนี้ผ่าน Kalman แล้ว
                 };
 
                 await database.ref('vehicles/' + vehicleKey).set(locationData);
@@ -1064,10 +1134,9 @@ const firebaseConfig = {
                 badge.className = 'stat-badge active';
                 badge.innerHTML = '<span class="pulse-dot"></span> ทำงาน (3s)';
                 
-                // ✅ อัปเดต GPS quality
                 updateGPSQuality(position.coords.accuracy);
                 
-                console.log('✅ Firebase updated:', new Date().toLocaleTimeString('th-TH'));
+                console.log('✅ Firebase updated (Kalman):', new Date().toLocaleTimeString('th-TH'));
             } catch (error) {
                 console.error('❌ Error updating Firebase:', error);
                 showAlert('ไม่สามารถอัปเดท Firebase: ' + error.message, 'error');
@@ -1075,10 +1144,15 @@ const firebaseConfig = {
         }
 
         function saveToLocalStorage(position) {
-            // ✅ ตรวจสอบความถูกต้องของ GPS
             if (!isValidGPSPosition(position)) {
-                return; // ข้ามการบันทึกข้อมูลนี้
+                return;
             }
+
+            // ✅ ใช้ Kalman Filter กรองพิกัด
+            const filtered = applyKalmanFilter(
+                position.coords.latitude,
+                position.coords.longitude
+            );
 
             const vehicleType = document.getElementById('vehicleType').value;
             const licensePlate = document.getElementById('licensePlate').value;
@@ -1092,8 +1166,8 @@ const firebaseConfig = {
             const locationData = {
                 vehicleType: vehicleType,
                 licensePlate: licensePlate,
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude,
+                latitude: filtered.latitude,    // ✅ ใช้ค่าที่กรองแล้ว
+                longitude: filtered.longitude,  // ✅ ใช้ค่าที่กรองแล้ว
                 accuracy: position.coords.accuracy,
                 speed: position.coords.speed,
                 timestamp: new Date().toISOString()
@@ -1104,13 +1178,12 @@ const firebaseConfig = {
             localStorage.setItem('vehicleType', vehicleType);
             localStorage.setItem('licensePlate', licensePlate);
 
-            // ✅ อัปเดตตำแหน่งที่ถูกต้องล่าสุด
             lastValidPosition = {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude
+                latitude: filtered.latitude,
+                longitude: filtered.longitude
             };
 
-            updateMap(position.coords.latitude, position.coords.longitude);
+            updateMap(filtered.latitude, filtered.longitude);
             polyline.setLatLngs(currentRoute.map(p => [p.latitude, p.longitude]));
             updatePointCount();
 
@@ -1134,10 +1207,16 @@ const firebaseConfig = {
             }
 
             isTracking = true;
-            filteredCount = 0; // รีเซ็ตตัวนับ
+            filteredCount = 0;
             updateFilteredCount();
             
-            // ✅ เปิด Wake Lock เพื่อป้องกันหน้าจอปิด
+            // ✅ รีเซ็ต Kalman Filter
+            kalmanLat.reset();
+            kalmanLng.reset();
+            
+            // ✅ แสดง Kalman Badge
+            document.getElementById('kalmanBadge').classList.add('active');
+            
             requestWakeLock();
             
             const statusIcon = document.getElementById('statusIcon');
@@ -1145,7 +1224,7 @@ const firebaseConfig = {
             statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
             
             const trackingStatus = document.getElementById('trackingStatus');
-            trackingStatus.textContent = 'กำลังติดตาม';
+            trackingStatus.textContent = 'กำลังติดตาม + Kalman ON';
             trackingStatus.className = 'active';
 
             document.getElementById('startBtn').disabled = true;
@@ -1154,7 +1233,6 @@ const firebaseConfig = {
             document.getElementById('vehicleType').disabled = true;
             document.getElementById('licensePlate').disabled = true;
 
-            // ✅ ส่งไป Firebase ทันทีพร้อมตรวจสอบความถูกต้อง
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     sendToFirebase(position);
@@ -1164,13 +1242,12 @@ const firebaseConfig = {
                     console.error('Error getting initial position:', error);
                 },
                 {
-                    enableHighAccuracy: true, // ✅ บังคับให้ใช้ GPS แม่นยำสูง
-                    timeout: 10000, // ✅ เพิ่ม timeout
-                    maximumAge: 0 // ✅ ไม่ใช้ข้อมูลเก่า
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
                 }
             );
 
-            // ส่งไป Firebase ทุก 1 วินาที
             firebaseTimer = setInterval(() => {
                 navigator.geolocation.getCurrentPosition(
                     sendToFirebase,
@@ -1185,7 +1262,6 @@ const firebaseConfig = {
                 );
             }, FIREBASE_INTERVAL);
 
-            // บันทึก local + อัปเดท map ทุก 3 วินาที
             localStorageTimer = setInterval(() => {
                 navigator.geolocation.getCurrentPosition(
                     saveToLocalStorage,
@@ -1200,7 +1276,7 @@ const firebaseConfig = {
                 );
             }, LOCAL_STORAGE_INTERVAL);
 
-            showAlert('เริ่มการติดตามแล้ว (Firebase: 3s, Path: 3s)', 'info');
+            showAlert('เริ่มการติดตามแล้ว (Firebase: 3s, Path: 3s + Kalman Filter)', 'info');
         }
 
         function stopTracking() {
@@ -1216,7 +1292,9 @@ const firebaseConfig = {
 
             isTracking = false;
             
-            // ✅ ปิด Wake Lock เมื่อหยุดติดตาม
+            // ✅ ซ่อน Kalman Badge
+            document.getElementById('kalmanBadge').classList.remove('active');
+            
             releaseWakeLock();
             
             const statusIcon = document.getElementById('statusIcon');
@@ -1251,15 +1329,14 @@ const firebaseConfig = {
             const vehicleType = document.getElementById('vehicleType').value;
             const licensePlate = document.getElementById('licensePlate').value;
 
-            // ✅ คำนวณความเร็วเฉลี่ย (km/h)
             const speeds = currentRoute
                 .filter(point => point.speed && point.speed > 0)
-                .map(point => point.speed * 3.6); // แปลง m/s เป็น km/h
+                .map(point => point.speed * 3.6);
             
             let averageSpeed = 0;
             if (speeds.length > 0) {
                 const totalSpeed = speeds.reduce((sum, speed) => sum + speed, 0);
-                averageSpeed = Math.round((totalSpeed / speeds.length) * 10) / 10; // ปัดทศนิยม 1 ตำแหน่ง
+                averageSpeed = Math.round((totalSpeed / speeds.length) * 10) / 10;
             }
 
             const saveBtn = document.getElementById('saveBtn');
@@ -1285,7 +1362,8 @@ const firebaseConfig = {
                         startTime: currentRoute[0].timestamp,
                         endTime: currentRoute[currentRoute.length - 1].timestamp,
                         totalPoints: currentRoute.length,
-                        averageSpeed: averageSpeed // ✅ ส่งความเร็วเฉลี่ยไปด้วย
+                        averageSpeed: averageSpeed,
+                        kalmanFiltered: true  // ✅ บอกว่าข้อมูลนี้ผ่าน Kalman แล้ว
                     })
                 });
 
@@ -1296,6 +1374,10 @@ const firebaseConfig = {
                 localStorage.removeItem('currentRoute');
                 polyline.setLatLngs([]);
                 updatePointCount();
+
+                // ✅ รีเซ็ต Kalman Filter
+                kalmanLat.reset();
+                kalmanLng.reset();
 
                 showAlert(`บันทึกสำเร็จ! 🎉 (เร็วเฉลี่ย: ${averageSpeed} km/h)`, 'success');
                 saveBtn.innerHTML = originalHTML;
@@ -1341,7 +1423,6 @@ const firebaseConfig = {
         document.getElementById('stopBtn').addEventListener('click', stopTracking);
         document.getElementById('saveBtn').addEventListener('click', saveRouteHistory);
 
-        // ✅ รีเซ็ต Wake Lock เมื่อกลับมาดูหน้าจออีกครั้ง
         document.addEventListener('visibilitychange', async () => {
             if (document.visibilityState === 'visible' && isTracking) {
                 await requestWakeLock();
@@ -1351,6 +1432,7 @@ const firebaseConfig = {
         window.addEventListener('load', () => {
             initMap();
             loadLocalData();
+            console.log('✅ Kalman Filter GPS Tracking Ready!');
         });
     </script>
 </body>
