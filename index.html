@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ติดตามรถ - Telematics v2 (Firebase + Kalman Filter)</title>
+    <title>ติดตามรถ - Telematics v2 (Raw GPS)</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -384,16 +384,15 @@
         .gps-quality.fair { color: #f59e0b; background: #fef3c7; }
         .gps-quality.poor { color: #dc2626; background: #fee2e2; }
 
-        /* ✅ Kalman Filter Badge */
-        .kalman-badge {
+        .raw-gps-badge {
             position: absolute;
             bottom: 12px;
             right: 12px;
-            background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             padding: 6px 12px;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
             z-index: 1000;
             font-size: 11px;
             font-weight: 600;
@@ -403,7 +402,7 @@
             gap: 6px;
         }
 
-        .kalman-badge.active {
+        .raw-gps-badge.active {
             display: flex;
         }
 
@@ -634,7 +633,7 @@
                 </div>
                 <div class="app-name">
                     <h1>Vehicle Tracker</h1>
-                    <p>Real-time GPS • Kalman Filter</p>
+                    <p>Real-time GPS • Raw Data</p>
                 </div>
             </div>
             <div class="notification-badge">
@@ -793,7 +792,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
                 </div>
                 <div class="location-info">
-                    <div class="location-label">พิกัดปัจจุบัน (Kalman Filtered)</div>
+                    <div class="location-label">พิกัดปัจจุบัน (Raw GPS)</div>
                     <div class="location-value" id="currentLocation">รอข้อมูล GPS...</div>
                 </div>
             </div>
@@ -808,10 +807,9 @@
             <div class="gps-quality" id="gpsQuality">
                 GPS: --
             </div>
-            <!-- ✅ Kalman Filter Badge -->
-            <div class="kalman-badge" id="kalmanBadge">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>
-                Kalman ON
+            <div class="raw-gps-badge" id="rawGpsBadge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                Raw GPS
             </div>
         </div>
 
@@ -860,44 +858,6 @@ const firebaseConfig = {
         // GPS Filtering Parameters
         const GPS_ACCURACY_THRESHOLD = 50;
         const GPS_MAX_JUMP_DISTANCE = 100;
-
-        // ✅ Kalman Filter Implementation
-        class KalmanFilter {
-            constructor(processNoise = 0.01, measurementNoise = 4, estimationError = 1) {
-                this.q = processNoise;        // Process noise (ค่ายิ่งต่ำ ยิ่ง smooth)
-                this.r = measurementNoise;     // Measurement noise (ค่ายิ่งสูง ยิ่งกรองมาก)
-                this.p = estimationError;      // Estimation error
-                this.x = null;                 // Estimated value
-                this.k = 0;                    // Kalman gain
-            }
-
-            filter(measurement) {
-                if (this.x === null) {
-                    this.x = measurement;
-                    return measurement;
-                }
-
-                // Prediction
-                this.p = this.p + this.q;
-
-                // Update
-                this.k = this.p / (this.p + this.r);
-                this.x = this.x + this.k * (measurement - this.x);
-                this.p = (1 - this.k) * this.p;
-
-                return this.x;
-            }
-
-            reset() {
-                this.x = null;
-                this.p = 1;
-                this.k = 0;
-            }
-        }
-
-        // ✅ สร้าง Kalman Filter แยกสำหรับ lat และ lng
-        const kalmanLat = new KalmanFilter(0.01, 4, 1);
-        const kalmanLng = new KalmanFilter(0.01, 4, 1);
 
         let map;
         let marker;
@@ -988,19 +948,6 @@ const firebaseConfig = {
             }
 
             return true;
-        }
-
-        // ✅ ฟังก์ชันใช้ Kalman Filter กรอง GPS
-        function applyKalmanFilter(lat, lng) {
-            const filteredLat = kalmanLat.filter(lat);
-            const filteredLng = kalmanLng.filter(lng);
-            
-            console.log(`📊 Kalman: Raw (${lat.toFixed(6)}, ${lng.toFixed(6)}) → Filtered (${filteredLat.toFixed(6)}, ${filteredLng.toFixed(6)})`);
-            
-            return {
-                latitude: filteredLat,
-                longitude: filteredLng
-            };
         }
 
         function updateGPSQuality(accuracy) {
@@ -1105,12 +1052,6 @@ const firebaseConfig = {
                 return;
             }
 
-            // ✅ ใช้ Kalman Filter กรองพิกัด
-            const filtered = applyKalmanFilter(
-                position.coords.latitude,
-                position.coords.longitude
-            );
-
             const vehicleType = document.getElementById('vehicleType').value;
             const licensePlate = document.getElementById('licensePlate').value;
 
@@ -1119,13 +1060,13 @@ const firebaseConfig = {
                 const locationData = {
                     vehicleType: vehicleType,
                     licensePlate: licensePlate,
-                    latitude: filtered.latitude,    // ✅ ใช้ค่าที่กรองแล้ว
-                    longitude: filtered.longitude,  // ✅ ใช้ค่าที่กรองแล้ว
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
                     accuracy: position.coords.accuracy || 0,
                     speed: position.coords.speed || 0,
                     timestamp: new Date().toISOString(),
                     lastUpdated: new Date().toISOString(),
-                    kalmanFiltered: true  // ✅ บอกว่าข้อมูลนี้ผ่าน Kalman แล้ว
+                    rawGPS: true
                 };
 
                 await database.ref('vehicles/' + vehicleKey).set(locationData);
@@ -1136,7 +1077,7 @@ const firebaseConfig = {
                 
                 updateGPSQuality(position.coords.accuracy);
                 
-                console.log('✅ Firebase updated (Kalman):', new Date().toLocaleTimeString('th-TH'));
+                console.log('✅ Firebase updated (Raw GPS):', new Date().toLocaleTimeString('th-TH'));
             } catch (error) {
                 console.error('❌ Error updating Firebase:', error);
                 showAlert('ไม่สามารถอัปเดท Firebase: ' + error.message, 'error');
@@ -1147,12 +1088,6 @@ const firebaseConfig = {
             if (!isValidGPSPosition(position)) {
                 return;
             }
-
-            // ✅ ใช้ Kalman Filter กรองพิกัด
-            const filtered = applyKalmanFilter(
-                position.coords.latitude,
-                position.coords.longitude
-            );
 
             const vehicleType = document.getElementById('vehicleType').value;
             const licensePlate = document.getElementById('licensePlate').value;
@@ -1166,8 +1101,8 @@ const firebaseConfig = {
             const locationData = {
                 vehicleType: vehicleType,
                 licensePlate: licensePlate,
-                latitude: filtered.latitude,    // ✅ ใช้ค่าที่กรองแล้ว
-                longitude: filtered.longitude,  // ✅ ใช้ค่าที่กรองแล้ว
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
                 accuracy: position.coords.accuracy,
                 speed: position.coords.speed,
                 timestamp: new Date().toISOString()
@@ -1179,11 +1114,11 @@ const firebaseConfig = {
             localStorage.setItem('licensePlate', licensePlate);
 
             lastValidPosition = {
-                latitude: filtered.latitude,
-                longitude: filtered.longitude
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
             };
 
-            updateMap(filtered.latitude, filtered.longitude);
+            updateMap(position.coords.latitude, position.coords.longitude);
             polyline.setLatLngs(currentRoute.map(p => [p.latitude, p.longitude]));
             updatePointCount();
 
@@ -1210,12 +1145,7 @@ const firebaseConfig = {
             filteredCount = 0;
             updateFilteredCount();
             
-            // ✅ รีเซ็ต Kalman Filter
-            kalmanLat.reset();
-            kalmanLng.reset();
-            
-            // ✅ แสดง Kalman Badge
-            document.getElementById('kalmanBadge').classList.add('active');
+            document.getElementById('rawGpsBadge').classList.add('active');
             
             requestWakeLock();
             
@@ -1224,7 +1154,7 @@ const firebaseConfig = {
             statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
             
             const trackingStatus = document.getElementById('trackingStatus');
-            trackingStatus.textContent = 'กำลังติดตาม + Kalman ON';
+            trackingStatus.textContent = 'กำลังติดตาม (Raw GPS)';
             trackingStatus.className = 'active';
 
             document.getElementById('startBtn').disabled = true;
@@ -1276,7 +1206,7 @@ const firebaseConfig = {
                 );
             }, LOCAL_STORAGE_INTERVAL);
 
-            showAlert('เริ่มการติดตามแล้ว (Firebase: 3s, Path: 3s + Kalman Filter)', 'info');
+            showAlert('เริ่มการติดตามแล้ว (Firebase: 3s, Path: 3s + Raw GPS)', 'info');
         }
 
         function stopTracking() {
@@ -1292,8 +1222,7 @@ const firebaseConfig = {
 
             isTracking = false;
             
-            // ✅ ซ่อน Kalman Badge
-            document.getElementById('kalmanBadge').classList.remove('active');
+            document.getElementById('rawGpsBadge').classList.remove('active');
             
             releaseWakeLock();
             
@@ -1363,7 +1292,7 @@ const firebaseConfig = {
                         endTime: currentRoute[currentRoute.length - 1].timestamp,
                         totalPoints: currentRoute.length,
                         averageSpeed: averageSpeed,
-                        kalmanFiltered: true  // ✅ บอกว่าข้อมูลนี้ผ่าน Kalman แล้ว
+                        rawGPS: true
                     })
                 });
 
@@ -1374,10 +1303,6 @@ const firebaseConfig = {
                 localStorage.removeItem('currentRoute');
                 polyline.setLatLngs([]);
                 updatePointCount();
-
-                // ✅ รีเซ็ต Kalman Filter
-                kalmanLat.reset();
-                kalmanLng.reset();
 
                 showAlert(`บันทึกสำเร็จ! 🎉 (เร็วเฉลี่ย: ${averageSpeed} km/h)`, 'success');
                 saveBtn.innerHTML = originalHTML;
@@ -1432,7 +1357,7 @@ const firebaseConfig = {
         window.addEventListener('load', () => {
             initMap();
             loadLocalData();
-            console.log('✅ Kalman Filter GPS Tracking Ready!');
+            console.log('✅ Raw GPS Tracking Ready!');
         });
     </script>
 </body>
