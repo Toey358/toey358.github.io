@@ -9,9 +9,6 @@
     <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     
-    <!-- Leaflet Measure CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-measure@3.1.0/dist/leaflet-measure.css" />
-    
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -45,7 +42,7 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 70px;
+            height: 80px;
             background: linear-gradient(135deg, #2196F3 0%, #42A5F5 50%, #64B5F6 100%);
             z-index: 2000;
             display: flex;
@@ -62,9 +59,9 @@
         }
 
         .navbar-brand .logo {
-            width: 45px;
-            height: 45px;
-            background: rgba(255, 255, 255, 0.2);
+            width: 50px;
+            height: 50px;
+            background: transparent;
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -73,7 +70,7 @@
         }
 
         .navbar-brand .title h1 {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: 600;
             color: white;
             letter-spacing: -0.3px;
@@ -93,7 +90,7 @@
 
         /* Main Container */
         .main-container {
-            margin-top: 90px;
+            margin-top: 100px;
             padding: 20px;
             max-width: 1800px;
             margin-left: auto;
@@ -253,17 +250,14 @@
             height: 16px;
         }
 
-        /* Radar Content - Two Separated Sections */
+        /* Radar Content - Full Width */
         .radar-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
+            display: block;
         }
 
         .radar-wrapper {
             position: relative;
             background: #f8f9fa;
-            border-right: 1px solid #e9ecef;
             overflow: hidden;
         }
 
@@ -282,21 +276,6 @@
             position: relative;
             overflow: hidden;
             z-index: 1;
-        }
-
-        .reference-container {
-            width: 100%;
-            height: 680px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f8f9fa;
-        }
-
-        .reference-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
         }
 
         /* Map */
@@ -482,82 +461,414 @@
             transition: opacity 0.3s ease !important;
         }
 
-        /* Leaflet Measure Control Customization */
-        .leaflet-control-measure {
+        /* Custom Measurement Tool */
+        .measure-control {
+            position: absolute;
+            top: 90px;
+            left: 10px;
+            z-index: 1000;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             border: 1px solid rgba(33, 150, 243, 0.2);
-            margin-top: 10px;
         }
 
-        .leaflet-control-measure a {
-            background-color: white;
-            border-radius: 8px;
+        .measure-btn {
             width: 40px;
             height: 40px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
             display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .measure-btn:hover {
+            background-color: #E3F2FD;
+        }
+
+        .measure-btn.active {
+            background-color: #2196F3;
+        }
+
+        .measure-btn svg {
+            width: 20px;
+            height: 20px;
+            stroke: #2196F3;
+        }
+
+        .measure-btn.active svg {
+            stroke: white;
+        }
+
+        #measure-clear-btn {
+            background: #f44336;
+        }
+
+        #measure-clear-btn svg {
+            stroke: white;
+        }
+
+        #measure-clear-btn:hover {
+            background: #d32f2f;
+        }
+
+        .measure-toolbar {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(33, 150, 243, 0.2);
+            display: none;
+            gap: 10px;
+            flex-direction: column;
+            min-width: 200px;
+        }
+
+        .measure-toolbar.active {
+            display: flex;
+        }
+
+        .measure-info {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            color: #2c3e50;
+            font-weight: 600;
+            padding: 8px 12px;
+            background: #E3F2FD;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .measure-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .measure-action-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            min-width: 90px;
+        }
+
+        .measure-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .measure-finish {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .measure-finish:hover {
+            background: #388E3C;
+        }
+
+        .measure-cancel {
+            background: #f44336;
+            color: white;
+        }
+
+        .measure-cancel:hover {
+            background: #d32f2f;
+        }
+
+        .measure-calculate {
+            background: #FF9800;
+            color: white;
+        }
+
+        .measure-calculate:hover {
+            background: #F57C00;
+        }
+
+        .measure-instruction {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            text-align: center;
+            padding: 4px 8px;
+        }
+
+        /* Measurement markers */
+        .measure-marker {
+            width: 12px;
+            height: 12px;
+            background: #2196F3;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .measure-marker-first {
+            width: 14px;
+            height: 14px;
+            background: #4CAF50;
+        }
+
+        /* Distance label */
+        .measure-label {
+            background: rgba(33, 150, 243, 0.95);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
+            border: 2px solid white;
+        }
+
+        .measure-total-label {
+            background: rgba(76, 175, 80, 0.95);
+        }
+
+        /* Calculator Modal */
+        .calc-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 3000;
+            display: none;
             align-items: center;
             justify-content: center;
         }
 
-        .leaflet-control-measure a:hover {
-            background-color: #E3F2FD;
+        .calc-modal.active {
+            display: flex;
         }
 
-        .leaflet-control-measure a:hover:after {
-            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%231976D2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>');
+        .calc-modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
-        .leaflet-control-measure.leaflet-control-measure-active a {
-            background-color: #2196F3 !important;
+        .calc-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
         }
 
-        .leaflet-control-measure.leaflet-control-measure-active a:after {
-            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>');
+        .calc-modal-header h3 {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .leaflet-control-measure .leaflet-control-measure-toggle {
-            background-image: none !important;
-            font-size: 0;
+        .calc-modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #f5f7fa;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .calc-modal-close:hover {
+            background: #e9ecef;
+        }
+
+        .calc-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            background: #f5f7fa;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .calc-tab {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #7f8c8d;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .calc-tab.active {
+            background: white;
+            color: #2196F3;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .calc-panel {
+            display: none;
+        }
+
+        .calc-panel.active {
+            display: block;
+        }
+
+        .calc-input-group {
+            margin-bottom: 20px;
+        }
+
+        .calc-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .calc-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: #2c3e50;
+            transition: all 0.2s ease;
+        }
+
+        .calc-input:focus {
+            outline: none;
+            border-color: #2196F3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .calc-input-suffix {
             position: relative;
         }
 
-        .leaflet-control-measure .leaflet-control-measure-toggle:after {
-            content: '';
+        .calc-input-suffix input {
+            padding-right: 60px;
+        }
+
+        .calc-input-suffix-text {
             position: absolute;
+            right: 16px;
             top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232196F3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-        }
-
-        .leaflet-measure-resultpopup {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 8px;
-            padding: 10px 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(33, 150, 243, 0.3);
+            transform: translateY(-50%);
             font-family: 'Inter', sans-serif;
-            color: #2c3e50;
-            font-weight: 500;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            font-weight: 600;
         }
 
-        .leaflet-measure-path-measurement {
-            background: rgba(33, 150, 243, 0.95);
+        .calc-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: #2196F3;
             color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .calc-btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+        }
+
+        .calc-result {
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .calc-result.active {
+            display: block;
+        }
+
+        .calc-result-label {
             font-family: 'Inter', sans-serif;
             font-size: 0.85rem;
+            color: #1976D2;
             font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .calc-result-value {
+            font-family: 'Inter', sans-serif;
+            font-size: 2rem;
+            color: #0D47A1;
+            font-weight: 700;
+        }
+
+        .calc-result-details {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            color: #1976D2;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(33, 150, 243, 0.2);
+        }
+
+        .calc-info {
+            background: #FFF3E0;
+            border-left: 4px solid #FF9800;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .calc-info-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            color: #E65100;
+            line-height: 1.5;
         }
 
         /* METAR Raw Text */
@@ -575,44 +886,25 @@
 
         /* Responsive */
         @media (max-width: 1500px) {
-            .radar-content {
-                grid-template-columns: 1fr;
-            }
-
-            .radar-wrapper {
-                border-right: none;
-                border-bottom: 1px solid #e9ecef;
-            }
-
-            .radar-wrapper:first-child {
-                border-radius: 0;
-            }
-
-            .radar-wrapper:last-child {
-                border-bottom: none;
-                border-radius: 0;
-            }
-
-            .map-container,
-            .reference-container {
+            .map-container {
                 height: 600px !important;
             }
         }
 
         @media (max-width: 768px) {
             .navbar {
-                height: 65px;
+                height: 70px;
                 padding: 0 1rem;
             }
 
             .navbar-brand .logo {
-                width: 40px;
-                height: 40px;
+                width: 45px;
+                height: 45px;
                 font-size: 1.5rem;
             }
 
             .navbar-brand .title h1 {
-                font-size: 1.1rem;
+                font-size: 1.2rem;
             }
 
             .current-time {
@@ -621,7 +913,7 @@
             }
 
             .main-container {
-                margin-top: 85px;
+                margin-top: 90px;
                 padding: 12px;
             }
 
@@ -639,8 +931,7 @@
                 grid-template-columns: repeat(2, 1fr);
             }
 
-            .map-container,
-            .reference-container {
+            .map-container {
                 height: 500px !important;
             }
 
@@ -658,6 +949,23 @@
             .map-controls {
                 padding: 12px 16px;
             }
+
+            .calc-modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .calc-tabs {
+                flex-direction: column;
+            }
+
+            .calc-tab {
+                font-size: 0.85rem;
+            }
+
+            .calc-modal-header h3 {
+                font-size: 1.1rem;
+            }
         }
     </style>
 </head>
@@ -667,7 +975,7 @@
 <nav class="navbar">
     <div class="navbar-brand">
         <div class="logo">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 28px; height: 28px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 32px; height: 32px;">
                 <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
             </svg>
         </div>
@@ -779,6 +1087,63 @@
             <div class="radar-wrapper">
                 <div class="map-container">
                     <div id="mapid">
+                        <!-- Measurement Tool -->
+                        <div class="measure-control">
+                            <button class="measure-btn" id="measure-btn" title="วัดระยะทาง">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/>
+                                    <path d="m14.5 12.5 2-2"/>
+                                    <path d="m11.5 9.5 2-2"/>
+                                    <path d="m8.5 6.5 2-2"/>
+                                    <path d="m17.5 15.5 2-2"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <button class="measure-btn" id="measure-clear-btn" title="ลบเส้นวัด" style="position: absolute; top: 140px; left: 10px; z-index: 1000; display: none; background: #f44336;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="m19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                <line x1="10" y1="11" x2="10" y2="17"/>
+                                <line x1="14" y1="11" x2="14" y2="17"/>
+                            </svg>
+                        </button>
+                        
+                        <div class="measure-toolbar" id="measure-toolbar">
+                            <div class="measure-instruction">คลิกบนแผนที่เพื่อวางจุด</div>
+                            <div class="measure-info" id="measure-info">ระยะทาง: 0.00 กม.</div>
+                            <div class="measure-actions">
+                                <button class="measure-action-btn measure-finish" id="measure-finish">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                    เสร็จ
+                                </button>
+                                <button class="measure-action-btn measure-cancel" id="measure-cancel">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                    ยกเลิก
+                                </button>
+                            </div>
+                            <button class="measure-action-btn measure-calculate" id="measure-calculate" style="width: 100%; margin-top: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                                    <rect x="4" y="2" width="16" height="20" rx="2"/>
+                                    <line x1="8" y1="6" x2="16" y2="6"/>
+                                    <line x1="16" y1="14" x2="16" y2="18"/>
+                                    <path d="M16 10h.01"/>
+                                    <path d="M12 10h.01"/>
+                                    <path d="M8 10h.01"/>
+                                    <path d="M12 14h.01"/>
+                                    <path d="M8 14h.01"/>
+                                    <path d="M12 18h.01"/>
+                                    <path d="M8 18h.01"/>
+                                </svg>
+                                คำนวณเวลามาถึง
+                            </button>
+                        </div>
+                        
                         <div class="map-controls">
                             <div id="timestamp" class="timestamp-display">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -798,13 +1163,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Reference Radar -->
-            <div class="radar-wrapper">
-                <div class="reference-container">
-                    <img id="reference-img" src="https://via.placeholder.com/680x680/e9ecef/7f8c8d?text=Loading..." alt="Radar Reference">
                 </div>
             </div>
         </div>
@@ -835,12 +1193,115 @@
     </div>
 </div>
 
+<!-- Calculator Modal -->
+<div class="calc-modal" id="calc-modal">
+    <div class="calc-modal-content">
+        <div class="calc-modal-header">
+            <h3>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                    <rect x="4" y="2" width="16" height="20" rx="2"/>
+                    <line x1="8" y1="6" x2="16" y2="6"/>
+                    <line x1="16" y1="14" x2="16" y2="18"/>
+                    <path d="M16 10h.01"/>
+                    <path d="M12 10h.01"/>
+                    <path d="M8 10h.01"/>
+                    <path d="M12 14h.01"/>
+                    <path d="M8 14h.01"/>
+                    <path d="M12 18h.01"/>
+                    <path d="M8 18h.01"/>
+                </svg>
+                คำนวณเวลาที่เมฆจะมาถึง
+            </h3>
+            <button class="calc-modal-close" id="calc-modal-close">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="calc-tabs">
+            <button class="calc-tab active" data-tab="method1">แบบที่ 1: ระยะทาง + ความเร็ว</button>
+            <button class="calc-tab" data-tab="method2">แบบที่ 2: เคลื่อนที่ 10 นาที</button>
+        </div>
+
+        <!-- Method 1: Distance + Wind Speed -->
+        <div class="calc-panel active" id="calc-method1">
+            <div class="calc-info">
+                <p class="calc-info-text">ใส่ระยะทางจากจุดเริ่มต้นถึงจุดสิ้นสุด และความเร็วลมเฉลี่ย</p>
+            </div>
+
+            <div class="calc-input-group">
+                <label class="calc-label">ระยะทาง</label>
+                <div class="calc-input-suffix">
+                    <input type="number" class="calc-input" id="method1-distance" placeholder="0.00" step="0.01" min="0">
+                    <span class="calc-input-suffix-text">กม.</span>
+                </div>
+            </div>
+
+            <div class="calc-input-group">
+                <label class="calc-label">ความเร็วลม</label>
+                <div class="calc-input-suffix">
+                    <input type="number" class="calc-input" id="method1-speed" placeholder="0" step="1" min="0">
+                    <span class="calc-input-suffix-text">กม./ชม.</span>
+                </div>
+            </div>
+
+            <button class="calc-btn" id="calc-method1-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                คำนวณ
+            </button>
+
+            <div class="calc-result" id="calc-method1-result">
+                <div class="calc-result-label">เวลาที่เมฆจะมาถึง</div>
+                <div class="calc-result-value" id="calc-method1-value">--</div>
+                <div class="calc-result-details" id="calc-method1-details"></div>
+            </div>
+        </div>
+
+        <!-- Method 2: 10-minute Movement -->
+        <div class="calc-panel" id="calc-method2">
+            <div class="calc-info">
+                <p class="calc-info-text">วัดระยะทางที่เมฆเคลื่อนที่ได้ภายใน 10 นาที และระยะทางที่ต้องการคำนวณ</p>
+            </div>
+
+            <div class="calc-input-group">
+                <label class="calc-label">ระยะทางที่เมฆเคลื่อนที่ใน 10 นาที</label>
+                <div class="calc-input-suffix">
+                    <input type="number" class="calc-input" id="method2-movement" placeholder="0.00" step="0.01" min="0">
+                    <span class="calc-input-suffix-text">กม.</span>
+                </div>
+            </div>
+
+            <div class="calc-input-group">
+                <label class="calc-label">ระยะทางจากจุดปัจจุบันถึงจุดสิ้นสุด</label>
+                <div class="calc-input-suffix">
+                    <input type="number" class="calc-input" id="method2-distance" placeholder="0.00" step="0.01" min="0">
+                    <span class="calc-input-suffix-text">กม.</span>
+                </div>
+            </div>
+
+            <button class="calc-btn" id="calc-method2-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                คำนวณ
+            </button>
+
+            <div class="calc-result" id="calc-method2-result">
+                <div class="calc-result-label">เวลาที่เมฆจะมาถึง</div>
+                <div class="calc-result-value" id="calc-method2-value">--</div>
+                <div class="calc-result-details" id="calc-method2-details"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Leaflet JavaScript -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
-<!-- Leaflet Measure JavaScript -->
-<script src="https://cdn.jsdelivr.net/npm/leaflet-measure@3.1.0/dist/leaflet-measure.js"></script>
 
 <style>
 @keyframes spin {
@@ -1085,49 +1546,338 @@
 
     L.Control.geocoder({ defaultMarkGeocode: false }).addTo(map);
 
-    // Add Measure Control
-    const measureControl = new L.Control.Measure({
-        position: 'topleft',
-        primaryLengthUnit: 'kilometers',
-        secondaryLengthUnit: 'meters',
-        primaryAreaUnit: 'sqkilometers',
-        secondaryAreaUnit: 'sqmeters',
-        activeColor: '#2196F3',
-        completedColor: '#4CAF50',
-        popupOptions: {
-            className: 'leaflet-measure-resultpopup',
-            autoPanPadding: [10, 10]
-        },
-        captureZIndex: 10000,
-        decPoint: '.',
-        thousandsSep: ',',
-        units: {
-            kilometers: {
-                factor: 0.001,
-                display: 'กิโลเมตร',
-                decimals: 2
-            },
-            meters: {
-                factor: 1,
-                display: 'เมตร',
-                decimals: 0
-            },
-            sqkilometers: {
-                factor: 0.000001,
-                display: 'ตร.กม.',
-                decimals: 2
-            },
-            sqmeters: {
-                factor: 1,
-                display: 'ตร.ม.',
-                decimals: 0
-            }
+    // ==================== Custom Measurement Tool ====================
+    let isMeasuring = false;
+    let measurePoints = [];
+    let measureMarkers = [];
+    let measureLines = [];
+    let measureLabels = [];
+    let totalDistance = 0;
+
+    function formatDistance(meters) {
+        if (meters < 1000) {
+            return meters.toFixed(0) + ' ม.';
+        } else {
+            return (meters / 1000).toFixed(2) + ' กม.';
+        }
+    }
+
+    function calculateDistance(latlng1, latlng2) {
+        return map.distance(latlng1, latlng2);
+    }
+
+    function startMeasuring() {
+        isMeasuring = true;
+        measurePoints = [];
+        totalDistance = 0;
+        
+        // Disable map dragging
+        map.dragging.disable();
+        map.doubleClickZoom.disable();
+        
+        // Update UI
+        document.getElementById('measure-btn').classList.add('active');
+        document.getElementById('measure-toolbar').classList.add('active');
+        document.getElementById('measure-info').textContent = 'ระยะทาง: 0.00 กม.';
+        
+        // Change cursor
+        document.getElementById('mapid').style.cursor = 'crosshair';
+        
+        console.log('📏 Measurement started');
+    }
+
+    function stopMeasuring(save = false) {
+        isMeasuring = false;
+        
+        // Enable map dragging
+        map.dragging.enable();
+        map.doubleClickZoom.enable();
+        
+        // Update UI
+        document.getElementById('measure-btn').classList.remove('active');
+        document.getElementById('measure-toolbar').classList.remove('active');
+        
+        // Reset cursor
+        document.getElementById('mapid').style.cursor = '';
+        
+        if (!save) {
+            // Clear all measurements
+            clearMeasurements();
+        } else if (measurePoints.length > 0) {
+            // Keep the measurement but convert markers to permanent
+            measureMarkers.forEach(marker => {
+                marker.on('click', function() {
+                    map.removeLayer(marker);
+                });
+            });
+        }
+        
+        console.log('📏 Measurement stopped');
+    }
+
+    function clearMeasurements() {
+        // Remove all markers
+        measureMarkers.forEach(marker => map.removeLayer(marker));
+        measureMarkers = [];
+        
+        // Remove all lines
+        measureLines.forEach(line => map.removeLayer(line));
+        measureLines = [];
+        
+        // Remove all labels
+        measureLabels.forEach(label => map.removeLayer(label));
+        measureLabels = [];
+        
+        measurePoints = [];
+        totalDistance = 0;
+    }
+
+    function addMeasurePoint(latlng) {
+        measurePoints.push(latlng);
+        
+        // Create marker
+        const markerIcon = L.divIcon({
+            className: measurePoints.length === 1 ? 'measure-marker measure-marker-first' : 'measure-marker',
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+        });
+        
+        const marker = L.marker(latlng, { icon: markerIcon }).addTo(map);
+        measureMarkers.push(marker);
+        
+        // If we have more than one point, draw line and calculate distance
+        if (measurePoints.length > 1) {
+            const prevPoint = measurePoints[measurePoints.length - 2];
+            const currPoint = latlng;
+            
+            // Draw line
+            const line = L.polyline([prevPoint, currPoint], {
+                color: '#2196F3',
+                weight: 4,
+                opacity: 0.8,
+                dashArray: '10, 5',
+                lineCap: 'round',
+                lineJoin: 'round'
+            }).addTo(map);
+            measureLines.push(line);
+            
+            // Calculate segment distance
+            const segmentDistance = calculateDistance(prevPoint, currPoint);
+            totalDistance += segmentDistance;
+            
+            // Add distance label at midpoint
+            const midLat = (prevPoint.lat + currPoint.lat) / 2;
+            const midLng = (prevPoint.lng + currPoint.lng) / 2;
+            
+            const labelIcon = L.divIcon({
+                className: 'measure-label',
+                html: formatDistance(segmentDistance),
+                iconSize: null,
+                iconAnchor: [0, 0]
+            });
+            
+            const label = L.marker([midLat, midLng], { icon: labelIcon }).addTo(map);
+            measureLabels.push(label);
+            
+            // Update total distance display
+            document.getElementById('measure-info').textContent = 
+                'ระยะทางรวม: ' + formatDistance(totalDistance);
+        }
+    }
+
+    // Measure button click
+    document.getElementById('measure-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!isMeasuring) {
+            startMeasuring();
+        } else {
+            stopMeasuring(false);
         }
     });
-    
-    measureControl.addTo(map);
-    
-    console.log('📏 Measure control added');
+
+    // Finish button
+    document.getElementById('measure-finish').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (measurePoints.length >= 2) {
+            // Add total distance label
+            const lastPoint = measurePoints[measurePoints.length - 1];
+            const totalLabelIcon = L.divIcon({
+                className: 'measure-label measure-total-label',
+                html: '📏 รวม: ' + formatDistance(totalDistance),
+                iconSize: null,
+                iconAnchor: [-10, -10]
+            });
+            
+            const totalLabel = L.marker(lastPoint, { icon: totalLabelIcon }).addTo(map);
+            measureLabels.push(totalLabel);
+            
+            stopMeasuring(true);
+            
+            // Show clear button
+            document.getElementById('measure-clear-btn').style.display = 'block';
+        }
+    });
+
+    // Cancel button
+    document.getElementById('measure-cancel').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        stopMeasuring(false);
+    });
+
+    // Clear measurements button
+    document.getElementById('measure-clear-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        clearMeasurements();
+        this.style.display = 'none';
+    });
+
+    // Map click handler for measurement
+    map.on('click', function(e) {
+        if (isMeasuring) {
+            addMeasurePoint(e.latlng);
+        }
+    });
+
+    console.log('📏 Custom measurement tool initialized');
+
+    // ==================== Calculator Modal ====================
+    const calcModal = document.getElementById('calc-modal');
+    const calcModalClose = document.getElementById('calc-modal-close');
+    const calcCalculateBtn = document.getElementById('measure-calculate');
+    const calcTabs = document.querySelectorAll('.calc-tab');
+    const calcPanels = document.querySelectorAll('.calc-panel');
+
+    // Open calculator modal
+    calcCalculateBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Auto-fill distance if measurement exists
+        if (totalDistance > 0) {
+            const distanceKm = totalDistance / 1000;
+            document.getElementById('method1-distance').value = distanceKm.toFixed(2);
+            document.getElementById('method2-distance').value = distanceKm.toFixed(2);
+        }
+        
+        calcModal.classList.add('active');
+        console.log('🧮 Calculator opened');
+    });
+
+    // Close calculator modal
+    calcModalClose.addEventListener('click', function() {
+        calcModal.classList.remove('active');
+    });
+
+    // Close on backdrop click
+    calcModal.addEventListener('click', function(e) {
+        if (e.target === calcModal) {
+            calcModal.classList.remove('active');
+        }
+    });
+
+    // Tab switching
+    calcTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetTab = this.dataset.tab;
+            
+            // Update tabs
+            calcTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update panels
+            calcPanels.forEach(panel => {
+                if (panel.id === `calc-${targetTab}`) {
+                    panel.classList.add('active');
+                } else {
+                    panel.classList.remove('active');
+                }
+            });
+        });
+    });
+
+    // Method 1: Distance + Wind Speed
+    document.getElementById('calc-method1-btn').addEventListener('click', function() {
+        const distance = parseFloat(document.getElementById('method1-distance').value);
+        const speed = parseFloat(document.getElementById('method1-speed').value);
+        
+        if (!distance || !speed || distance <= 0 || speed <= 0) {
+            alert('กรุณาใส่ระยะทางและความเร็วลมที่ถูกต้อง');
+            return;
+        }
+        
+        // Calculate time = distance / speed (in hours)
+        const timeHours = distance / speed;
+        const timeMinutes = timeHours * 60;
+        
+        // Format result
+        let resultText = '';
+        if (timeHours >= 1) {
+            const hours = Math.floor(timeHours);
+            const minutes = Math.round((timeHours - hours) * 60);
+            resultText = `${hours} ชั่วโมง ${minutes} นาที`;
+        } else {
+            resultText = `${Math.round(timeMinutes)} นาที`;
+        }
+        
+        // Display result
+        document.getElementById('calc-method1-value').textContent = resultText;
+        document.getElementById('calc-method1-details').innerHTML = 
+            `<strong>ระยะทาง:</strong> ${distance.toFixed(2)} กม.<br>` +
+            `<strong>ความเร็วลม:</strong> ${speed} กม./ชม.<br>` +
+            `<strong>เวลาโดยประมาณ:</strong> ${timeMinutes.toFixed(1)} นาที`;
+        document.getElementById('calc-method1-result').classList.add('active');
+        
+        console.log(`📊 Method 1: ${distance}km at ${speed}km/h = ${resultText}`);
+    });
+
+    // Method 2: 10-minute Movement
+    document.getElementById('calc-method2-btn').addEventListener('click', function() {
+        const movement = parseFloat(document.getElementById('method2-movement').value);
+        const distance = parseFloat(document.getElementById('method2-distance').value);
+        
+        if (!movement || !distance || movement <= 0 || distance <= 0) {
+            alert('กรุณาใส่ระยะทางที่ถูกต้อง');
+            return;
+        }
+        
+        // Calculate speed = distance / time (10 minutes = 1/6 hour)
+        const speedKmPerHour = movement / (10 / 60);
+        
+        // Calculate time to reach destination
+        const timeHours = distance / speedKmPerHour;
+        const timeMinutes = timeHours * 60;
+        
+        // Format result
+        let resultText = '';
+        if (timeHours >= 1) {
+            const hours = Math.floor(timeHours);
+            const minutes = Math.round((timeHours - hours) * 60);
+            resultText = `${hours} ชั่วโมง ${minutes} นาที`;
+        } else {
+            resultText = `${Math.round(timeMinutes)} นาที`;
+        }
+        
+        // Display result
+        document.getElementById('calc-method2-value').textContent = resultText;
+        document.getElementById('calc-method2-details').innerHTML = 
+            `<strong>ระยะทางเคลื่อนที่ (10 นาที):</strong> ${movement.toFixed(2)} กม.<br>` +
+            `<strong>ความเร็วเฉลี่ย:</strong> ${speedKmPerHour.toFixed(1)} กม./ชม.<br>` +
+            `<strong>ระยะทางที่เหลือ:</strong> ${distance.toFixed(2)} กม.<br>` +
+            `<strong>เวลาโดยประมาณ:</strong> ${timeMinutes.toFixed(1)} นาที`;
+        document.getElementById('calc-method2-result').classList.add('active');
+        
+        console.log(`📊 Method 2: ${movement}km in 10min, ${distance}km remaining = ${resultText}`);
+    });
+
+    console.log('🧮 Calculator initialized');
 
     // ==================== RainViewer Radar ====================
     let apiData = {};
@@ -1154,10 +1904,6 @@
                 
                 apiData = data;
                 initialize(data);
-                
-                // Update reference image
-                const img = document.getElementById('reference-img');
-                img.src = API_CONFIG.RADAR.reference + '?t=' + new Date().getTime();
             })
             .catch(err => {
                 console.error('❌ RainViewer Error:', err);
@@ -1388,6 +2134,18 @@
 
     // Keyboard shortcuts
     document.onkeydown = function(e) {
+        // Close calculator modal on ESC
+        if (e.keyCode === 27 && calcModal.classList.contains('active')) {
+            calcModal.classList.remove('active');
+            e.preventDefault();
+            return;
+        }
+        
+        // Don't trigger shortcuts when calculator is open
+        if (calcModal.classList.contains('active')) {
+            return;
+        }
+        
         switch (e.keyCode) {
             case 37: 
                 stop(); 
