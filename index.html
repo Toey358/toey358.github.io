@@ -3,19 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Radar System - VTUD</title>
+    <title>Obstacle Limitation Surface - สนามบินอุดรธานี</title>
+    
+    <!-- Airplane Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232196F3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z'/></svg>">
     
     <!-- Leaflet CSS -->
-    <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
+        :root {
+            --primary-blue: #2196F3;
+            --primary-blue-light: #64b5f6;
+            --primary-blue-lighter: #90caf9;
+            --primary-blue-dark: #1976d2;
+            --bg-main: #f1f5f9;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --danger-red: #ef4444;
+            --success-green: #22c55e;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -23,2314 +51,2786 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #f5f7fa;
-            color: #333;
-            overflow-x: hidden;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            overflow: hidden;
         }
 
-        /* Lucide Icons */
-        .lucide {
-            width: 20px;
-            height: 20px;
-            stroke-width: 2;
-        }
-
-        /* Navbar */
+        /* Navbar - Bigger */
         .navbar {
+            background: var(--primary-blue);
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            height: 80px;
-            background: linear-gradient(135deg, #2196F3 0%, #42A5F5 50%, #64B5F6 100%);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 2rem;
-            box-shadow: 0 2px 15px rgba(33, 150, 243, 0.3);
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
-        .navbar-brand {
+        .navbar-left {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 16px;
         }
 
-        .navbar-brand .logo {
-            width: 50px;
-            height: 50px;
-            background: transparent;
-            border-radius: 10px;
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Profile button - No border */
+        .profile-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8rem;
+            transition: var(--transition);
+            flex-shrink: 0;
         }
 
-        .navbar-brand .title h1 {
-            font-size: 1.5rem;
+        .profile-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .profile-btn svg {
+            width: 22px;
+            height: 22px;
+            color: white;
+            opacity: 0.9;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        /* Logo box - No border */
+        .logo-box {
+            width: 46px;
+            height: 46px;
+            background: rgba(255,255,255,0.15);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+        }
+
+        .logo-box svg {
+            width: 26px;
+            height: 26px;
+            color: white;
+        }
+
+        .logo-text h1 {
+            font-size: 18px;
             font-weight: 600;
             color: white;
-            letter-spacing: -0.3px;
+            letter-spacing: -0.02em;
         }
 
-        .current-time {
-            color: white;
-            font-size: 1.1rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 8px;
+        .logo-text p {
+            font-size: 13px;
+            color: rgba(255,255,255,0.75);
+            font-weight: 400;
         }
 
-        /* Main Container */
-        .main-container {
-            margin-top: 100px;
-            padding: 20px;
-            max-width: 1800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        /* Card Style */
-        .card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-
-        .card-header {
-            padding: 20px 25px;
-            background: white;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .card-header h2 {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-
-        .card-header h2 .lucide {
-            color: #2196F3;
-            width: 24px;
-            height: 24px;
-        }
-
-        .card-body {
-            padding: 25px;
-        }
-
-        /* METAR Dashboard with Charts */
-        .metar-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .metar-chart-card {
-            background: white;
-            border-radius: 14px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-            transition: all 0.3s ease;
-            border: 1px solid #e9ecef;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .metar-chart-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 16px rgba(33, 150, 243, 0.2);
-        }
-
-        .chart-container {
-            width: 140px;
-            height: 140px;
-            position: relative;
-            margin-bottom: 15px;
-        }
-
-        .chart-label {
-            font-size: 0.75rem;
-            color: #7f8c8d;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            text-align: center;
-        }
-
-        .chart-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #2c3e50;
-            text-align: center;
-            margin-top: 5px;
-        }
-
-        .chart-unit {
-            font-size: 0.9rem;
-            color: #95a5a6;
-            margin-left: 3px;
-        }
-
-        /* Info Cards Grid */
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-        }
-
-        .info-card {
-            background: #ffffff;
-            border-radius: 12px;
+        /* Main Content */
+        .main-content {
+            position: fixed;
+            top: 72px;
+            left: 0;
+            right: 0;
+            bottom: 0;
             padding: 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            border: 1px solid #e9ecef;
+            background: var(--bg-main);
         }
 
-        .info-label {
-            font-size: 0.75rem;
-            color: #7f8c8d;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .info-value {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .info-icon {
-            margin-bottom: 8px;
-            color: #2196F3;
-        }
-
-        .info-icon svg {
-            width: 24px;
-            height: 24px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 25px;
-            color: #7f8c8d;
-            font-size: 1rem;
-        }
-
-        .update-info {
-            text-align: center;
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-            font-size: 0.85rem;
-            color: #1976D2;
-            font-weight: 500;
-            border-radius: 0 0 16px 16px;
-        }
-
-        .update-info .lucide {
-            vertical-align: middle;
-            margin-right: 6px;
-            width: 16px;
-            height: 16px;
-        }
-
-        /* Radar Content - Full Width */
-        .radar-content {
-            display: block;
-        }
-
-        .radar-wrapper {
-            position: relative;
-            background: #f8f9fa;
-            overflow: hidden;
-        }
-
-        .radar-wrapper:first-child {
-            border-radius: 0;
-        }
-
-        .radar-wrapper:last-child {
-            border-right: none;
-            border-radius: 0;
-        }
-
-        .map-container {
-            width: 100%;
-            height: 680px;
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        /* Map */
-        #mapid {
+        .map-frame {
             width: 100%;
             height: 100%;
-            z-index: 1;
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border-color);
         }
 
-        /* Map Controls - FIXED for proper button interaction */
-        .map-controls {
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: var(--radius-xl);
+        }
+
+        /* Search Box - Wider on Desktop */
+        .search-container {
             position: absolute;
-            bottom: 20px;
+            top: 16px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 1002 !important;
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 15px 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            align-items: center;
-            border: 1px solid rgba(33, 150, 243, 0.2);
-            pointer-events: auto !important;
+            width: 400px;
+            max-width: calc(100% - 140px);
+            z-index: 800;
         }
 
-        .timestamp-display {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            color: #2c3e50;
-            font-weight: 600;
+        .search-box-wrapper {
+            position: relative;
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .search-box {
+            width: 100%;
+            height: 48px;
+            background: transparent;
+            border: none;
+            padding: 0 16px 0 48px;
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        .search-box::placeholder {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .search-box:focus {
+            outline: none;
+        }
+
+        .search-box-wrapper:focus-within {
+            box-shadow: var(--shadow-xl), 0 0 0 3px rgba(33, 150, 243, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--text-muted);
             pointer-events: none;
         }
 
-        .timestamp-display .lucide {
-            color: #2196F3;
-            width: 18px;
-            height: 18px;
-        }
-
-        .forecast-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #FFA726 0%, #FF9800 100%);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-left: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .playback-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            background: #2196F3;
-            color: white;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            user-select: none;
-            pointer-events: auto !important;
-            position: relative;
-            z-index: 1003 !important;
-        }
-
-        .btn:active {
-            transform: scale(0.95);
-        }
-
-        .btn:hover {
-            background: #1976D2;
-            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
-        }
-
-        .btn-icon {
-            padding: 14px;
-            min-width: 50px;
-            min-height: 50px;
-            justify-content: center;
-            background: #2196F3;
-        }
-
-        .btn-icon:hover {
-            background: #1976D2;
-        }
-
-        .btn-icon .lucide {
-            width: 20px;
-            height: 20px;
-        }
-
-        .btn-play {
-            background: #4CAF50;
-            min-height: 50px;
-        }
-
-        .btn-play:hover {
-            background: #388E3C;
-        }
-
-        .btn-play .lucide {
-            width: 18px;
-            height: 18px;
-        }
-
-        /* Circle Labels */
-        .circle-label {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-            font-size: 0.9rem;
-            font-weight: 700;
-            text-shadow: 
-                -1px -1px 0 #fff,
-                1px -1px 0 #fff,
-                -1px 1px 0 #fff,
-                1px 1px 0 #fff,
-                0 0 8px rgba(255, 255, 255, 0.9);
-        }
-
-        .circle-label.red {
-            color: #ef4444 !important;
-        }
-
-        .circle-label.blue {
-            color: #2196F3 !important;
-        }
-
-        /* Leaflet specific fixes - IMPORTANT for button interaction */
-        .leaflet-container {
-            z-index: 1 !important;
-        }
-
-        .leaflet-pane {
-            z-index: auto !important;
-        }
-
-        .leaflet-tile-pane {
-            z-index: 200 !important;
-            transition: opacity 0.3s ease;
-        }
-
-        .leaflet-overlay-pane {
-            z-index: 400 !important;
-            transition: opacity 0.3s ease;
-        }
-
-        .leaflet-marker-pane {
-            z-index: 600 !important;
-        }
-
-        /* Prevent map controls from interfering with buttons */
-        .leaflet-control-container {
-            pointer-events: none !important;
-        }
-
-        .leaflet-control {
-            pointer-events: auto !important;
-        }
-        
-        /* Smooth layer transitions */
-        .leaflet-layer {
-            transition: opacity 0.3s ease !important;
-        }
-
-        /* Custom Measurement Tool */
-        .measure-control {
+        .search-suggestions {
             position: absolute;
-            top: 90px;
-            left: 10px;
-            z-index: 1000;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(33, 150, 243, 0.2);
-        }
-
-        .measure-btn {
-            width: 40px;
-            height: 40px;
-            background: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .measure-btn:hover {
-            background-color: #E3F2FD;
-        }
-
-        .measure-btn.active {
-            background-color: #2196F3;
-        }
-
-        .measure-btn svg {
-            width: 20px;
-            height: 20px;
-            stroke: #2196F3;
-        }
-
-        .measure-btn.active svg {
-            stroke: white;
-        }
-
-        #measure-clear-btn {
-            background: #f44336;
-        }
-
-        #measure-clear-btn svg {
-            stroke: white;
-        }
-
-        #measure-clear-btn:hover {
-            background: #d32f2f;
-        }
-
-        .measure-toolbar {
-            position: absolute;
-            top: 50px;
-            left: 10px;
-            z-index: 1001;
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(33, 150, 243, 0.2);
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-xl);
+            max-height: 320px;
+            overflow-y: auto;
             display: none;
-            gap: 10px;
-            flex-direction: column;
-            min-width: 200px;
+            z-index: 1001;
         }
 
-        .measure-toolbar.active {
+        .search-suggestions.active {
+            display: block;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .search-suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
             display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition);
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .measure-info {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            color: #2c3e50;
+        .search-suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-suggestion-item:hover {
+            background: var(--bg-main);
+        }
+
+        .search-suggestion-item svg {
+            width: 18px;
+            height: 18px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .search-suggestion-text {
+            font-size: 14px;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .search-suggestion-text small {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Sidebar Overlay - Allow map interaction on desktop */
+        .sidebar-overlay {
+            position: fixed;
+            top: 72px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            z-index: 1100;
+            pointer-events: none;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Sidebar - Blue background */
+        .sidebar {
+            position: fixed;
+            top: 72px;
+            right: 0;
+            width: 320px;
+            height: calc(100vh - 72px);
+            background: var(--primary-blue);
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1150;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-content {
+            padding: 0;
+        }
+
+        .info-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            margin: 0 20px 16px;
+            border: none;
+            transition: var(--transition);
+        }
+
+        .info-section:hover {
+            background: white;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .section-icon {
+            width: 34px;
+            height: 34px;
+            background: var(--primary-blue);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .section-icon svg {
+            width: 17px;
+            height: 17px;
+            color: white;
+        }
+
+        .section-title {
+            font-size: 14px;
             font-weight: 600;
-            padding: 8px 12px;
-            background: #E3F2FD;
-            border-radius: 6px;
-            text-align: center;
+            color: var(--text-primary);
         }
 
-        .measure-actions {
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-item:first-of-type {
+            padding-top: 0;
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 13px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Legend */
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            margin-bottom: 4px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .legend-item:hover {
+            background: var(--bg-main);
+        }
+
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-checkbox {
+            width: 16px;
+            height: 16px;
+            margin-right: 10px;
+            cursor: pointer;
+            accent-color: var(--primary-blue);
+        }
+
+        .legend-color {
+            width: 26px;
+            height: 18px;
+            border-radius: 4px;
+            margin-right: 10px;
+            flex-shrink: 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .legend-text {
+            font-size: 13px;
+            color: var(--text-primary);
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .legend-item.hidden-surface {
+            opacity: 0.4;
+        }
+
+        .legend-item.hidden-surface .legend-text {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        /* Sidebar Menu Buttons */
+        .sidebar-menu {
+            padding: 20px;
+            padding-bottom: 4px;
+        }
+
+        .sidebar-menu-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            background: #bbdefb;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .sidebar-menu-btn:last-child {
+            margin-bottom: 0;
+        }
+
+        .sidebar-menu-btn:hover {
+            background: #90caf9;
+            transform: translateX(4px);
+        }
+
+        .sidebar-menu-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--primary-blue);
+        }
+
+        /* OBS Button (for table top bar) */
+        .obs-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .obs-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .obs-btn.primary {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .obs-btn.primary:hover {
+            background: #1976D2;
+        }
+
+        /* OBS Table Section - Below Navbar */
+        .obs-table-section {
+            position: fixed;
+            top: 72px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-main);
+            z-index: 1500;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .obs-table-section.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .obs-table-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .obs-table-top-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .obs-table-top-bar h2 {
+            flex: 1;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .back-btn:hover {
+            background: var(--border-color);
+        }
+
+        .back-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .obs-table-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .obs-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 14px;
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .obs-table th {
+            background: var(--bg-main);
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .obs-table th:first-child {
+            border-top-left-radius: var(--radius-lg);
+        }
+
+        .obs-table th:last-child {
+            border-top-right-radius: var(--radius-lg);
+        }
+
+        .obs-table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .obs-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .obs-table tr:last-child td:first-child {
+            border-bottom-left-radius: var(--radius-lg);
+        }
+
+        .obs-table tr:last-child td:last-child {
+            border-bottom-right-radius: var(--radius-lg);
+        }
+
+        .obs-table tr:hover td {
+            background: var(--bg-main);
+        }
+
+        .obs-table .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .obs-table .status-badge.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger-red);
+        }
+
+        .obs-table .status-badge.safe {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success-green);
+        }
+
+        .obs-table .action-btns {
             display: flex;
             gap: 8px;
         }
 
-        .measure-action-btn {
-            flex: 1;
-            padding: 10px;
+        .obs-table .action-btn {
+            width: 36px;
+            height: 36px;
             border: none;
-            border-radius: 6px;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.85rem;
-            font-weight: 600;
+            border-radius: var(--radius-sm);
             cursor: pointer;
-            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
-            min-width: 90px;
+            transition: var(--transition);
         }
 
-        .measure-action-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        .obs-table .action-btn svg {
+            width: 18px;
+            height: 18px;
         }
 
-        .measure-finish {
-            background: #4CAF50;
-            color: white;
+        .obs-table .action-btn.edit {
+            background: rgba(33, 150, 243, 0.1);
+            color: var(--primary-blue);
         }
 
-        .measure-finish:hover {
-            background: #388E3C;
+        .obs-table .action-btn.edit:hover {
+            background: rgba(33, 150, 243, 0.2);
         }
 
-        .measure-cancel {
-            background: #f44336;
-            color: white;
+        .obs-table .action-btn.delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-red);
         }
 
-        .measure-cancel:hover {
-            background: #d32f2f;
+        .obs-table .action-btn.delete:hover {
+            background: rgba(239, 68, 68, 0.2);
         }
 
-        .measure-calculate {
-            background: #FF9800;
-            color: white;
+        .obs-table .action-btn.locate {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success-green);
         }
 
-        .measure-calculate:hover {
-            background: #F57C00;
+        .obs-table .action-btn.locate:hover {
+            background: rgba(34, 197, 94, 0.2);
         }
 
-        .measure-instruction {
-            font-size: 0.8rem;
-            color: #7f8c8d;
-            text-align: center;
-            padding: 4px 8px;
+        /* Pagination */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 20px;
+            background: white;
+            border-top: 1px solid var(--border-color);
         }
 
-        /* Measurement markers */
-        .measure-marker {
-            width: 12px;
-            height: 12px;
-            background: #2196F3;
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        .page-btn {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
         }
 
-        .measure-marker-first {
-            width: 14px;
-            height: 14px;
-            background: #4CAF50;
+        .page-btn:hover:not(:disabled) {
+            background: var(--bg-main);
+            border-color: var(--primary-blue);
         }
 
-        /* Distance label */
-        .measure-label {
-            background: rgba(33, 150, 243, 0.95);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            font-weight: 700;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            white-space: nowrap;
-            border: 2px solid white;
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
-        .measure-total-label {
-            background: rgba(76, 175, 80, 0.95);
+        .page-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
         }
 
-        /* Calculator Modal */
-        .calc-modal {
+        .page-info {
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Modal */
+        .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
-            z-index: 3000;
-            display: none;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
         }
 
-        .calc-modal.active {
-            display: flex;
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
         }
 
-        .calc-modal-content {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            max-width: 500px;
+        .modal {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
             width: 90%;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 480px;
             max-height: 90vh;
             overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            transform: scale(0.9);
+            transition: var(--transition);
         }
 
-        .calc-modal-header {
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal.small {
+            max-width: 360px;
+        }
+
+        .modal-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 25px;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .calc-modal-header h3 {
-            font-family: 'Inter', sans-serif;
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .modal-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
         }
 
-        .calc-modal-close {
+        .modal-close {
             width: 32px;
             height: 32px;
             border: none;
-            background: #f5f7fa;
-            border-radius: 8px;
+            background: var(--bg-main);
+            border-radius: var(--radius-sm);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s ease;
+            transition: var(--transition);
         }
 
-        .calc-modal-close:hover {
-            background: #e9ecef;
+        .modal-close:hover {
+            background: var(--border-color);
         }
 
-        .calc-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-            background: #f5f7fa;
-            padding: 5px;
-            border-radius: 10px;
+        .modal-close svg {
+            width: 18px;
+            height: 18px;
+            color: var(--text-secondary);
         }
 
-        .calc-tab {
-            flex: 1;
-            padding: 12px 16px;
-            border: none;
-            background: transparent;
-            border-radius: 8px;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #7f8c8d;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .modal-body {
+            padding: 20px;
         }
 
-        .calc-tab.active {
-            background: white;
-            color: #2196F3;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        .modal-body p {
+            margin: 0 0 10px;
+            color: var(--text-secondary);
         }
 
-        .calc-panel {
-            display: none;
+        .modal-body .warning-text {
+            color: var(--danger-red);
+            font-size: 13px;
         }
 
-        .calc-panel.active {
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
             display: block;
-        }
-
-        .calc-input-group {
-            margin-bottom: 20px;
-        }
-
-        .calc-label {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
+            font-size: 13px;
             font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            display: block;
+            color: var(--text-primary);
+            margin-bottom: 6px;
         }
 
-        .calc-input {
+        .form-group input,
+        .form-group textarea {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
-            color: #2c3e50;
-            transition: all 0.2s ease;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+            transition: var(--transition);
+            background: var(--bg-card);
+            color: var(--text-primary);
         }
 
-        .calc-input:focus {
+        .form-group input:focus,
+        .form-group textarea:focus {
             outline: none;
-            border-color: #2196F3;
+            border-color: var(--primary-blue);
             box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
         }
 
-        .calc-input-suffix {
-            position: relative;
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
         }
 
-        .calc-input-suffix input {
-            padding-right: 60px;
+        .form-group small {
+            display: block;
+            margin-top: 4px;
+            font-size: 11px;
+            color: var(--text-muted);
         }
 
-        .calc-input-suffix-text {
-            position: absolute;
-            right: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            color: #7f8c8d;
-            font-weight: 600;
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
         }
 
-        .calc-btn {
-            width: 100%;
-            padding: 14px;
+        .modal-btn {
+            flex: 1;
+            padding: 12px 16px;
             border: none;
-            border-radius: 8px;
-            background: #2196F3;
-            color: white;
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .modal-btn.cancel {
+            background: var(--bg-main);
+            color: var(--text-secondary);
+        }
+
+        .modal-btn.cancel:hover {
+            background: var(--border-color);
+        }
+
+        .modal-btn.save {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .modal-btn.save:hover {
+            background: #1976D2;
+        }
+
+        .modal-btn.delete {
+            background: var(--danger-red);
+            color: white;
+        }
+
+        .modal-btn.delete:hover {
+            background: #dc2626;
+        }
+
+        /* OBS Label on Map - No background */
+        .obs-label {
+            padding: 0;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white;
+        }
+
+        .obs-label.danger {
+            color: var(--danger-red);
+        }
+
+        .obs-label.safe {
+            color: var(--success-green);
+        }
+
+        /* Coordinate Display */
+        .coordinate-display {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            box-shadow: var(--shadow-lg);
+            z-index: 800;
+            display: none;
+            backdrop-filter: blur(8px);
+            white-space: nowrap;
+        }
+
+        .coordinate-display.active {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 8px;
-            margin-top: 20px;
         }
 
-        .calc-btn:hover {
-            background: #1976D2;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+        .coordinate-display svg {
+            width: 16px;
+            height: 16px;
+            color: var(--primary-blue);
+            flex-shrink: 0;
         }
 
-        .calc-result {
-            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
-            display: none;
+        #coordText {
+            white-space: nowrap;
         }
 
-        .calc-result.active {
-            display: block;
+        /* Custom Leaflet Styles */
+        .leaflet-popup-content-wrapper {
+            background: var(--bg-card) !important;
+            color: var(--text-primary);
+            border-radius: var(--radius-md) !important;
+            box-shadow: var(--shadow-xl) !important;
+            border: none !important;
+            padding: 4px !important;
         }
 
-        .calc-result-label {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.85rem;
-            color: #1976D2;
+        .leaflet-popup-content {
+            margin: 14px 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .leaflet-popup-content b {
+            color: var(--primary-blue);
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
         }
 
-        .calc-result-value {
-            font-family: 'Inter', sans-serif;
-            font-size: 2rem;
-            color: #0D47A1;
-            font-weight: 700;
+        .leaflet-popup-content .danger {
+            color: var(--danger-red);
         }
 
-        .calc-result-details {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            color: #1976D2;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(33, 150, 243, 0.2);
+        .leaflet-popup-content .success {
+            color: var(--success-green);
         }
 
-        .calc-info {
-            background: #FFF3E0;
-            border-left: 4px solid #FF9800;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        .leaflet-popup-tip {
+            background: var(--bg-card) !important;
         }
 
-        .calc-info-text {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.85rem;
-            color: #E65100;
-            line-height: 1.5;
+        .leaflet-popup-close-button {
+            color: var(--text-muted) !important;
+            font-size: 20px !important;
         }
 
-        /* METAR Raw Text */
-        .metar-raw-content {
-            padding: 20px 25px;
-            background: #f8f9fa;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            color: #2c3e50;
-            white-space: pre-wrap;
-            word-break: break-word;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
+        .leaflet-tooltip {
+            background: var(--bg-card) !important;
+            border: none !important;
+            border-radius: var(--radius-sm) !important;
+            box-shadow: var(--shadow-md) !important;
+            padding: 8px 12px !important;
+            font-size: 13px;
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
-        /* Responsive */
-        @media (max-width: 1500px) {
-            .map-container {
-                height: 600px !important;
-            }
+        /* Measure Tool */
+        .custom-measure-control {
+            background: var(--bg-card) !important;
+            border: none !important;
+            border-radius: var(--radius-md) !important;
+            width: 42px !important;
+            height: 42px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            box-shadow: var(--shadow-md) !important;
+            transition: var(--transition) !important;
         }
 
+        .custom-measure-control:hover {
+            background: var(--bg-main) !important;
+            box-shadow: var(--shadow-lg) !important;
+        }
+
+        .custom-measure-control.active {
+            background: var(--primary-blue) !important;
+        }
+
+        .custom-measure-control svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--text-secondary);
+        }
+
+        .custom-measure-control.active svg {
+            stroke: white;
+        }
+
+        .measure-tooltip {
+            background: var(--bg-card) !important;
+            border: none !important;
+            border-radius: var(--radius-sm) !important;
+            padding: 6px 12px !important;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary-blue) !important;
+            box-shadow: var(--shadow-md) !important;
+        }
+
+        .measure-tooltip.temp-measure {
+            color: var(--text-secondary) !important;
+            font-style: italic;
+        }
+
+        .measure-marker {
+            background: var(--primary-blue);
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .measure-control-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .measure-buttons {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .measure-buttons.active {
+            display: flex;
+        }
+
+        .measure-btn {
+            background: var(--bg-card);
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            box-shadow: var(--shadow-md);
+        }
+
+        .measure-btn.finish { background: #22c55e; color: white; }
+        .measure-btn.cancel { background: #ef4444; color: white; }
+        .measure-btn.clear { background: #f97316; color: white; }
+
+        .measure-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Scrollbar */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.4);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.6);
+        }
+
+        /* Leaflet Controls */
+        .leaflet-control-zoom {
+            border: none !important;
+            box-shadow: var(--shadow-md) !important;
+            border-radius: var(--radius-md) !important;
+            overflow: hidden;
+        }
+
+        .leaflet-control-zoom a {
+            background: var(--bg-card) !important;
+            color: var(--text-primary) !important;
+            border: none !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            width: 34px !important;
+            height: 34px !important;
+            line-height: 34px !important;
+        }
+
+        .leaflet-control-zoom a:last-child {
+            border-bottom: none !important;
+        }
+
+        /* Markers */
+        .search-marker {
+            background: #ef4444;
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .obstacle-marker-danger {
+            background: var(--danger-red);
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+        }
+
+        .obstacle-marker-safe {
+            background: var(--success-green);
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.5);
+        }
+
+        /* Loading */
+        .loading-indicator {
+            position: absolute;
+            top: 70px;
+            right: 16px;
+            background: var(--bg-card);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: none;
+            align-items: center;
+            gap: 8px;
+            z-index: 800;
+        }
+
+        .loading-indicator.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Mobile */
         @media (max-width: 768px) {
             .navbar {
-                height: 70px;
-                padding: 0 1rem;
+                height: 64px;
+                padding: 0 16px;
             }
 
-            .navbar-brand .logo {
-                width: 45px;
-                height: 45px;
-                font-size: 1.5rem;
-            }
-
-            .navbar-brand .title h1 {
-                font-size: 1.2rem;
-            }
-
-            .current-time {
-                font-size: 0.95rem;
-                padding: 6px 12px;
-            }
-
-            .main-container {
-                margin-top: 90px;
+            .main-content {
+                top: 64px;
                 padding: 12px;
             }
 
-            .metar-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
+            .sidebar {
+                width: 100%;
+                top: 64px;
+                height: calc(100vh - 64px);
+                pointer-events: auto;
             }
 
-            .chart-container {
-                width: 110px;
-                height: 110px;
+            .sidebar-overlay {
+                top: 64px;
+                pointer-events: auto;
+            }
+            
+            .search-container {
+                top: 12px;
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
+                width: 260px;
+                max-width: calc(100% - 120px);
             }
 
-            .info-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .search-box {
+                height: 44px;
+                font-size: 14px;
+                padding-left: 40px;
             }
 
-            .map-container {
-                height: 500px !important;
+            .search-box::placeholder {
+                font-size: 12px;
             }
 
-            .btn-icon {
-                padding: 12px;
-                min-width: 46px;
-                min-height: 46px;
+            .search-icon {
+                left: 12px;
+                width: 18px;
+                height: 18px;
             }
 
-            .btn-play {
-                min-height: 46px;
-                padding: 10px 16px;
+            .map-frame, #map {
+                border-radius: var(--radius-lg);
             }
 
-            .map-controls {
+            .logo-text h1 {
+                font-size: 15px;
+            }
+
+            .logo-text p {
+                font-size: 11px;
+            }
+
+            .logo-box {
+                width: 40px;
+                height: 40px;
+            }
+
+            .profile-btn {
+                width: 40px;
+                height: 40px;
+            }
+
+            .coordinate-display {
+                bottom: 10px;
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+
+            #coordText {
+                font-size: 11px;
+            }
+
+            .loading-indicator {
+                top: 68px;
+                right: 56px;
+                font-size: 10px;
+                padding: 6px 10px;
+            }
+
+            .obs-table-section {
+                top: 64px;
+            }
+
+            .obs-table-top-bar h2 {
+                font-size: 16px;
+            }
+
+            .obs-table-container {
+                padding: 16px;
+            }
+
+            .obs-table th,
+            .obs-table td {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+
+            .modal {
+                width: 95%;
+                max-width: 420px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar {
+                height: 60px;
+            }
+
+            .main-content {
+                top: 60px;
+            }
+
+            .sidebar {
+                top: 60px;
+                height: calc(100vh - 60px);
+            }
+
+            .sidebar-overlay {
+                top: 60px;
+            }
+
+            .search-container {
+                width: 220px;
+                max-width: calc(100% - 100px);
+            }
+
+            .search-box {
+                height: 40px;
+                font-size: 13px;
+                padding-left: 36px;
+            }
+
+            .search-box::placeholder {
+                font-size: 11px;
+            }
+
+            .search-icon {
+                left: 10px;
+                width: 16px;
+                height: 16px;
+            }
+
+            .coordinate-display {
+                padding: 6px 10px;
+                font-size: 10px;
+            }
+
+            .coordinate-display svg {
+                width: 12px;
+                height: 12px;
+            }
+
+            #coordText {
+                font-size: 9px;
+            }
+
+            .logo-box {
+                width: 38px;
+                height: 38px;
+            }
+
+            .profile-btn {
+                width: 38px;
+                height: 38px;
+            }
+
+            .obs-table-section {
+                top: 60px;
+            }
+
+            .obs-table-top-bar {
                 padding: 12px 16px;
             }
 
-            .calc-modal-content {
-                width: 95%;
-                padding: 20px;
+            .obs-table-top-bar h2 {
+                font-size: 14px;
             }
 
-            .calc-tabs {
-                flex-direction: column;
+            .back-btn {
+                padding: 8px 12px;
+                font-size: 12px;
             }
 
-            .calc-tab {
-                font-size: 0.85rem;
+            .obs-table-container {
+                padding: 12px;
             }
 
-            .calc-modal-header h3 {
-                font-size: 1.1rem;
+            .obs-table th,
+            .obs-table td {
+                padding: 8px 6px;
+                font-size: 11px;
+            }
+
+            .obs-table .action-btn {
+                width: 28px;
+                height: 28px;
+            }
+
+            .obs-table .action-btn svg {
+                width: 14px;
+                height: 14px;
             }
         }
     </style>
 </head>
 <body>
-
-<!-- Navbar -->
-<nav class="navbar">
-    <div class="navbar-brand">
-        <div class="logo">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 32px; height: 32px;">
-                <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
-            </svg>
-        </div>
-        <div class="title">
-            <h1>Weather Radar System</h1>
-        </div>
-    </div>
-    <div class="current-time">
-        <svg xmlns="http://www.w3.org/2000/svg" class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span id="current-time-display">--:--:--</span>
-    </div>
-</nav>
-
-<!-- Main Container -->
-<div class="main-container">
-    <!-- METAR Section -->
-    <div class="card">
-        <div class="card-header">
-            <h2>
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
-                สภาพอากาศปัจจุบัน (METAR) - VTUD
-            </h2>
-        </div>
-
-        <div class="card-body">
-            <div id="metar-loading" class="loading">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite; width: 24px; height: 24px;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                กำลังโหลดข้อมูลสภาพอากาศ...
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <div class="logo-container">
+                <div class="logo-box">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>Obstacle Limitation Surface</h1>
+                    <p>สนามบินอุดรธานี (VTUD)</p>
+                </div>
             </div>
+        </div>
+        <div class="navbar-right">
+            <button class="profile-btn" id="profileBtn" aria-label="เปิดเมนู">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="5"/>
+                    <path d="M20 21a8 8 0 0 0-16 0"/>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-content">
+            <!-- Sidebar Menu Buttons at Top -->
+            <div class="sidebar-menu">
+                <button class="sidebar-menu-btn" id="btnAddObs">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="16"/>
+                        <line x1="8" y1="12" x2="16" y2="12"/>
+                    </svg>
+                    เพิ่ม
+                </button>
+                <button class="sidebar-menu-btn" id="btnViewObs">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3h18v18H3z"/>
+                        <path d="M3 9h18"/>
+                        <path d="M3 15h18"/>
+                        <path d="M9 3v18"/>
+                    </svg>
+                    ข้อมูลสิ่งกีดขวาง
+                </button>
+            </div>
+
+            <div class="info-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <circle cx="12" cy="12" r="4"/>
+                            <line x1="21.17" y1="8" x2="12" y2="8"/>
+                            <line x1="3.95" y1="6.06" x2="8.54" y2="14"/>
+                            <line x1="10.88" y1="21.94" x2="15.46" y2="14"/>
+                        </svg>
+                    </div>
+                    <span class="section-title">ข้อมูลสนามบิน</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">รหัส ICAO</span>
+                    <span class="info-value">VTUD</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">ทางวิ่ง</span>
+                    <span class="info-value">12/30</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">ความยาว</span>
+                    <span class="info-value">3,000 m</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">ระดับความสูง</span>
+                    <span class="info-value">579 ft (176 m)</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">พิกัด</span>
+                    <span class="info-value">17.3864°N, 102.7883°E</span>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="7" height="7" x="3" y="3" rx="1"/>
+                            <rect width="7" height="7" x="14" y="3" rx="1"/>
+                            <rect width="7" height="7" x="14" y="14" rx="1"/>
+                            <rect width="7" height="7" x="3" y="14" rx="1"/>
+                        </svg>
+                    </div>
+                    <span class="section-title">สัญลักษณ์</span>
+                </div>
+                
+                <label class="legend-item">
+                    <input type="checkbox" class="legend-checkbox" id="toggle-runway" checked>
+                    <div class="legend-color" style="background: #3b82f6;"></div>
+                    <span class="legend-text">Runway 12/30</span>
+                </label>
+                <label class="legend-item">
+                    <input type="checkbox" class="legend-checkbox" id="toggle-strip" checked>
+                    <div class="legend-color" style="background: rgba(139, 92, 246, 0.4);"></div>
+                    <span class="legend-text">Runway Strip</span>
+                </label>
+                <label class="legend-item">
+                    <input type="checkbox" class="legend-checkbox" id="toggle-approach" checked>
+                    <div class="legend-color" style="background: rgba(239, 68, 68, 0.35);"></div>
+                    <span class="legend-text">Approach Surface</span>
+                </label>
+                <label class="legend-item">
+                    <input type="checkbox" class="legend-checkbox" id="toggle-inner" checked>
+                    <div class="legend-color" style="background: rgba(34, 197, 94, 0.35);"></div>
+                    <span class="legend-text">Inner Horizontal</span>
+                </label>
+                <label class="legend-item">
+                    <input type="checkbox" class="legend-checkbox" id="toggle-conical" checked>
+                    <div class="legend-color" style="background: rgba(168, 85, 247, 0.3);"></div>
+                    <span class="legend-text">Conical Surface</span>
+                </label>
+                <label class="legend-item">
+                    <input type="checkbox" class="legend-checkbox" id="toggle-outer" checked>
+                    <div class="legend-color" style="background: rgba(249, 115, 22, 0.35);"></div>
+                    <span class="legend-text">Outer Horizontal</span>
+                </label>
+                <label class="legend-item">
+                    <input type="checkbox" class="legend-checkbox" id="toggle-transitional" checked>
+                    <div class="legend-color" style="background: rgba(234, 179, 8, 0.35);"></div>
+                    <span class="legend-text">Transitional Surface</span>
+                </label>
+                <label class="legend-item">
+                    <input type="checkbox" class="legend-checkbox" id="toggle-obstacles" checked>
+                    <div class="legend-color" style="background: linear-gradient(135deg, #ef4444 50%, #22c55e 50%);"></div>
+                    <span class="legend-text">Obstacles</span>
+                </label>
+                <label class="legend-item">
+                    <input type="checkbox" class="legend-checkbox" id="toggle-obs-labels">
+                    <div class="legend-color" style="background: white; border: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold;">Aa</div>
+                    <span class="legend-text">ชื่อ Obstacles</span>
+                </label>
+            </div>
+
+            <div class="info-section">
+                <div class="section-header">
+                    <div class="section-icon" style="background: #f97316;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                    </div>
+                    <span class="section-title">สถานะสิ่งกีดขวาง</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">จำนวนทั้งหมด</span>
+                    <span class="info-value" id="totalObstacles">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label" style="color: var(--danger-red);">เกินความสูง OLS</span>
+                    <span class="info-value" id="dangerObstacles" style="color: var(--danger-red);">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label" style="color: var(--success-green);">ปลอดภัย</span>
+                    <span class="info-value" id="safeObstacles" style="color: var(--success-green);">0</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- OBS Table Section -->
+    <div class="obs-table-section" id="obsTableSection">
+        <div class="obs-table-content">
+            <div class="obs-table-top-bar">
+                <button class="back-btn" id="btnBackFromTable">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5"/>
+                        <path d="M12 19l-7-7 7-7"/>
+                    </svg>
+                    กลับ
+                </button>
+                <h2>ข้อมูลสิ่งกีดขวาง</h2>
+                <button class="obs-btn primary" id="btnAddObsFromTable">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    เพิ่ม
+                </button>
+            </div>
+            <div class="obs-table-container">
+                <table class="obs-table" id="obsTable">
+                    <thead>
+                        <tr>
+                            <th>รหัส</th>
+                            <th>ชื่อ</th>
+                            <th>ความสูง</th>
+                            <th>พิกัด</th>
+                            <th>สถานะ</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="obsTableBody">
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="pagination">
+                <button class="page-btn" id="prevPage">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                </button>
+                <span class="page-info" id="pageInfo">1 / 1</span>
+                <button class="page-btn" id="nextPage">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit OBS Modal -->
+    <div class="modal-overlay" id="obsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">เพิ่มสิ่งกีดขวาง</h3>
+                <button class="modal-close" id="modalClose">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="obsEditId">
+                <div class="form-group">
+                    <label>รหัส (ID)</label>
+                    <input type="text" id="obsId" placeholder="OBS0001 (อัตโนมัติถ้าไม่กรอก)">
+                </div>
+                <div class="form-group">
+                    <label>ชื่อสิ่งกีดขวาง *</label>
+                    <input type="text" id="obsName" placeholder="เช่น Tower A, Building B" required>
+                </div>
+                <div class="form-group">
+                    <label>ความสูง (m AGL) *</label>
+                    <input type="number" id="obsHeight" placeholder="เช่น 150" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label>พิกัด (Lat, Lng) *</label>
+                    <input type="text" id="obsCoords" placeholder="17.3864, 102.7883">
+                    <small>หรือคลิกที่แผนที่เพื่อเลือกตำแหน่ง</small>
+                </div>
+                <div class="form-group">
+                    <label>หมายเหตุ</label>
+                    <textarea id="obsNote" placeholder="รายละเอียดเพิ่มเติม"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" id="modalCancel">ยกเลิก</button>
+                <button class="modal-btn save" id="modalSave">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal small">
+            <div class="modal-header">
+                <h3>ยืนยันการลบ</h3>
+            </div>
+            <div class="modal-body">
+                <p>คุณต้องการลบ <strong id="deleteObsName"></strong> หรือไม่?</p>
+                <p class="warning-text">การลบไม่สามารถย้อนกลับได้</p>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label>พิมพ์ <strong style="color: var(--danger-red);">vtud1234</strong> เพื่อยืนยัน</label>
+                    <input type="text" id="deleteConfirmCode" placeholder="vtud1234" autocomplete="off">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" id="deleteCancel">ยกเลิก</button>
+                <button class="modal-btn delete" id="deleteConfirm" disabled>ลบ</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <div class="map-frame">
+            <div id="map"></div>
             
-            <!-- Charts Grid -->
-            <div id="metar-charts" class="metar-grid" style="display: none;">
-                <div class="metar-chart-card">
-                    <div class="chart-container">
-                        <canvas id="tempChart"></canvas>
-                    </div>
-                    <div class="chart-label">อุณหภูมิ</div>
-                    <div class="chart-value" id="temp-display">--<span class="chart-unit">°C</span></div>
+            <div class="search-container">
+                <div class="search-box-wrapper">
+                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.3-4.3"/>
+                    </svg>
+                    <input type="text" class="search-box" id="searchBox" placeholder="ค้นหาพิกัด (17.38, 102.78)">
                 </div>
-
-                <div class="metar-chart-card">
-                    <div class="chart-container">
-                        <canvas id="humidityChart"></canvas>
-                    </div>
-                    <div class="chart-label">ความชื้น</div>
-                    <div class="chart-value" id="humidity-display">--<span class="chart-unit">%</span></div>
-                </div>
-
-                <div class="metar-chart-card">
-                    <div class="chart-container">
-                        <canvas id="pressureChart"></canvas>
-                    </div>
-                    <div class="chart-label">ความกดอากาศ</div>
-                    <div class="chart-value" id="pressure-display">--<span class="chart-unit">hPa</span></div>
-                </div>
-
-                <div class="metar-chart-card">
-                    <div class="chart-container">
-                        <canvas id="windChart"></canvas>
-                    </div>
-                    <div class="chart-label">ความเร็วลม</div>
-                    <div class="chart-value" id="wind-display">--<span class="chart-unit">kt</span></div>
-                </div>
+                <div class="search-suggestions" id="searchSuggestions"></div>
             </div>
 
-            <!-- Additional Info -->
-            <div id="metar-info" class="info-grid" style="display: none;">
-                <div class="info-card">
-                    <div class="info-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-                    </div>
-                    <div class="info-label">จุดน้ำค้าง</div>
-                    <div class="info-value" id="dewpoint-value">--°C</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 10"/></svg>
-                    </div>
-                    <div class="info-label">ทิศทางลม</div>
-                    <div class="info-value" id="wind-dir-value">--</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                    </div>
-                    <div class="info-label">ทัศนวิสัย</div>
-                    <div class="info-value" id="visibility-value">--</div>
-                </div>
+            <div class="loading-indicator" id="loadingIndicator">
+                <div class="loading-spinner"></div>
+                <span>กำลังโหลด...</span>
             </div>
-        </div>
 
-        <div class="update-info">
-            <svg xmlns="http://www.w3.org/2000/svg" class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.12-5.83"/><polyline points="21 3 21 12 12 12"/></svg>
-            <span>อัปเดทอัตโนมัติทุก 30 นาที | ครั้งถัดไป: <span id="metar-countdown">--:--</span></span>
-        </div>
-    </div>
-
-    <!-- Radar Section -->
-    <div class="card">
-        <div class="card-header">
-            <h2>
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                เรดาร์ฝน (Weather Radar)
-            </h2>
-        </div>
-
-        <div class="radar-content">
-            <!-- Live Radar -->
-            <div class="radar-wrapper">
-                <div class="map-container">
-                    <div id="mapid">
-                        <!-- Measurement Tool -->
-                        <div class="measure-control">
-                            <button class="measure-btn" id="measure-btn" title="วัดระยะทาง">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/>
-                                    <path d="m14.5 12.5 2-2"/>
-                                    <path d="m11.5 9.5 2-2"/>
-                                    <path d="m8.5 6.5 2-2"/>
-                                    <path d="m17.5 15.5 2-2"/>
-                                </svg>
-                            </button>
-                        </div>
-                        
-                        <button class="measure-btn" id="measure-clear-btn" title="ลบเส้นวัด" style="position: absolute; top: 140px; left: 10px; z-index: 1000; display: none; background: #f44336;">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"/>
-                                <path d="m19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                <line x1="10" y1="11" x2="10" y2="17"/>
-                                <line x1="14" y1="11" x2="14" y2="17"/>
-                            </svg>
-                        </button>
-                        
-                        <div class="measure-toolbar" id="measure-toolbar">
-                            <div class="measure-instruction">คลิกบนแผนที่เพื่อวางจุด</div>
-                            <div class="measure-info" id="measure-info">ระยะทาง: 0.00 กม.</div>
-                            <div class="measure-actions">
-                                <button class="measure-action-btn measure-finish" id="measure-finish">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
-                                        <polyline points="20 6 9 17 4 12"/>
-                                    </svg>
-                                    เสร็จ
-                                </button>
-                                <button class="measure-action-btn measure-cancel" id="measure-cancel">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
-                                        <line x1="18" y1="6" x2="6" y2="18"/>
-                                        <line x1="6" y1="6" x2="18" y2="18"/>
-                                    </svg>
-                                    ยกเลิก
-                                </button>
-                            </div>
-                            <button class="measure-action-btn measure-calculate" id="measure-calculate" style="width: 100%; margin-top: 8px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
-                                    <rect x="4" y="2" width="16" height="20" rx="2"/>
-                                    <line x1="8" y1="6" x2="16" y2="6"/>
-                                    <line x1="16" y1="14" x2="16" y2="18"/>
-                                    <path d="M16 10h.01"/>
-                                    <path d="M12 10h.01"/>
-                                    <path d="M8 10h.01"/>
-                                    <path d="M12 14h.01"/>
-                                    <path d="M8 14h.01"/>
-                                    <path d="M12 18h.01"/>
-                                    <path d="M8 18h.01"/>
-                                </svg>
-                                คำนวณเวลามาถึง
-                            </button>
-                        </div>
-                        
-                        <div class="map-controls">
-                            <div id="timestamp" class="timestamp-display">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                <span id="timestamp-text">กำลังโหลด...</span>
-                            </div>
-                            <div class="playback-controls">
-                                <button class="btn btn-icon" id="btn-prev" title="ย้อนกลับ">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 19 2 12 11 5 11 19"/><polygon points="22 19 13 12 22 5 22 19"/></svg>
-                                </button>
-                                <button class="btn btn-play" id="btn-play" title="เล่น/หยุด">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" id="play-icon-svg"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                                    <span id="play-text">เล่น</span>
-                                </button>
-                                <button class="btn btn-icon" id="btn-next" title="ถัดไป">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="update-info">
-            <svg xmlns="http://www.w3.org/2000/svg" class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.12-5.83"/><polyline points="21 3 21 12 12 12"/></svg>
-            <span>อัปเดทอัตโนมัติทุก 10 นาที | อัปเดทอีกครั้งใน: <span id="radar-countdown">--:--</span></span>
-        </div>
-    </div>
-
-    <!-- METAR Raw Text Section -->
-    <div class="card">
-        <div class="card-header">
-            <h2>
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                ข่าว METAR
-            </h2>
-        </div>
-        <div class="card-body">
-            <div class="metar-raw-content" id="metar-raw-text">
-                กำลังโหลดข้อมูล METAR...
-            </div>
-        </div>
-        <div class="update-info">
-            <svg xmlns="http://www.w3.org/2000/svg" class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.12-5.83"/><polyline points="21 3 21 12 12 12"/></svg>
-            <span>อัปเดทอัตโนมัติทุก 30 นาที | ครั้งถัดไป: <span id="metar-raw-countdown">--:--</span></span>
-        </div>
-    </div>
-</div>
-
-<!-- Calculator Modal -->
-<div class="calc-modal" id="calc-modal">
-    <div class="calc-modal-content">
-        <div class="calc-modal-header">
-            <h3>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
-                    <rect x="4" y="2" width="16" height="20" rx="2"/>
-                    <line x1="8" y1="6" x2="16" y2="6"/>
-                    <line x1="16" y1="14" x2="16" y2="18"/>
-                    <path d="M16 10h.01"/>
-                    <path d="M12 10h.01"/>
-                    <path d="M8 10h.01"/>
-                    <path d="M12 14h.01"/>
-                    <path d="M8 14h.01"/>
-                    <path d="M12 18h.01"/>
-                    <path d="M8 18h.01"/>
+            <div class="coordinate-display" id="coordinateDisplay">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                    <circle cx="12" cy="10" r="3"/>
                 </svg>
-                คำนวณเวลาที่เมฆจะมาถึง
-            </h3>
-            <button class="calc-modal-close" id="calc-modal-close">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-            </button>
-        </div>
-
-        <div class="calc-tabs">
-            <button class="calc-tab active" data-tab="method1">แบบที่ 1: ระยะทาง + ความเร็ว</button>
-            <button class="calc-tab" data-tab="method2">แบบที่ 2: เคลื่อนที่ 10 นาที</button>
-        </div>
-
-        <!-- Method 1: Distance + Wind Speed -->
-        <div class="calc-panel active" id="calc-method1">
-            <div class="calc-info">
-                <p class="calc-info-text">ใส่ระยะทางจากจุดเริ่มต้นถึงจุดสิ้นสุด และความเร็วลมเฉลี่ย</p>
-            </div>
-
-            <div class="calc-input-group">
-                <label class="calc-label">ระยะทาง</label>
-                <div class="calc-input-suffix">
-                    <input type="number" class="calc-input" id="method1-distance" placeholder="0.00" step="0.01" min="0">
-                    <span class="calc-input-suffix-text">กม.</span>
-                </div>
-            </div>
-
-            <div class="calc-input-group">
-                <label class="calc-label">ความเร็วลม</label>
-                <div class="calc-input-suffix">
-                    <input type="number" class="calc-input" id="method1-speed" placeholder="0" step="1" min="0">
-                    <span class="calc-input-suffix-text">กม./ชม.</span>
-                </div>
-            </div>
-
-            <button class="calc-btn" id="calc-method1-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
-                    <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                คำนวณ
-            </button>
-
-            <div class="calc-result" id="calc-method1-result">
-                <div class="calc-result-label">เวลาที่เมฆจะมาถึง</div>
-                <div class="calc-result-value" id="calc-method1-value">--</div>
-                <div class="calc-result-details" id="calc-method1-details"></div>
+                <span id="coordText">Lat: 17.3864° Lng: 102.7883°</span>
             </div>
         </div>
+    </main>
 
-        <!-- Method 2: 10-minute Movement -->
-        <div class="calc-panel" id="calc-method2">
-            <div class="calc-info">
-                <p class="calc-info-text">วัดระยะทางที่เมฆเคลื่อนที่ได้ภายใน 10 นาที และระยะทางที่ต้องการคำนวณ</p>
-            </div>
-
-            <div class="calc-input-group">
-                <label class="calc-label">ระยะทางที่เมฆเคลื่อนที่ใน 10 นาที</label>
-                <div class="calc-input-suffix">
-                    <input type="number" class="calc-input" id="method2-movement" placeholder="0.00" step="0.01" min="0">
-                    <span class="calc-input-suffix-text">กม.</span>
-                </div>
-            </div>
-
-            <div class="calc-input-group">
-                <label class="calc-label">ระยะทางจากจุดปัจจุบันถึงจุดสิ้นสุด</label>
-                <div class="calc-input-suffix">
-                    <input type="number" class="calc-input" id="method2-distance" placeholder="0.00" step="0.01" min="0">
-                    <span class="calc-input-suffix-text">กม.</span>
-                </div>
-            </div>
-
-            <button class="calc-btn" id="calc-method2-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
-                    <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                คำนวณ
-            </button>
-
-            <div class="calc-result" id="calc-method2-result">
-                <div class="calc-result-label">เวลาที่เมฆจะมาถึง</div>
-                <div class="calc-result-value" id="calc-method2-value">--</div>
-                <div class="calc-result-details" id="calc-method2-details"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Leaflet JavaScript -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
-<style>
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-</style>
-
-<script>
-(function() {
-    'use strict';
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    // ==================== API Configuration ====================
-    const API_CONFIG = {
-        METAR: {
-            endpoint: 'https://api.checkwx.com/metar/VTUD/decoded',
-            key: 'd27b39a0a69e464c86bffd72dc',
-            updateInterval: 30
-        },
-        RADAR: {
-            rainviewer: 'https://api.rainviewer.com/public/weather-maps.json',
-            reference: 'https://weather.tmd.go.th/kkn/kkn240Loop.gif',
-            updateInterval: 10
-        }
-    };
-
-    const UDON_THANI_AIRPORT = [17.3866, 102.7882];
-
-    console.log('🚀 Weather Radar System Starting...');
-
-    // ==================== Utility Functions ====================
-    function formatUpdateTime() {
-        const now = new Date();
-        return now.toLocaleString('th-TH', { 
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: false 
-        });
-    }
-
-    // ==================== Chart Configuration with New Colors ====================
-    const chartColors = {
-        temp: { 
-            main: '#FF69B4',
-            gradient: ['#FF69B4', '#FF8DC7'],
-            bg: 'rgba(255, 105, 180, 0.08)' 
-        },
-        humidity: { 
-            main: '#10B981',
-            gradient: ['#10B981', '#34D399'],
-            bg: 'rgba(16, 185, 129, 0.08)' 
-        },
-        pressure: { 
-            main: '#A78BFA',
-            gradient: ['#A78BFA', '#C4B5FD'],
-            bg: 'rgba(167, 139, 250, 0.08)' 
-        },
-        wind: { 
-            main: '#FFD93D',
-            gradient: ['#FFD93D', '#FFE569'],
-            bg: 'rgba(255, 217, 61, 0.08)' 
-        }
-    };
-
-    let charts = {};
-    let lastMetarValues = {
-        temp: null,
-        humidity: null,
-        pressure: null,
-        windSpeed: null
-    };
-
-    function createDonutChart(canvasId, value, max, colors) {
-        const ctx = document.getElementById(canvasId).getContext('2d');
+    <script>
+        // ============================================================
+        // API Configuration - วาง URL ที่ได้จาก Apps Script ที่นี่
+        // ============================================================
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwERKfsaygszQweIt-6jMFSj8ucJokPIZO9JItUR6Lbc01BwaupcioAJt2rW-Yus85t/exec';
+        // ตัวอย่าง: const API_URL = 'https://script.google.com/macros/s/AKfycbw.../exec';
         
-        // Create gradient
-        const gradient = ctx.createLinearGradient(0, 0, 0, 140);
-        gradient.addColorStop(0, colors.gradient[0]);
-        gradient.addColorStop(1, colors.gradient[1]);
-        
-        if (charts[canvasId]) {
-            charts[canvasId].destroy();
+        // Fallback URL (ใช้เมื่อยังไม่ได้ Deploy Apps Script)
+        const SHEET_ID = '1ze_1brF3ksgHEmfDumHS4Ux6s62vlyMpflgl1R1a2Hk';
+        const SHEET_NAME = 'Sheet1';
+        const FALLBACK_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+
+        // Sidebar Toggle
+        const profileBtn = document.getElementById('profileBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
         }
-        
-        charts[canvasId] = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                datasets: [{
-                    data: [value, max - value],
-                    backgroundColor: [gradient, colors.bg],
-                    borderWidth: 0,
-                    borderRadius: 8
-                }]
-            },
-            options: {
-                cutout: '75%',
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: false }
-                },
-                animation: {
-                    animateRotate: true,
-                    animateScale: false,
-                    duration: 800,
-                    easing: 'easeInOutQuart'
-                }
-            }
-        });
-    }
 
-    // ==================== Initialize Map ====================
-    const map = L.map('mapid', {
-        center: UDON_THANI_AIRPORT,
-        zoom: 10,
-        zoomControl: true,
-        maxZoom: 22,
-        preferCanvas: true,
-        scrollWheelZoom: true,
-        doubleClickZoom: true,
-        touchZoom: true,
-        dragging: true,
-        zoomAnimation: false,
-        fadeAnimation: false,
-        markerZoomAnimation: false,
-        zoomSnap: 1,
-        zoomDelta: 1
-    });
+        profileBtn.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap',
-        maxZoom: 22,
-        updateWhenIdle: true,
-        updateWhenZooming: false,
-        keepBuffer: 2
-    }).addTo(map);
-
-    // Force map invalidation
-    function invalidateMap() {
-        setTimeout(() => map.invalidateSize(), 100);
-        setTimeout(() => map.invalidateSize(), 300);
-        setTimeout(() => map.invalidateSize(), 500);
-        setTimeout(() => map.invalidateSize(), 1000);
-    }
-    
-    invalidateMap();
-    
-    let resizeTimer;
-    window.addEventListener('resize', function() {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-            map.invalidateSize();
-        }, 250);
-    });
-    
-    window.addEventListener('load', () => invalidateMap());
-
-    // Lock zoom level during operations to prevent flickering
-    let targetZoom = 10;
-    let targetCenter = UDON_THANI_AIRPORT;
-    
-    map.on('zoomstart', function() {
-        if (isNavigating) {
-            map.setZoom(targetZoom, { animate: false });
-        }
-    });
-    
-    map.on('movestart', function() {
-        if (isNavigating) {
-            map.panTo(targetCenter, { animate: false, duration: 0, noMoveStart: true });
-        }
-    });
-
-    // ==================== Airport Marker ====================
-    const airportIcon = L.divIcon({
-        className: 'custom-airport-marker',
-        html: '<div style="background: #2196F3; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4); border: 3px solid white;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg></div>',
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
-    });
-
-    L.marker(UDON_THANI_AIRPORT, { icon: airportIcon }).addTo(map)
-        .bindPopup('<div style="font-family: Inter, sans-serif; text-align: center;"><strong>Udon Thani International Airport</strong><br>VTUD</div>');
-
-    // ==================== Circles ====================
-    L.circle(UDON_THANI_AIRPORT, {
-        color: '#ef4444',
-        fillColor: '#ef4444',
-        fillOpacity: 0.05,
-        radius: 8000,
-        weight: 2
-    }).addTo(map);
-
-    L.circle(UDON_THANI_AIRPORT, {
-        color: '#2196F3',
-        fillColor: '#2196F3',
-        fillOpacity: 0.05,
-        radius: 16000,
-        weight: 2
-    }).addTo(map);
-
-    const radiusInDegrees16 = 16 / 111;
-    L.polyline([
-        [UDON_THANI_AIRPORT[0] + radiusInDegrees16, UDON_THANI_AIRPORT[1]],
-        [UDON_THANI_AIRPORT[0] - radiusInDegrees16, UDON_THANI_AIRPORT[1]]
-    ], { color: '#666', weight: 1, opacity: 0.5, dashArray: '5, 5' }).addTo(map);
-
-    L.polyline([
-        [UDON_THANI_AIRPORT[0], UDON_THANI_AIRPORT[1] - radiusInDegrees16],
-        [UDON_THANI_AIRPORT[0], UDON_THANI_AIRPORT[1] + radiusInDegrees16]
-    ], { color: '#666', weight: 1, opacity: 0.5, dashArray: '5, 5' }).addTo(map);
-
-    function addCircleLabels() {
-        const offset8 = 8 / 111;
-        const offset16 = 16 / 111;
-        
-        const positions = [
-            [offset8, 0, 'red', '8 km', [20, 10]],
-            [-offset8, 0, 'red', '8 km', [-20, 10]],
-            [0, offset8, 'red', '8 km', [-10, 20]],
-            [0, -offset8, 'red', '8 km', [-10, -5]],
-            [offset16, 0, 'blue', '16 km', [25, 10]],
-            [-offset16, 0, 'blue', '16 km', [-25, 10]],
-            [0, offset16, 'blue', '16 km', [-10, 25]],
-            [0, -offset16, 'blue', '16 km', [-10, -5]]
+        // Airport calculations
+        const originalStripCorners = [
+            { lat: 17.3918125, lng: 102.7743807 },
+            { lat: 17.3940801, lng: 102.7755713 },
+            { lat: 17.3810494, lng: 102.8021653 },
+            { lat: 17.3787798, lng: 102.8009793 }
         ];
         
-        positions.forEach(pos => {
-            const icon = L.divIcon({
-                className: 'circle-label ' + pos[2],
-                html: pos[3],
-                iconSize: [50, 20],
-                iconAnchor: pos[4]
-            });
-            L.marker([UDON_THANI_AIRPORT[0] + pos[0], UDON_THANI_AIRPORT[1] + pos[1]], { icon: icon }).addTo(map);
-        });
-    }
-    addCircleLabels();
-
-    L.Control.geocoder({ defaultMarkGeocode: false }).addTo(map);
-
-    // ==================== Custom Measurement Tool ====================
-    let isMeasuring = false;
-    let measurePoints = [];
-    let measureMarkers = [];
-    let measureLines = [];
-    let measureLabels = [];
-    let totalDistance = 0;
-
-    function formatDistance(meters) {
-        if (meters < 1000) {
-            return meters.toFixed(0) + ' ม.';
-        } else {
-            return (meters / 1000).toFixed(2) + ' กม.';
+        const airportLat = (originalStripCorners[0].lat + originalStripCorners[1].lat + originalStripCorners[2].lat + originalStripCorners[3].lat) / 4;
+        const airportLng = (originalStripCorners[0].lng + originalStripCorners[1].lng + originalStripCorners[2].lng + originalStripCorners[3].lng) / 4;
+        
+        const bearing1 = Math.atan2(originalStripCorners[2].lng - originalStripCorners[0].lng, originalStripCorners[2].lat - originalStripCorners[0].lat) * 180 / Math.PI;
+        const bearing2 = Math.atan2(originalStripCorners[3].lng - originalStripCorners[1].lng, originalStripCorners[3].lat - originalStripCorners[1].lat) * 180 / Math.PI;
+        const runwayBearing = ((bearing1 + bearing2) / 2 + 360) % 360;
+        
+        const airportElevation = 176;
+        
+        function calculateDestination(lat, lng, bearing, distance) {
+            const R = 6371000;
+            const δ = distance / R;
+            const θ = bearing * Math.PI / 180;
+            const φ1 = lat * Math.PI / 180;
+            const λ1 = lng * Math.PI / 180;
+            const φ2 = Math.asin(Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(θ));
+            const λ2 = λ1 + Math.atan2(Math.sin(θ) * Math.sin(δ) * Math.cos(φ1), Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2));
+            return { lat: φ2 * 180 / Math.PI, lng: λ2 * 180 / Math.PI };
         }
-    }
+        
+        function haversineDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371000;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+        
+        // Strip - ขยับเข้ามา 300m (60m จากปลาย Runway)
+        const stripExtension = 60;
+        const stripLength = 3000 + (stripExtension * 2);
+        const stripHalfLength = stripLength / 2;
+        const stripHalfWidth = 140;
+        
+        const stripEnd30 = calculateDestination(airportLat, airportLng, (runwayBearing + 180) % 360, stripHalfLength);
+        const stripEnd12 = calculateDestination(airportLat, airportLng, runwayBearing, stripHalfLength);
+        
+        const perpLeft = (runwayBearing + 90 + 360) % 360;
+        const perpRight = (runwayBearing - 90 + 360) % 360;
+        
+        const stripCorners = [
+            calculateDestination(stripEnd30.lat, stripEnd30.lng, perpLeft, stripHalfWidth),
+            calculateDestination(stripEnd30.lat, stripEnd30.lng, perpRight, stripHalfWidth),
+            calculateDestination(stripEnd12.lat, stripEnd12.lng, perpRight, stripHalfWidth),
+            calculateDestination(stripEnd12.lat, stripEnd12.lng, perpLeft, stripHalfWidth)
+        ];
+        
+        // Runway
+        const runwayHalfLength = 1500;
+        const runwayHalfWidth = 22.5;
+        const runwayEnd30 = calculateDestination(airportLat, airportLng, (runwayBearing + 180) % 360, runwayHalfLength);
+        const runwayEnd12 = calculateDestination(airportLat, airportLng, runwayBearing, runwayHalfLength);
+        
+        const runwayCorners = [
+            calculateDestination(runwayEnd30.lat, runwayEnd30.lng, perpLeft, runwayHalfWidth),
+            calculateDestination(runwayEnd30.lat, runwayEnd30.lng, perpRight, runwayHalfWidth),
+            calculateDestination(runwayEnd12.lat, runwayEnd12.lng, perpRight, runwayHalfWidth),
+            calculateDestination(runwayEnd12.lat, runwayEnd12.lng, perpLeft, runwayHalfWidth)
+        ];
 
-    function calculateDistance(latlng1, latlng2) {
-        return map.distance(latlng1, latlng2);
-    }
+        // Create map
+        const map = L.map('map', { zoomControl: false }).setView([airportLat, airportLng], 13);
+        L.control.zoom({ position: 'topleft' }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(map);
 
-    function startMeasuring() {
-        isMeasuring = true;
-        measurePoints = [];
-        totalDistance = 0;
-        
-        // Disable map dragging
-        map.dragging.disable();
-        map.doubleClickZoom.disable();
-        
-        // Update UI
-        document.getElementById('measure-btn').classList.add('active');
-        document.getElementById('measure-toolbar').classList.add('active');
-        document.getElementById('measure-info').textContent = 'ระยะทาง: 0.00 กม.';
-        
-        // Change cursor
-        document.getElementById('mapid').style.cursor = 'crosshair';
-        
-        console.log('📏 Measurement started');
-    }
+        // Layer Groups
+        const outerHorizontalLayer = L.layerGroup().addTo(map);
+        const conicalLayer = L.layerGroup().addTo(map);
+        const innerHorizontalLayer = L.layerGroup().addTo(map);
+        const transitionalLayer = L.layerGroup().addTo(map);
+        const approachLayer = L.layerGroup().addTo(map);
+        const runwayStripLayer = L.layerGroup().addTo(map);
+        const runwayLayer = L.layerGroup().addTo(map);
+        const obstaclesLayer = L.layerGroup().addTo(map);
+        const obsLabelsLayer = L.layerGroup(); // Default: NOT added to map
 
-    function stopMeasuring(save = false) {
-        isMeasuring = false;
+        // Draw Runway
+        L.polygon(runwayCorners.map(c => [c.lat, c.lng]), { color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.7, weight: 2 }).addTo(runwayLayer)
+            .on('click', function(e) { 
+                if (!measureTool.isActive) {
+                    const ols = getOLSHeight(e.latlng.lat, e.latlng.lng);
+                    L.popup().setLatLng(e.latlng).setContent(`
+                        <b>${ols.type}</b><br>
+                        <b>ความยาว:</b> 3,000 m<br>
+                        <b>ความกว้าง:</b> 45 m<br>
+                        <b>ทิศทาง:</b> ${Math.round(runwayBearing)}°<br>
+                        <b>ความสูง OLS:</b> ${ols.heightAGL} m AGL<br>
+                        <b>Lat:</b> ${e.latlng.lat.toFixed(7)}°<br>
+                        <b>Lng:</b> ${e.latlng.lng.toFixed(7)}°
+                    `).openOn(map);
+                }
+            });
+
+        // Draw Strip
+        L.polygon(stripCorners.map(c => [c.lat, c.lng]), { color: '#8b5cf6', fillColor: '#8b5cf6', fillOpacity: 0.15, weight: 2, dashArray: '5, 5' }).addTo(runwayStripLayer)
+            .on('click', function(e) { 
+                if (!measureTool.isActive) {
+                    const ols = getOLSHeight(e.latlng.lat, e.latlng.lng);
+                    L.popup().setLatLng(e.latlng).setContent(`
+                        <b>${ols.type}</b><br>
+                        <b>ความกว้าง:</b> 280 m<br>
+                        <b>ส่วนต่อขยาย:</b> ${stripExtension} m จากปลาย Runway<br>
+                        <b>ความยาวรวม:</b> ${stripLength} m<br>
+                        <b>ความสูง OLS:</b> ${ols.heightAGL} m AGL<br>
+                        <b>Lat:</b> ${e.latlng.lat.toFixed(7)}°<br>
+                        <b>Lng:</b> ${e.latlng.lng.toFixed(7)}°
+                    `).openOn(map);
+                }
+            });
+
+        // Inner Horizontal
+        const innerHorizontalDistance = 4000;
+        const innerHorizontalPoints = [];
+        const numPoints = 30;
         
-        // Enable map dragging
-        map.dragging.enable();
-        map.doubleClickZoom.enable();
+        function getOutwardPerp(c1, c2) { return Math.atan2(c2.lng - c1.lng, c2.lat - c1.lat) * 180 / Math.PI - 90; }
         
-        // Update UI
-        document.getElementById('measure-btn').classList.remove('active');
-        document.getElementById('measure-toolbar').classList.remove('active');
+        const perps = [getOutwardPerp(stripCorners[0], stripCorners[1]), getOutwardPerp(stripCorners[1], stripCorners[2]), getOutwardPerp(stripCorners[2], stripCorners[3]), getOutwardPerp(stripCorners[3], stripCorners[0])];
         
-        // Reset cursor
-        document.getElementById('mapid').style.cursor = '';
+        function createArc(cLat, cLng, startB, endB, r, n) {
+            const pts = [];
+            let s = ((startB % 360) + 360) % 360, e = ((endB % 360) + 360) % 360;
+            let diff = e - s;
+            if (diff > 180) diff -= 360;
+            if (diff < -180) diff += 360;
+            for (let i = 0; i <= n; i++) {
+                const p = calculateDestination(cLat, cLng, s + (i/n) * diff, r);
+                pts.push([p.lat, p.lng]);
+            }
+            return pts;
+        }
         
-        if (!save) {
-            // Clear all measurements
-            clearMeasurements();
-        } else if (measurePoints.length > 0) {
-            // Keep the measurement but convert markers to permanent
-            measureMarkers.forEach(marker => {
-                marker.on('click', function() {
-                    map.removeLayer(marker);
+        for (let i = 0; i < 4; i++) {
+            const c1 = stripCorners[i], c2 = stripCorners[(i+1)%4];
+            const p1 = calculateDestination(c1.lat, c1.lng, perps[i], innerHorizontalDistance);
+            const p2 = calculateDestination(c2.lat, c2.lng, perps[i], innerHorizontalDistance);
+            innerHorizontalPoints.push([p1.lat, p1.lng], [p2.lat, p2.lng]);
+            innerHorizontalPoints.push(...createArc(c2.lat, c2.lng, perps[i], perps[(i+1)%4], innerHorizontalDistance, numPoints));
+        }
+        
+        L.polygon(innerHorizontalPoints, { color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.15, weight: 2 }).addTo(innerHorizontalLayer)
+            .on('click', function(e) { 
+                if (!measureTool.isActive) {
+                    const ols = getOLSHeight(e.latlng.lat, e.latlng.lng);
+                    L.popup().setLatLng(e.latlng).setContent(`
+                        <b>${ols.type}</b><br>
+                        <b>รายละเอียด:</b> ${ols.info}<br>
+                        <b>ความลาดชัน:</b> ${ols.slope}<br>
+                        <b>ความสูง OLS:</b> ${ols.heightAGL.toFixed(1)} m AGL<br>
+                        <b>ความสูง AMSL:</b> ${ols.heightAMSL.toFixed(1)} m<br>
+                        <b>Lat:</b> ${e.latlng.lat.toFixed(7)}°<br>
+                        <b>Lng:</b> ${e.latlng.lng.toFixed(7)}°
+                    `).openOn(map);
+                }
+            });
+
+        // Conical
+        const conicalDistance = 2100;
+        const conicalOuterPoints = innerHorizontalPoints.map(p => {
+            const b = Math.atan2(p[1] - airportLng, p[0] - airportLat) * 180 / Math.PI;
+            const d = haversineDistance(p[0], p[1], airportLat, airportLng) + conicalDistance;
+            const np = calculateDestination(airportLat, airportLng, b, d);
+            return [np.lat, np.lng];
+        });
+        
+        L.polygon([conicalOuterPoints, [...innerHorizontalPoints].reverse()], { color: '#a855f7', fillColor: '#a855f7', fillOpacity: 0.12, weight: 2 }).addTo(conicalLayer)
+            .on('click', function(e) { 
+                if (!measureTool.isActive) {
+                    const ols = getOLSHeight(e.latlng.lat, e.latlng.lng);
+                    L.popup().setLatLng(e.latlng).setContent(`
+                        <b>${ols.type}</b><br>
+                        <b>รายละเอียด:</b> ${ols.info}<br>
+                        <b>ความลาดชัน:</b> ${ols.slope}<br>
+                        <b>ความสูง OLS:</b> ${ols.heightAGL.toFixed(1)} m AGL<br>
+                        <b>ความสูง AMSL:</b> ${ols.heightAMSL.toFixed(1)} m<br>
+                        <b>Lat:</b> ${e.latlng.lat.toFixed(7)}°<br>
+                        <b>Lng:</b> ${e.latlng.lng.toFixed(7)}°
+                    `).openOn(map);
+                }
+            });
+
+        // Outer Horizontal
+        const outerPoints = [];
+        for (let i = 0; i <= 180; i++) {
+            const p = calculateDestination(airportLat, airportLng, (i/180)*360, 15000);
+            outerPoints.push([p.lat, p.lng]);
+        }
+        
+        L.polygon([outerPoints, [...conicalOuterPoints].reverse()], { color: '#f97316', fillColor: '#f97316', fillOpacity: 0.12, weight: 2 }).addTo(outerHorizontalLayer)
+            .on('click', function(e) { 
+                if (!measureTool.isActive) {
+                    const ols = getOLSHeight(e.latlng.lat, e.latlng.lng);
+                    L.popup().setLatLng(e.latlng).setContent(`
+                        <b>${ols.type}</b><br>
+                        <b>รายละเอียด:</b> ${ols.info}<br>
+                        <b>ความลาดชัน:</b> ${ols.slope}<br>
+                        <b>ความสูง OLS:</b> ${ols.heightAGL.toFixed(1)} m AGL<br>
+                        <b>ความสูง AMSL:</b> ${ols.heightAMSL.toFixed(1)} m<br>
+                        <b>Lat:</b> ${e.latlng.lat.toFixed(7)}°<br>
+                        <b>Lng:</b> ${e.latlng.lng.toFixed(7)}°
+                    `).openOn(map);
+                }
+            });
+
+        // Approach Surfaces
+        function createApproach(bearing, label, c1, c2) {
+            const cLat = (c1.lat + c2.lat) / 2, cLng = (c1.lng + c2.lng) / 2;
+            const outer = calculateDestination(cLat, cLng, bearing, 15000);
+            const innerW = haversineDistance(c1.lat, c1.lng, c2.lat, c2.lng);
+            const outerW = innerW + 0.15 * 15000 * 2;
+            const oL = calculateDestination(outer.lat, outer.lng, bearing + 90, outerW/2);
+            const oR = calculateDestination(outer.lat, outer.lng, bearing - 90, outerW/2);
+            const coords = [[c1.lat, c1.lng], [c2.lat, c2.lng], [oR.lat, oR.lng], [oL.lat, oL.lng]];
+            
+            L.polygon(coords, { color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.15, weight: 2 }).addTo(approachLayer)
+                .on('click', function(e) { 
+                    if (!measureTool.isActive) {
+                        const ols = getOLSHeight(e.latlng.lat, e.latlng.lng);
+                        L.popup().setLatLng(e.latlng).setContent(`
+                            <b>${ols.type}</b><br>
+                            <b>รายละเอียด:</b> ${ols.info}<br>
+                            <b>ความลาดชัน:</b> ${ols.slope}<br>
+                            <b>ความสูง OLS:</b> ${ols.heightAGL.toFixed(1)} m AGL<br>
+                            <b>ความสูง AMSL:</b> ${ols.heightAMSL.toFixed(1)} m<br>
+                            <b>Lat:</b> ${e.latlng.lat.toFixed(7)}°<br>
+                            <b>Lng:</b> ${e.latlng.lng.toFixed(7)}°
+                        `).openOn(map);
+                    }
                 });
+            
+            return { coords, cLat, cLng };
+        }
+        
+        const approach12 = createApproach(runwayBearing, 'RWY 12', stripCorners[3], stripCorners[2]);
+        const approach30 = createApproach(runwayBearing + 180, 'RWY 30', stripCorners[1], stripCorners[0]);
+
+        // Transitional Surfaces
+        const transWidth = 315, transExt = transWidth / 0.15;
+        
+        function createTrans(c1, c2, dir, perpDir) {
+            const e1 = calculateDestination(c1.lat, c1.lng, dir, transExt);
+            const i1 = calculateDestination(e1.lat, e1.lng, perpDir, transWidth);
+            const e2 = calculateDestination(c2.lat, c2.lng, (dir + 180) % 360, transExt);
+            const i2 = calculateDestination(e2.lat, e2.lng, perpDir, transWidth);
+            return [[c1.lat, c1.lng], [i1.lat, i1.lng], [i2.lat, i2.lng], [c2.lat, c2.lng]];
+        }
+        
+        const trans1Coords = createTrans(stripCorners[0], stripCorners[3], (runwayBearing + 180) % 360, perpLeft);
+        const trans2Coords = createTrans(stripCorners[1], stripCorners[2], (runwayBearing + 180) % 360, perpRight);
+        
+        L.polygon(trans1Coords, { color: '#eab308', fillColor: '#eab308', fillOpacity: 0.15, weight: 2 }).addTo(transitionalLayer)
+            .on('click', function(e) { 
+                if (!measureTool.isActive) {
+                    const ols = getOLSHeight(e.latlng.lat, e.latlng.lng);
+                    L.popup().setLatLng(e.latlng).setContent(`
+                        <b>${ols.type}</b><br>
+                        <b>รายละเอียด:</b> ${ols.info}<br>
+                        <b>ความลาดชัน:</b> ${ols.slope}<br>
+                        <b>ความสูง OLS:</b> ${ols.heightAGL.toFixed(1)} m AGL<br>
+                        <b>ความสูง AMSL:</b> ${ols.heightAMSL.toFixed(1)} m<br>
+                        <b>Lat:</b> ${e.latlng.lat.toFixed(7)}°<br>
+                        <b>Lng:</b> ${e.latlng.lng.toFixed(7)}°
+                    `).openOn(map);
+                }
             });
-        }
-        
-        console.log('📏 Measurement stopped');
-    }
-
-    function clearMeasurements() {
-        // Remove all markers
-        measureMarkers.forEach(marker => map.removeLayer(marker));
-        measureMarkers = [];
-        
-        // Remove all lines
-        measureLines.forEach(line => map.removeLayer(line));
-        measureLines = [];
-        
-        // Remove all labels
-        measureLabels.forEach(label => map.removeLayer(label));
-        measureLabels = [];
-        
-        measurePoints = [];
-        totalDistance = 0;
-    }
-
-    function addMeasurePoint(latlng) {
-        measurePoints.push(latlng);
-        
-        // Create marker
-        const markerIcon = L.divIcon({
-            className: measurePoints.length === 1 ? 'measure-marker measure-marker-first' : 'measure-marker',
-            iconSize: [12, 12],
-            iconAnchor: [6, 6]
-        });
-        
-        const marker = L.marker(latlng, { icon: markerIcon }).addTo(map);
-        measureMarkers.push(marker);
-        
-        // If we have more than one point, draw line and calculate distance
-        if (measurePoints.length > 1) {
-            const prevPoint = measurePoints[measurePoints.length - 2];
-            const currPoint = latlng;
-            
-            // Draw line
-            const line = L.polyline([prevPoint, currPoint], {
-                color: '#2196F3',
-                weight: 4,
-                opacity: 0.8,
-                dashArray: '10, 5',
-                lineCap: 'round',
-                lineJoin: 'round'
-            }).addTo(map);
-            measureLines.push(line);
-            
-            // Calculate segment distance
-            const segmentDistance = calculateDistance(prevPoint, currPoint);
-            totalDistance += segmentDistance;
-            
-            // Add distance label at midpoint
-            const midLat = (prevPoint.lat + currPoint.lat) / 2;
-            const midLng = (prevPoint.lng + currPoint.lng) / 2;
-            
-            const labelIcon = L.divIcon({
-                className: 'measure-label',
-                html: formatDistance(segmentDistance),
-                iconSize: null,
-                iconAnchor: [0, 0]
+        L.polygon(trans2Coords, { color: '#eab308', fillColor: '#eab308', fillOpacity: 0.15, weight: 2 }).addTo(transitionalLayer)
+            .on('click', function(e) { 
+                if (!measureTool.isActive) {
+                    const ols = getOLSHeight(e.latlng.lat, e.latlng.lng);
+                    L.popup().setLatLng(e.latlng).setContent(`
+                        <b>${ols.type}</b><br>
+                        <b>รายละเอียด:</b> ${ols.info}<br>
+                        <b>ความลาดชัน:</b> ${ols.slope}<br>
+                        <b>ความสูง OLS:</b> ${ols.heightAGL.toFixed(1)} m AGL<br>
+                        <b>ความสูง AMSL:</b> ${ols.heightAMSL.toFixed(1)} m<br>
+                        <b>Lat:</b> ${e.latlng.lat.toFixed(7)}°<br>
+                        <b>Lng:</b> ${e.latlng.lng.toFixed(7)}°
+                    `).openOn(map);
+                }
             });
-            
-            const label = L.marker([midLat, midLng], { icon: labelIcon }).addTo(map);
-            measureLabels.push(label);
-            
-            // Update total distance display
-            document.getElementById('measure-info').textContent = 
-                'ระยะทางรวม: ' + formatDistance(totalDistance);
-        }
-    }
 
-    // Measure button click
-    document.getElementById('measure-btn').addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        if (!isMeasuring) {
-            startMeasuring();
-        } else {
-            stopMeasuring(false);
-        }
-    });
+        // Airport marker
+        L.marker([airportLat, airportLng], {
+            icon: L.divIcon({ className: '', html: '<div style="background:#2196F3;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2);"></div>', iconSize: [16,16], iconAnchor: [8,8] })
+        }).addTo(map).bindPopup(`<b>สนามบินอุดรธานี</b><br>VTUD`);
 
-    // Finish button
-    document.getElementById('measure-finish').addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        if (measurePoints.length >= 2) {
-            // Add total distance label
-            const lastPoint = measurePoints[measurePoints.length - 1];
-            const totalLabelIcon = L.divIcon({
-                className: 'measure-label measure-total-label',
-                html: '📏 รวม: ' + formatDistance(totalDistance),
-                iconSize: null,
-                iconAnchor: [-10, -10]
-            });
-            
-            const totalLabel = L.marker(lastPoint, { icon: totalLabelIcon }).addTo(map);
-            measureLabels.push(totalLabel);
-            
-            stopMeasuring(true);
-            
-            // Show clear button
-            document.getElementById('measure-clear-btn').style.display = 'block';
-        }
-    });
-
-    // Cancel button
-    document.getElementById('measure-cancel').addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        stopMeasuring(false);
-    });
-
-    // Clear measurements button
-    document.getElementById('measure-clear-btn').addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        clearMeasurements();
-        this.style.display = 'none';
-    });
-
-    // Map click handler for measurement
-    map.on('click', function(e) {
-        if (isMeasuring) {
-            addMeasurePoint(e.latlng);
-        }
-    });
-
-    console.log('📏 Custom measurement tool initialized');
-
-    // ==================== Calculator Modal ====================
-    const calcModal = document.getElementById('calc-modal');
-    const calcModalClose = document.getElementById('calc-modal-close');
-    const calcCalculateBtn = document.getElementById('measure-calculate');
-    const calcTabs = document.querySelectorAll('.calc-tab');
-    const calcPanels = document.querySelectorAll('.calc-panel');
-
-    // Open calculator modal
-    calcCalculateBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        // Auto-fill distance if measurement exists
-        if (totalDistance > 0) {
-            const distanceKm = totalDistance / 1000;
-            document.getElementById('method1-distance').value = distanceKm.toFixed(2);
-            document.getElementById('method2-distance').value = distanceKm.toFixed(2);
+        // OLS Height calculation - returns both AGL and AMSL
+        function pointInPoly(lat, lng, coords) {
+            let inside = false;
+            for (let i = 0, j = coords.length - 1; i < coords.length; j = i++) {
+                const xi = coords[i][0], yi = coords[i][1], xj = coords[j][0], yj = coords[j][1];
+                if (((yi > lng) !== (yj > lng)) && (lat < (xj - xi) * (lng - yi) / (yj - yi) + xi)) inside = !inside;
+            }
+            return inside;
         }
         
-        calcModal.classList.add('active');
-        console.log('🧮 Calculator opened');
-    });
-
-    // Close calculator modal
-    calcModalClose.addEventListener('click', function() {
-        calcModal.classList.remove('active');
-    });
-
-    // Close on backdrop click
-    calcModal.addEventListener('click', function(e) {
-        if (e.target === calcModal) {
-            calcModal.classList.remove('active');
+        function distanceToLine(px, py, x1, y1, x2, y2) {
+            const A = px - x1, B = py - y1, C = x2 - x1, D = y2 - y1;
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let param = lenSq !== 0 ? dot / lenSq : -1;
+            let xx, yy;
+            if (param < 0) { xx = x1; yy = y1; }
+            else if (param > 1) { xx = x2; yy = y2; }
+            else { xx = x1 + param * C; yy = y1 + param * D; }
+            return Math.sqrt((px - xx) * (px - xx) + (py - yy) * (py - yy));
         }
-    });
-
-    // Tab switching
-    calcTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            const targetTab = this.dataset.tab;
+        
+        function getOLSHeight(lat, lng) {
+            const dist = haversineDistance(lat, lng, airportLat, airportLng);
+            const R = 6371000;
+            const cosLat = Math.cos(lat * Math.PI / 180);
             
-            // Update tabs
-            calcTabs.forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
+            // Runway
+            if (pointInPoly(lat, lng, runwayCorners.map(c => [c.lat, c.lng]))) {
+                return { type: 'Runway', typeTH: 'ทางวิ่ง', heightAGL: 0, heightAMSL: airportElevation, slope: '-', info: 'พื้นที่ทางวิ่ง' };
+            }
             
-            // Update panels
-            calcPanels.forEach(panel => {
-                if (panel.id === `calc-${targetTab}`) {
-                    panel.classList.add('active');
+            // Strip
+            if (pointInPoly(lat, lng, stripCorners.map(c => [c.lat, c.lng]))) {
+                return { type: 'Runway Strip', typeTH: 'แถบทางวิ่ง', heightAGL: 0, heightAMSL: airportElevation, slope: '-', info: 'พื้นที่แถบทางวิ่ง 280 m' };
+            }
+            
+            // Transitional - calculate actual height based on distance from strip edge
+            if (pointInPoly(lat, lng, trans1Coords)) {
+                const px = lng * cosLat * R * Math.PI / 180;
+                const py = lat * R * Math.PI / 180;
+                const x1 = stripCorners[0].lng * cosLat * R * Math.PI / 180;
+                const y1 = stripCorners[0].lat * R * Math.PI / 180;
+                const x2 = stripCorners[3].lng * cosLat * R * Math.PI / 180;
+                const y2 = stripCorners[3].lat * R * Math.PI / 180;
+                const distFromStrip = distanceToLine(px, py, x1, y1, x2, y2);
+                const heightAGL = Math.min(45, distFromStrip * 0.143);
+                return { type: 'Transitional', typeTH: 'พื้นผิวเปลี่ยนผ่าน', heightAGL: heightAGL, heightAMSL: airportElevation + heightAGL, slope: '14.3% (1:7)', info: `ระยะจาก Strip: ${Math.round(distFromStrip)} m` };
+            }
+            if (pointInPoly(lat, lng, trans2Coords)) {
+                const px = lng * cosLat * R * Math.PI / 180;
+                const py = lat * R * Math.PI / 180;
+                const x1 = stripCorners[1].lng * cosLat * R * Math.PI / 180;
+                const y1 = stripCorners[1].lat * R * Math.PI / 180;
+                const x2 = stripCorners[2].lng * cosLat * R * Math.PI / 180;
+                const y2 = stripCorners[2].lat * R * Math.PI / 180;
+                const distFromStrip = distanceToLine(px, py, x1, y1, x2, y2);
+                const heightAGL = Math.min(45, distFromStrip * 0.143);
+                return { type: 'Transitional', typeTH: 'พื้นผิวเปลี่ยนผ่าน', heightAGL: heightAGL, heightAMSL: airportElevation + heightAGL, slope: '14.3% (1:7)', info: `ระยะจาก Strip: ${Math.round(distFromStrip)} m` };
+            }
+            
+            // Approach - calculate actual height based on distance from threshold
+            if (pointInPoly(lat, lng, approach12.coords)) {
+                const distFromThreshold = haversineDistance(lat, lng, approach12.cLat, approach12.cLng);
+                let heightAGL, section;
+                if (distFromThreshold <= 3000) {
+                    heightAGL = distFromThreshold * 0.02;
+                    section = 'First Section (2%)';
+                } else if (distFromThreshold <= 6600) {
+                    heightAGL = 60 + (distFromThreshold - 3000) * 0.025;
+                    section = 'Second Section (2.5%)';
                 } else {
-                    panel.classList.remove('active');
+                    heightAGL = 150;
+                    section = 'Horizontal Section';
                 }
-            });
-        });
-    });
+                return { type: 'Approach RWY 12', typeTH: 'พื้นผิวร่อนลง RWY 12', heightAGL: heightAGL, heightAMSL: airportElevation + heightAGL, slope: section, info: `ระยะจาก Threshold: ${Math.round(distFromThreshold)} m` };
+            }
+            if (pointInPoly(lat, lng, approach30.coords)) {
+                const distFromThreshold = haversineDistance(lat, lng, approach30.cLat, approach30.cLng);
+                let heightAGL, section;
+                if (distFromThreshold <= 3000) {
+                    heightAGL = distFromThreshold * 0.02;
+                    section = 'First Section (2%)';
+                } else if (distFromThreshold <= 6600) {
+                    heightAGL = 60 + (distFromThreshold - 3000) * 0.025;
+                    section = 'Second Section (2.5%)';
+                } else {
+                    heightAGL = 150;
+                    section = 'Horizontal Section';
+                }
+                return { type: 'Approach RWY 30', typeTH: 'พื้นผิวร่อนลง RWY 30', heightAGL: heightAGL, heightAMSL: airportElevation + heightAGL, slope: section, info: `ระยะจาก Threshold: ${Math.round(distFromThreshold)} m` };
+            }
+            
+            // Inner Horizontal
+            if (dist <= 4500) {
+                return { type: 'Inner Horizontal', typeTH: 'พื้นผิวแนวนอนชั้นใน', heightAGL: 45, heightAMSL: airportElevation + 45, slope: '0% (ระนาบ)', info: `รัศมี 4,000 m จาก Strip` };
+            }
+            
+            // Conical
+            if (dist <= 6600) {
+                const distFromInner = dist - 4500;
+                const heightAGL = 45 + distFromInner * 0.05;
+                return { type: 'Conical', typeTH: 'พื้นผิวกรวย', heightAGL: heightAGL, heightAMSL: airportElevation + heightAGL, slope: '5%', info: `ระยะจาก Inner Horizontal: ${Math.round(distFromInner)} m` };
+            }
+            
+            // Outer Horizontal
+            if (dist <= 15000) {
+                return { type: 'Outer Horizontal', typeTH: 'พื้นผิวแนวนอนชั้นนอก', heightAGL: 150, heightAMSL: airportElevation + 150, slope: '0% (ระนาบ)', info: `รัศมี 15,000 m จากสนามบิน` };
+            }
+            
+            return { type: 'outside', typeTH: 'นอกเขต OLS', heightAGL: Infinity, heightAMSL: Infinity, slope: '-', info: '' };
+        }
 
-    // Method 1: Distance + Wind Speed
-    document.getElementById('calc-method1-btn').addEventListener('click', function() {
-        const distance = parseFloat(document.getElementById('method1-distance').value);
-        const speed = parseFloat(document.getElementById('method1-speed').value);
-        
-        if (!distance || !speed || distance <= 0 || speed <= 0) {
-            alert('กรุณาใส่ระยะทางและความเร็วลมที่ถูกต้อง');
-            return;
+        // Parse coordinates
+        function parseDMS(s) {
+            const m = s.match(/(\d+)[°]\s*(\d+)[\'′']\s*(\d+\.?\d*)[\"″"]?\s*([NSns])\s*(\d+)[°]\s*(\d+)[\'′']\s*(\d+\.?\d*)[\"″"]?\s*([EWew])/);
+            if (m) {
+                let lat = parseInt(m[1]) + parseInt(m[2])/60 + parseFloat(m[3])/3600;
+                let lng = parseInt(m[5]) + parseInt(m[6])/60 + parseFloat(m[7])/3600;
+                if (m[4].toUpperCase() === 'S') lat = -lat;
+                if (m[8].toUpperCase() === 'W') lng = -lng;
+                return { lat, lng };
+            }
+            return null;
         }
         
-        // Calculate time = distance / speed (in hours)
-        const timeHours = distance / speed;
-        const timeMinutes = timeHours * 60;
-        
-        // Format result
-        let resultText = '';
-        if (timeHours >= 1) {
-            const hours = Math.floor(timeHours);
-            const minutes = Math.round((timeHours - hours) * 60);
-            resultText = `${hours} ชั่วโมง ${minutes} นาที`;
-        } else {
-            resultText = `${Math.round(timeMinutes)} นาที`;
+        function parseCoords(input) {
+            input = input.trim();
+            const dec = input.match(/^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/);
+            if (dec) {
+                const lat = parseFloat(dec[1]), lng = parseFloat(dec[2]);
+                if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) return { lat, lng };
+            }
+            return parseDMS(input);
         }
-        
-        // Display result
-        document.getElementById('calc-method1-value').textContent = resultText;
-        document.getElementById('calc-method1-details').innerHTML = 
-            `<strong>ระยะทาง:</strong> ${distance.toFixed(2)} กม.<br>` +
-            `<strong>ความเร็วลม:</strong> ${speed} กม./ชม.<br>` +
-            `<strong>เวลาโดยประมาณ:</strong> ${timeMinutes.toFixed(1)} นาที`;
-        document.getElementById('calc-method1-result').classList.add('active');
-        
-        console.log(`📊 Method 1: ${distance}km at ${speed}km/h = ${resultText}`);
-    });
 
-    // Method 2: 10-minute Movement
-    document.getElementById('calc-method2-btn').addEventListener('click', function() {
-        const movement = parseFloat(document.getElementById('method2-movement').value);
-        const distance = parseFloat(document.getElementById('method2-distance').value);
-        
-        if (!movement || !distance || movement <= 0 || distance <= 0) {
-            alert('กรุณาใส่ระยะทางที่ถูกต้อง');
-            return;
-        }
-        
-        // Calculate speed = distance / time (10 minutes = 1/6 hour)
-        const speedKmPerHour = movement / (10 / 60);
-        
-        // Calculate time to reach destination
-        const timeHours = distance / speedKmPerHour;
-        const timeMinutes = timeHours * 60;
-        
-        // Format result
-        let resultText = '';
-        if (timeHours >= 1) {
-            const hours = Math.floor(timeHours);
-            const minutes = Math.round((timeHours - hours) * 60);
-            resultText = `${hours} ชั่วโมง ${minutes} นาที`;
-        } else {
-            resultText = `${Math.round(timeMinutes)} นาที`;
-        }
-        
-        // Display result
-        document.getElementById('calc-method2-value').textContent = resultText;
-        document.getElementById('calc-method2-details').innerHTML = 
-            `<strong>ระยะทางเคลื่อนที่ (10 นาที):</strong> ${movement.toFixed(2)} กม.<br>` +
-            `<strong>ความเร็วเฉลี่ย:</strong> ${speedKmPerHour.toFixed(1)} กม./ชม.<br>` +
-            `<strong>ระยะทางที่เหลือ:</strong> ${distance.toFixed(2)} กม.<br>` +
-            `<strong>เวลาโดยประมาณ:</strong> ${timeMinutes.toFixed(1)} นาที`;
-        document.getElementById('calc-method2-result').classList.add('active');
-        
-        console.log(`📊 Method 2: ${movement}km in 10min, ${distance}km remaining = ${resultText}`);
-    });
+        // Global obstacles array for table
+        let allObstacles = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
 
-    console.log('🧮 Calculator initialized');
-
-    // ==================== RainViewer Radar ====================
-    let apiData = {};
-    let mapFrames = [];
-    let radarLayers = [];
-    let animationPosition = 0;
-    let animationTimer = false;
-    let isPlaying = false;
-    let loadingTilesCount = 0;
-    let loadedTilesCount = 0;
-    let pastFramesCount = 0;
-
-    function startLoadingTile() { loadingTilesCount++; }
-    function finishLoadingTile() { setTimeout(() => loadedTilesCount++, 250); }
-    function isTilesLoading() { return loadingTilesCount > loadedTilesCount; }
-
-    function loadRadarData() {
-        console.log('🌧️  Loading RainViewer data...');
-        
-        fetch(API_CONFIG.RADAR.rainviewer)
-            .then(r => r.json())
-            .then(data => {
-                console.log('✅ RainViewer data loaded!');
+        // Load obstacles
+        async function loadObstacles() {
+            const loading = document.getElementById('loadingIndicator');
+            loading.classList.add('active');
+            
+            try {
+                let obstacles = [];
                 
-                apiData = data;
-                initialize(data);
-            })
-            .catch(err => {
-                console.error('❌ RainViewer Error:', err);
-            });
-    }
-
-    function initialize(api) {
-        stop();
-        
-        radarLayers.forEach(l => map.removeLayer(l));
-        mapFrames = [];
-        radarLayers = [];
-        animationPosition = 0;
-
-        if (api.radar && api.radar.past) {
-            pastFramesCount = api.radar.past.length;
-            mapFrames = api.radar.past.concat(api.radar.nowcast || []);
-            const latestIndex = api.radar.past.length - 1;
-            console.log('🎯 Latest frame:', latestIndex, '/ Past frames:', pastFramesCount);
-            showFrame(latestIndex, true);
-            animationPosition = latestIndex;
-        }
-    }
-
-    function addLayer(frame) {
-        if (!radarLayers[frame.path]) {
-            const source = new L.TileLayer(
-                apiData.host + frame.path + '/256/{z}/{x}/{y}/4/1_1.png',
-                { 
-                    tileSize: 256, 
-                    opacity: 0.01, 
-                    zIndex: frame.time, 
-                    maxZoom: 22,
-                    maxNativeZoom: 8,
-                    minZoom: 0,
-                    keepBuffer: 10,
-                    updateWhenZooming: false,
-                    updateWhenIdle: true
+                if (API_URL && API_URL !== 'YOUR_APPS_SCRIPT_URL_HERE') {
+                    const res = await fetch(API_URL);
+                    const json = await res.json();
+                    if (json.success) obstacles = json.obstacles;
+                } else {
+                    const res = await fetch(FALLBACK_URL);
+                    const text = await res.text();
+                    const json = JSON.parse(text.substring(47, text.length - 2));
+                    
+                    for (const row of json.table.rows) {
+                        if (!row.c || !row.c[0]) continue;
+                        const id = row.c[0]?.v || '', obs = row.c[2]?.v || '', h = parseFloat(row.c[3]?.v) || 0, ll = row.c[4]?.v || '', note = row.c[5]?.v || '';
+                        if (!id || !ll) continue;
+                        const coords = parseCoords(ll);
+                        if (coords) obstacles.push({ id, obstacle: obs, height: h, lat: coords.lat, lng: coords.lng, latLong: ll, note });
+                    }
                 }
-            );
-            source.on('loading', startLoadingTile);
-            source.on('load', finishLoadingTile);
-            radarLayers[frame.path] = source;
-        }
-        if (!map.hasLayer(radarLayers[frame.path])) {
-            map.addLayer(radarLayers[frame.path]);
-        }
-    }
-
-    function changeRadarPosition(position, preloadOnly, force) {
-        while (position >= mapFrames.length) position -= mapFrames.length;
-        while (position < 0) position += mapFrames.length;
-
-        const currentFrame = mapFrames[animationPosition];
-        const nextFrame = mapFrames[position];
-        addLayer(nextFrame);
-
-        if (preloadOnly || (isTilesLoading() && !force)) return;
-
-        animationPosition = position;
-        
-        // Smooth opacity transitions
-        if (radarLayers[currentFrame.path]) {
-            const currentLayer = radarLayers[currentFrame.path].getContainer();
-            if (currentLayer) {
-                currentLayer.style.transition = 'opacity 0.3s ease';
+                
+                allObstacles = obstacles;
+                obstaclesLayer.clearLayers();
+                obsLabelsLayer.clearLayers();
+                let total = 0, danger = 0, safe = 0;
+                
+                for (const obs of obstacles) {
+                    if (!obs.lat || !obs.lng) continue;
+                    const ols = getOLSHeight(obs.lat, obs.lng);
+                    const isDanger = obs.height > ols.heightAGL;
+                    total++; isDanger ? danger++ : safe++;
+                    obs.isDanger = isDanger;
+                    obs.olsHeight = ols.heightAGL;
+                    obs.olsType = ols.type;
+                    
+                    const heightDiff = obs.height - ols.heightAGL;
+                    const diffText = isDanger 
+                        ? `<span class="danger"><b>เกิน:</b> ${heightDiff.toFixed(1)} m</span>`
+                        : `<span class="success"><b>ต่ำกว่า:</b> ${Math.abs(heightDiff).toFixed(1)} m</span>`;
+                    
+                    // Marker with popup
+                    const marker = L.marker([obs.lat, obs.lng], {
+                        icon: L.divIcon({ className: isDanger ? 'obstacle-marker-danger' : 'obstacle-marker-safe', iconSize: [18,18], iconAnchor: [9,9] })
+                    }).bindPopup(`
+                        <b style="font-size:15px;">${obs.obstacle || obs.id}</b><br>
+                        <b>รหัส:</b> ${obs.id}<br>
+                        <b>ความสูง OBS:</b> ${obs.height} m AGL<br>
+                        <b>ความสูง OLS:</b> ${ols.heightAGL.toFixed(1)} m AGL<br>
+                        ${diffText}<br>
+                        <b>พื้นที่:</b> ${ols.type}<br>
+                        ${isDanger ? '<span class="danger"><b>⚠️ สถานะ:</b> เกินความสูง OLS</span>' : '<span class="success"><b>✓ สถานะ:</b> ปลอดภัย</span>'}<br>
+                        <b>พิกัด:</b> ${obs.lat.toFixed(6)}°, ${obs.lng.toFixed(6)}°
+                        ${obs.note ? '<br><b>หมายเหตุ:</b> ' + obs.note : ''}
+                    `).addTo(obstaclesLayer);
+                    
+                    // Add label with name to separate layer
+                    const labelName = obs.obstacle || obs.id;
+                    if (labelName) {
+                        L.marker([obs.lat, obs.lng], {
+                            icon: L.divIcon({
+                                className: 'obs-label ' + (isDanger ? 'danger' : 'safe'),
+                                html: labelName,
+                                iconSize: [100, 20],
+                                iconAnchor: [-5, 10]
+                            })
+                        }).addTo(obsLabelsLayer);
+                    }
+                }
+                
+                document.getElementById('totalObstacles').textContent = total;
+                document.getElementById('dangerObstacles').textContent = danger;
+                document.getElementById('safeObstacles').textContent = safe;
+                
+                // Update table if visible
+                if (document.getElementById('obsTableSection').classList.contains('active')) {
+                    renderTable();
+                }
+            } catch (e) {
+                console.error('Load error:', e);
+            } finally {
+                loading.classList.remove('active');
             }
-            radarLayers[currentFrame.path].setOpacity(0);
         }
-        
-        const nextLayer = radarLayers[nextFrame.path].getContainer();
-        if (nextLayer) {
-            nextLayer.style.transition = 'opacity 0.3s ease';
-        }
-        radarLayers[nextFrame.path].setOpacity(0.7);
 
-        // Update timestamp
-        const date = new Date(nextFrame.time * 1000);
-        const timeStr = date.toLocaleString('th-TH', { 
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: false 
-        });
-        
-        // Check if this is a forecast frame (nowcast)
-        const isForecast = position >= pastFramesCount;
-        
-        const timestampElement = document.getElementById('timestamp-text');
-        if (isForecast) {
-            timestampElement.innerHTML = timeStr + '<span class="forecast-badge">พยากรณ์</span>';
-        } else {
-            timestampElement.innerHTML = timeStr;
-        }
-    }
+        loadObstacles();
+        setInterval(loadObstacles, 30000);
 
-    function showFrame(nextPosition, force) {
-        // Store current view state
-        const currentZoom = map.getZoom();
-        const currentCenter = map.getCenter();
+        // ============================================================
+        // OBS Table Management
+        // ============================================================
         
-        // Update target values
-        targetZoom = currentZoom;
-        targetCenter = currentCenter;
-        
-        changeRadarPosition(nextPosition, false, force);
-        changeRadarPosition(nextPosition + (nextPosition > animationPosition ? 1 : -1), true);
-        
-        // Gently restore view state only if it changed significantly
-        const newZoom = map.getZoom();
-        const newCenter = map.getCenter();
-        
-        if (newZoom !== currentZoom || 
-            Math.abs(newCenter.lat - currentCenter.lat) > 0.0001 || 
-            Math.abs(newCenter.lng - currentCenter.lng) > 0.0001) {
+        function renderTable() {
+            const tbody = document.getElementById('obsTableBody');
+            const totalPages = Math.ceil(allObstacles.length / itemsPerPage);
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageData = allObstacles.slice(start, end);
             
-            // Use flyTo for smoother transition if needed, or instant setView
-            map.setView(currentCenter, currentZoom, { 
-                animate: false,
-                duration: 0,
-                noMoveStart: true
+            tbody.innerHTML = pageData.map(obs => `
+                <tr>
+                    <td>${obs.id}</td>
+                    <td><strong>${obs.obstacle || '-'}</strong></td>
+                    <td>${obs.height} m</td>
+                    <td style="font-size:11px;">${obs.lat?.toFixed(5) || '-'}, ${obs.lng?.toFixed(5) || '-'}</td>
+                    <td>
+                        <span class="status-badge ${obs.isDanger ? 'danger' : 'safe'}">
+                            ${obs.isDanger ? 'เกิน OLS' : 'ปลอดภัย'}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="action-btn locate" onclick="locateObs('${obs.id}')" title="ไปที่ตำแหน่ง">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                                    <circle cx="12" cy="10" r="3"/>
+                                </svg>
+                            </button>
+                            <button class="action-btn edit" onclick="editObs('${obs.id}')" title="แก้ไข">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                                </svg>
+                            </button>
+                            <button class="action-btn delete" onclick="confirmDelete('${obs.id}')" title="ลบ">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('pageInfo').textContent = `${currentPage} / ${totalPages || 1}`;
+            document.getElementById('prevPage').disabled = currentPage <= 1;
+            document.getElementById('nextPage').disabled = currentPage >= totalPages;
+        }
+        
+        function locateObs(id) {
+            const obs = allObstacles.find(o => o.id === id);
+            if (obs && obs.lat && obs.lng) {
+                map.setView([obs.lat, obs.lng], 16);
+                document.getElementById('obsTableSection').classList.remove('active');
+            }
+        }
+        
+        function editObs(id) {
+            const obs = allObstacles.find(o => o.id === id);
+            if (!obs) return;
+            
+            document.getElementById('modalTitle').textContent = 'แก้ไขสิ่งกีดขวาง';
+            document.getElementById('obsEditId').value = id;
+            document.getElementById('obsId').value = obs.id;
+            document.getElementById('obsId').disabled = true;
+            document.getElementById('obsName').value = obs.obstacle || '';
+            document.getElementById('obsHeight').value = obs.height || '';
+            document.getElementById('obsCoords').value = obs.latLong || `${obs.lat}, ${obs.lng}`;
+            document.getElementById('obsNote').value = obs.note || '';
+            
+            document.getElementById('obsModal').classList.add('active');
+        }
+        
+        let deleteTargetId = null;
+        
+        function confirmDelete(id) {
+            const obs = allObstacles.find(o => o.id === id);
+            if (!obs) return;
+            
+            deleteTargetId = id;
+            document.getElementById('deleteObsName').textContent = obs.obstacle || obs.id;
+            document.getElementById('deleteConfirmCode').value = '';
+            document.getElementById('deleteConfirm').disabled = true;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+        
+        async function deleteObs(id) {
+            if (!API_URL || API_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+                Swal.fire({ icon: 'info', title: 'กรุณาตั้งค่า API URL', text: 'ก่อนใช้งานฟังก์ชันนี้', confirmButtonColor: '#2196F3' });
+                return;
+            }
+            
+            // Show loading
+            Swal.fire({
+                title: 'กำลังลบ...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
             });
-        }
-    }
-
-    function stop() {
-        if (animationTimer) {
-            clearTimeout(animationTimer);
-            animationTimer = false;
-            isPlaying = false;
-            updatePlayButton();
-            return true;
-        }
-        return false;
-    }
-
-    function play() {
-        showFrame(animationPosition + 1);
-        animationTimer = setTimeout(play, 500);
-        isPlaying = true;
-        updatePlayButton();
-    }
-
-    function playStop() {
-        if (!stop()) play();
-    }
-
-    function updatePlayButton() {
-        const iconSvg = document.getElementById('play-icon-svg');
-        const text = document.getElementById('play-text');
-        
-        if (isPlaying) {
-            iconSvg.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
-            text.textContent = 'หยุด';
-        } else {
-            iconSvg.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
-            text.textContent = 'เล่น';
-        }
-    }
-
-    // ==================== Button Event Handlers - SMOOTH & NO FLICKER ====================
-    let isNavigating = false;
-    
-    function handleNavigation(direction) {
-        if (isNavigating) return;
-        isNavigating = true;
-        
-        // Store current view state
-        targetZoom = map.getZoom();
-        targetCenter = map.getCenter();
-        
-        // Use requestAnimationFrame for smooth updates
-        requestAnimationFrame(() => {
-            if (direction === 'prev') {
-                showFrame(animationPosition - 1);
-            } else if (direction === 'next') {
-                showFrame(animationPosition + 1);
-            }
             
-            // Restore view immediately after frame change
-            requestAnimationFrame(() => {
-                if (map.getZoom() !== targetZoom || 
-                    Math.abs(map.getCenter().lat - targetCenter.lat) > 0.0001 || 
-                    Math.abs(map.getCenter().lng - targetCenter.lng) > 0.0001) {
-                    map.setView(targetCenter, targetZoom, { 
-                        animate: false,
-                        duration: 0
+            try {
+                const res = await fetch(API_URL + '?action=delete&id=' + encodeURIComponent(id));
+                const json = await res.json();
+                if (json.success) {
+                    await loadObstacles();
+                    renderTable();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'ลบสำเร็จ!',
+                        text: 'ข้อมูลถูกลบเรียบร้อยแล้ว',
+                        confirmButtonColor: '#2196F3'
                     });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: json.error || 'Unknown error', confirmButtonColor: '#2196F3' });
                 }
-                
-                // Release lock after a short delay
-                setTimeout(() => {
-                    isNavigating = false;
-                }, 100);
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถลบข้อมูลได้', confirmButtonColor: '#2196F3' });
+                console.error(e);
+            }
+        }
+        
+        async function saveObs() {
+            const editId = document.getElementById('obsEditId').value;
+            const id = document.getElementById('obsId').value;
+            const name = document.getElementById('obsName').value.trim();
+            const height = parseFloat(document.getElementById('obsHeight').value);
+            const coordsStr = document.getElementById('obsCoords').value.trim();
+            const note = document.getElementById('obsNote').value.trim();
+            
+            if (!name) { 
+                Swal.fire({ icon: 'warning', title: 'กรุณากรอกชื่อสิ่งกีดขวาง', confirmButtonColor: '#2196F3' }); 
+                return; 
+            }
+            if (isNaN(height)) { 
+                Swal.fire({ icon: 'warning', title: 'กรุณากรอกความสูง', confirmButtonColor: '#2196F3' }); 
+                return; 
+            }
+            if (!coordsStr) { 
+                Swal.fire({ icon: 'warning', title: 'กรุณากรอกพิกัด', confirmButtonColor: '#2196F3' }); 
+                return; 
+            }
+            
+            const coords = parseCoords(coordsStr);
+            if (!coords) { 
+                Swal.fire({ icon: 'error', title: 'รูปแบบพิกัดไม่ถูกต้อง', confirmButtonColor: '#2196F3' }); 
+                return; 
+            }
+            
+            if (!API_URL || API_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+                Swal.fire({ icon: 'info', title: 'กรุณาตั้งค่า API URL', text: 'ก่อนใช้งานฟังก์ชันนี้', confirmButtonColor: '#2196F3' });
+                return;
+            }
+            
+            // Show loading
+            Swal.fire({
+                title: 'กำลังบันทึก...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
             });
-        });
-    }
-
-    document.getElementById('btn-prev').addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        stop();
-        handleNavigation('prev');
-        console.log('⬅️ Previous frame');
-        return false;
-    }, true);
-
-    document.getElementById('btn-next').addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        stop();
-        handleNavigation('next');
-        console.log('➡️ Next frame');
-        return false;
-    }, true);
-
-    document.getElementById('btn-play').addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        playStop();
-        console.log('▶️ Play/Pause');
-        return false;
-    }, true);
-
-    // Keyboard shortcuts
-    document.onkeydown = function(e) {
-        // Close calculator modal on ESC
-        if (e.keyCode === 27 && calcModal.classList.contains('active')) {
-            calcModal.classList.remove('active');
-            e.preventDefault();
-            return;
-        }
-        
-        // Don't trigger shortcuts when calculator is open
-        if (calcModal.classList.contains('active')) {
-            return;
-        }
-        
-        switch (e.keyCode) {
-            case 37: 
-                stop(); 
-                handleNavigation('prev');
-                e.preventDefault();
-                break;
-            case 39: 
-                stop(); 
-                handleNavigation('next');
-                e.preventDefault();
-                break;
-            case 32: 
-                playStop(); 
-                e.preventDefault();
-                break;
-        }
-    };
-
-    // ==================== Countdown Timers ====================
-    function calculateNextUpdateTime(intervalMinutes) {
-        const now = new Date();
-        const currentMinutes = now.getMinutes();
-        const currentSeconds = now.getSeconds();
-        
-        const nextMinutes = Math.ceil((currentMinutes + 1) / intervalMinutes) * intervalMinutes;
-        let minutesUntilNext = nextMinutes - currentMinutes;
-        
-        if (nextMinutes >= 60) {
-            minutesUntilNext = 60 - currentMinutes;
-        }
-        
-        const secondsUntilNext = (minutesUntilNext * 60) - currentSeconds;
-        
-        return secondsUntilNext;
-    }
-
-    // Radar Countdown
-    let radarRemainingSeconds = calculateNextUpdateTime(API_CONFIG.RADAR.updateInterval);
-
-    function startRadarCountdown() {
-        setInterval(() => {
-            radarRemainingSeconds--;
-            if (radarRemainingSeconds <= 0) {
-                console.log('🔄 Auto-refresh radar...');
-                loadRadarData();
-                radarRemainingSeconds = calculateNextUpdateTime(API_CONFIG.RADAR.updateInterval);
+            
+            try {
+                const data = {
+                    id: id || undefined,
+                    obstacle: name,
+                    height: height,
+                    latLong: `${coords.lat}, ${coords.lng}`,
+                    note: note,
+                    editId: editId || undefined
+                };
+                
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(data)
+                });
+                const json = await res.json();
+                
+                if (json.success) {
+                    document.getElementById('obsModal').classList.remove('active');
+                    await loadObstacles();
+                    if (document.getElementById('obsTableSection').classList.contains('active')) {
+                        renderTable();
+                    }
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: editId ? 'แก้ไขสำเร็จ!' : 'บันทึกสำเร็จ!',
+                        text: `${name} ได้ถูก${editId ? 'แก้ไข' : 'เพิ่ม'}เรียบร้อยแล้ว`,
+                        confirmButtonColor: '#2196F3'
+                    });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: json.error || 'Unknown error', confirmButtonColor: '#2196F3' });
+                }
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถบันทึกข้อมูลได้', confirmButtonColor: '#2196F3' });
+                console.error(e);
             }
-            const m = Math.floor(radarRemainingSeconds / 60);
-            const s = radarRemainingSeconds % 60;
-            document.getElementById('radar-countdown').textContent = m + ':' + (s < 10 ? '0' : '') + s;
-        }, 1000);
-    }
-
-    // ==================== METAR API with Smart UI ====================
-    function fetchMetar() {
-        console.log('☁️  Fetching METAR...');
+        }
         
-        fetch(API_CONFIG.METAR.endpoint, {
-            headers: { 'X-API-Key': API_CONFIG.METAR.key }
-        })
-        .then(r => r.json())
-        .then(data => {
-            console.log('✅ METAR received');
-            if (data.data && data.data[0]) {
-                displayMetar(data.data[0]);
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'เพิ่มสิ่งกีดขวาง';
+            document.getElementById('obsEditId').value = '';
+            document.getElementById('obsId').value = '';
+            document.getElementById('obsId').disabled = false;
+            document.getElementById('obsName').value = '';
+            document.getElementById('obsHeight').value = '';
+            document.getElementById('obsCoords').value = '';
+            document.getElementById('obsNote').value = '';
+            document.getElementById('obsModal').classList.add('active');
+        }
+        
+        // Event Listeners for OBS Management
+        document.getElementById('btnAddObs').addEventListener('click', () => {
+            toggleSidebar();
+            openAddModal();
+        });
+        
+        document.getElementById('btnViewObs').addEventListener('click', () => {
+            toggleSidebar();
+            renderTable();
+            document.getElementById('obsTableSection').classList.add('active');
+        });
+        
+        document.getElementById('btnAddObsFromTable').addEventListener('click', openAddModal);
+        
+        document.getElementById('btnBackFromTable').addEventListener('click', () => {
+            document.getElementById('obsTableSection').classList.remove('active');
+        });
+        
+        document.getElementById('modalClose').addEventListener('click', () => {
+            document.getElementById('obsModal').classList.remove('active');
+        });
+        
+        document.getElementById('modalCancel').addEventListener('click', () => {
+            document.getElementById('obsModal').classList.remove('active');
+        });
+        
+        document.getElementById('modalSave').addEventListener('click', saveObs);
+        
+        document.getElementById('deleteCancel').addEventListener('click', () => {
+            document.getElementById('deleteModal').classList.remove('active');
+            document.getElementById('deleteConfirmCode').value = '';
+            deleteTargetId = null;
+        });
+        
+        // Validate delete confirmation code
+        document.getElementById('deleteConfirmCode').addEventListener('input', (e) => {
+            const isValid = e.target.value === 'vtud1234';
+            document.getElementById('deleteConfirm').disabled = !isValid;
+        });
+        
+        document.getElementById('deleteConfirm').addEventListener('click', async () => {
+            const code = document.getElementById('deleteConfirmCode').value;
+            if (code !== 'vtud1234') {
+                Swal.fire({ icon: 'warning', title: 'รหัสไม่ถูกต้อง', text: 'กรุณาพิมพ์ vtud1234 เพื่อยืนยัน', confirmButtonColor: '#2196F3' });
+                return;
+            }
+            if (deleteTargetId) {
+                document.getElementById('deleteModal').classList.remove('active');
+                await deleteObs(deleteTargetId);
+                document.getElementById('deleteConfirmCode').value = '';
+                deleteTargetId = null;
+            }
+        });
+        
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
+        });
+        
+        document.getElementById('nextPage').addEventListener('click', () => {
+            const totalPages = Math.ceil(allObstacles.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
+            }
+        });
+        
+        // Click on map to set coords in modal
+        map.on('click', function(e) {
+            if (document.getElementById('obsModal').classList.contains('active')) {
+                document.getElementById('obsCoords').value = `${e.latlng.lat.toFixed(7)}, ${e.latlng.lng.toFixed(7)}`;
+            }
+        });
+
+        // Search
+        const searchBox = document.getElementById('searchBox');
+        const searchSuggestions = document.getElementById('searchSuggestions');
+        let searchMarker = null;
+
+        const places = [
+            { name: 'สนามบินอุดรธานี', lat: airportLat, lng: airportLng, type: 'airport' },
+            { name: 'Runway 12', lat: runwayEnd12.lat, lng: runwayEnd12.lng, type: 'runway' },
+            { name: 'Runway 30', lat: runwayEnd30.lat, lng: runwayEnd30.lng, type: 'runway' }
+        ];
+
+        function showSuggestions(q) {
+            if (!q.trim()) { searchSuggestions.classList.remove('active'); return; }
+            let sugs = [];
+            const coords = parseCoords(q);
+            if (coords) sugs.push({ name: `ไปยัง ${coords.lat.toFixed(5)}°, ${coords.lng.toFixed(5)}°`, ...coords, type: 'coord' });
+            sugs.push(...places.filter(p => p.name.toLowerCase().includes(q.toLowerCase())));
+            if (!sugs.length) { searchSuggestions.classList.remove('active'); return; }
+            
+            searchSuggestions.innerHTML = sugs.map(s => `<div class="search-suggestion-item" data-lat="${s.lat}" data-lng="${s.lng}"><div class="search-suggestion-text">${s.name}</div></div>`).join('');
+            searchSuggestions.classList.add('active');
+            
+            document.querySelectorAll('.search-suggestion-item').forEach(item => {
+                item.onclick = () => {
+                    goTo(parseFloat(item.dataset.lat), parseFloat(item.dataset.lng));
+                    searchSuggestions.classList.remove('active');
+                    searchBox.value = '';
+                };
+            });
+        }
+
+        function goTo(lat, lng) {
+            map.setView([lat, lng], 15);
+            if (searchMarker) map.removeLayer(searchMarker);
+            searchMarker = L.marker([lat, lng], { icon: L.divIcon({ className: 'search-marker', iconSize: [16,16], iconAnchor: [8,8] }) }).addTo(map);
+            const ols = getOLSHeight(lat, lng);
+            const dist = haversineDistance(lat, lng, airportLat, airportLng);
+            let popupContent = `<b>ตำแหน่งค้นหา</b><br>`;
+            if (ols.type !== 'outside') {
+                popupContent += `
+                    <b>พื้นที่:</b> ${ols.type}<br>
+                    <b>ความสูง OLS:</b> ${ols.heightAGL.toFixed(1)} m AGL<br>
+                    <b>ความสูง AMSL:</b> ${ols.heightAMSL.toFixed(1)} m<br>
+                `;
             } else {
-                displayMetar(null);
+                popupContent += `<b>พื้นที่:</b> นอกเขต OLS<br>`;
             }
-        })
-        .catch(err => {
-            console.error('❌ METAR Error:', err);
-            displayMetar(null);
+            popupContent += `
+                <b>ระยะจากสนามบิน:</b> ${(dist/1000).toFixed(2)} km<br>
+                <b>Lat:</b> ${lat.toFixed(7)}°<br>
+                <b>Lng:</b> ${lng.toFixed(7)}°
+            `;
+            L.popup().setLatLng([lat, lng]).setContent(popupContent).openOn(map);
+            setTimeout(() => { if (searchMarker) { map.removeLayer(searchMarker); searchMarker = null; } }, 10000);
+        }
+
+        searchBox.addEventListener('input', e => showSuggestions(e.target.value));
+        searchBox.addEventListener('focus', e => showSuggestions(e.target.value));
+        searchBox.addEventListener('keypress', e => { if (e.key === 'Enter') { const c = parseCoords(searchBox.value); if (c) { goTo(c.lat, c.lng); searchSuggestions.classList.remove('active'); searchBox.value = ''; } } });
+        document.addEventListener('click', e => { if (!e.target.closest('.search-container')) searchSuggestions.classList.remove('active'); });
+
+        // Measure Tool
+        const measureTool = {
+            isActive: false, points: [], markers: [], lines: [], tooltips: [], tempLine: null, tempTooltip: null, saved: [],
+            start() {
+                this.isActive = true; this.clear();
+                document.querySelector('.custom-measure-control').classList.add('active');
+                document.getElementById('measure-buttons').classList.add('active');
+                map.getContainer().style.cursor = 'crosshair';
+                map.doubleClickZoom.disable();
+                this.clickHandler = e => this.onClick(e);
+                this.dblHandler = e => { e.stopPropagation(); this.finish(); };
+                map.getContainer().addEventListener('click', this.clickHandler, true);
+                map.getContainer().addEventListener('dblclick', this.dblHandler, true);
+                map.on('mousemove', this.onMove, this);
+                document.getElementById('measure-finish').onclick = () => this.finish();
+                document.getElementById('measure-cancel').onclick = () => this.cancel();
+                document.getElementById('measure-clear').onclick = () => this.clearAll();
+            },
+            stop() {
+                this.isActive = false;
+                document.querySelector('.custom-measure-control').classList.remove('active');
+                document.getElementById('measure-buttons').classList.remove('active');
+                map.getContainer().style.cursor = '';
+                map.doubleClickZoom.enable();
+                if (this.clickHandler) map.getContainer().removeEventListener('click', this.clickHandler, true);
+                if (this.dblHandler) map.getContainer().removeEventListener('dblclick', this.dblHandler, true);
+                map.off('mousemove', this.onMove, this);
+                if (this.tempLine) { map.removeLayer(this.tempLine); this.tempLine = null; }
+                if (this.tempTooltip) { map.removeLayer(this.tempTooltip); this.tempTooltip = null; }
+            },
+            onClick(e) {
+                if (!this.isActive || e.target.closest('.leaflet-control') || e.target.closest('.search-container')) return;
+                e.stopPropagation();
+                const rect = map.getContainer().getBoundingClientRect();
+                const latlng = map.containerPointToLatLng([e.clientX - rect.left, e.clientY - rect.top]);
+                this.addPoint(latlng);
+            },
+            addPoint(latlng) {
+                this.points.push(latlng);
+                const m = L.marker(latlng, { icon: L.divIcon({ className: 'measure-marker', iconSize: [14,14], iconAnchor: [7,7] }) }).addTo(map);
+                this.markers.push(m);
+                if (this.points.length > 1) {
+                    const prev = this.points[this.points.length - 2];
+                    const d = haversineDistance(prev.lat, prev.lng, latlng.lat, latlng.lng);
+                    const line = L.polyline([prev, latlng], { color: '#2196F3', weight: 3 }).addTo(map);
+                    this.lines.push(line);
+                    const tt = L.tooltip({ permanent: true, direction: 'center', className: 'measure-tooltip' })
+                        .setLatLng([(prev.lat + latlng.lat)/2, (prev.lng + latlng.lng)/2])
+                        .setContent(d >= 1000 ? (d/1000).toFixed(2) + ' km' : d.toFixed(0) + ' m').addTo(map);
+                    this.tooltips.push(tt);
+                }
+                if (this.tempLine) { map.removeLayer(this.tempLine); this.tempLine = null; }
+                if (this.tempTooltip) { map.removeLayer(this.tempTooltip); this.tempTooltip = null; }
+            },
+            onMove(e) {
+                if (!this.isActive || !this.points.length) return;
+                if (this.tempLine) map.removeLayer(this.tempLine);
+                if (this.tempTooltip) map.removeLayer(this.tempTooltip);
+                const last = this.points[this.points.length - 1];
+                this.tempLine = L.polyline([last, e.latlng], { color: '#2196F3', weight: 2, opacity: 0.5, dashArray: '5,5' }).addTo(map);
+                const d = haversineDistance(last.lat, last.lng, e.latlng.lat, e.latlng.lng);
+                this.tempTooltip = L.tooltip({ permanent: true, direction: 'center', className: 'measure-tooltip temp-measure' })
+                    .setLatLng([(last.lat + e.latlng.lat)/2, (last.lng + e.latlng.lng)/2])
+                    .setContent(d >= 1000 ? (d/1000).toFixed(2) + ' km' : d.toFixed(0) + ' m').addTo(map);
+            },
+            finish() { if (this.markers.length) this.saved.push({ markers: [...this.markers], lines: [...this.lines], tooltips: [...this.tooltips] }); this.markers = []; this.lines = []; this.tooltips = []; this.points = []; this.stop(); },
+            cancel() { this.clear(); this.stop(); },
+            clearAll() { this.saved.forEach(s => { s.markers.forEach(m => map.removeLayer(m)); s.lines.forEach(l => map.removeLayer(l)); s.tooltips.forEach(t => map.removeLayer(t)); }); this.saved = []; this.clear(); },
+            clear() { this.markers.forEach(m => map.removeLayer(m)); this.lines.forEach(l => map.removeLayer(l)); this.tooltips.forEach(t => map.removeLayer(t)); this.markers = []; this.lines = []; this.tooltips = []; this.points = []; if (this.tempLine) { map.removeLayer(this.tempLine); this.tempLine = null; } }
+        };
+
+        const MeasureControl = L.Control.extend({
+            options: { position: 'topright' },
+            onAdd() {
+                const w = L.DomUtil.create('div', 'measure-control-wrapper');
+                const c = L.DomUtil.create('div', 'leaflet-bar custom-measure-control', w);
+                c.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>`;
+                const btns = L.DomUtil.create('div', 'measure-buttons', w);
+                btns.id = 'measure-buttons';
+                btns.innerHTML = `<button class="measure-btn finish" id="measure-finish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>เสร็จ</button><button class="measure-btn cancel" id="measure-cancel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>ยกเลิก</button><button class="measure-btn clear" id="measure-clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg>เคลียร์</button>`;
+                L.DomEvent.disableClickPropagation(w);
+                L.DomEvent.on(c, 'click', () => measureTool.isActive ? measureTool.finish() : measureTool.start());
+                return w;
+            }
         });
-    }
+        new MeasureControl().addTo(map);
 
-    function displayMetar(metar) {
-        document.getElementById('metar-loading').style.display = 'none';
-        document.getElementById('metar-charts').style.display = 'grid';
-        document.getElementById('metar-info').style.display = 'grid';
-
-        const rawTextElement = document.getElementById('metar-raw-text');
-        if (metar && metar.raw_text) {
-            rawTextElement.textContent = metar.raw_text;
-        } else {
-            rawTextElement.textContent = 'ไม่พบข้อมูล METAR';
-        }
-
-        if (!metar) {
-            document.getElementById('temp-display').innerHTML = '--<span class="chart-unit">°C</span>';
-            document.getElementById('humidity-display').innerHTML = '--<span class="chart-unit">%</span>';
-            document.getElementById('pressure-display').innerHTML = '--<span class="chart-unit">hPa</span>';
-            document.getElementById('wind-display').innerHTML = '--<span class="chart-unit">kt</span>';
-            document.getElementById('dewpoint-value').textContent = '--°C';
-            document.getElementById('wind-dir-value').textContent = '--';
-            document.getElementById('visibility-value').textContent = '--';
-            return;
-        }
-
-        const temp = metar.temperature?.celsius || 0;
-        const humidity = metar.humidity?.percent || 0;
-        const pressure = metar.barometer?.hpa || 1013;
-        const windSpeed = metar.wind?.speed_kts || 0;
-
-        // Smart UI - Only update charts if values actually changed
-        if (lastMetarValues.temp !== temp) {
-            document.getElementById('temp-display').innerHTML = temp + '<span class="chart-unit">°C</span>';
-            createDonutChart('tempChart', temp, 50, chartColors.temp);
-            lastMetarValues.temp = temp;
-            console.log('📊 Updated temperature chart');
-        }
-
-        if (lastMetarValues.humidity !== humidity) {
-            document.getElementById('humidity-display').innerHTML = humidity + '<span class="chart-unit">%</span>';
-            createDonutChart('humidityChart', humidity, 100, chartColors.humidity);
-            lastMetarValues.humidity = humidity;
-            console.log('📊 Updated humidity chart');
-        }
-
-        if (lastMetarValues.pressure !== pressure) {
-            document.getElementById('pressure-display').innerHTML = pressure + '<span class="chart-unit">hPa</span>';
-            createDonutChart('pressureChart', pressure - 950, 100, chartColors.pressure);
-            lastMetarValues.pressure = pressure;
-            console.log('📊 Updated pressure chart');
-        }
-
-        if (lastMetarValues.windSpeed !== windSpeed) {
-            document.getElementById('wind-display').innerHTML = windSpeed + '<span class="chart-unit">kt</span>';
-            createDonutChart('windChart', windSpeed, 50, chartColors.wind);
-            lastMetarValues.windSpeed = windSpeed;
-            console.log('📊 Updated wind chart');
-        }
-
-        document.getElementById('dewpoint-value').textContent = (metar.dewpoint?.celsius || '--') + '°C';
-        document.getElementById('wind-dir-value').textContent = metar.wind?.degrees ? metar.wind.degrees + '°' : 'VRB';
-        
-        const visibility = metar.visibility?.meters_float;
-        if (visibility >= 10000) {
-            document.getElementById('visibility-value').textContent = '>10 km';
-        } else if (visibility) {
-            document.getElementById('visibility-value').textContent = (visibility / 1000).toFixed(1) + ' km';
-        } else {
-            document.getElementById('visibility-value').textContent = '--';
-        }
-    }
-
-    // METAR Countdown (30 minutes for both METAR sections)
-    let metarRemainingSeconds = calculateNextUpdateTime(API_CONFIG.METAR.updateInterval);
-
-    function startMetarCountdown() {
-        setInterval(() => {
-            metarRemainingSeconds--;
-            if (metarRemainingSeconds <= 0) {
-                console.log('🔄 Auto-refresh METAR...');
-                fetchMetar();
-                metarRemainingSeconds = calculateNextUpdateTime(API_CONFIG.METAR.updateInterval);
+        // General map click handler for outside OLS
+        map.on('click', function(e) {
+            // Don't show popup if modal is active or measure tool is active
+            if (measureTool.isActive) return;
+            if (document.getElementById('obsModal').classList.contains('active')) return;
+            
+            const ols = getOLSHeight(e.latlng.lat, e.latlng.lng);
+            if (ols.type === 'outside') {
+                const dist = haversineDistance(e.latlng.lat, e.latlng.lng, airportLat, airportLng);
+                L.popup().setLatLng(e.latlng).setContent(`
+                    <b>นอกเขต OLS</b><br>
+                    <b>ระยะจากสนามบิน:</b> ${(dist/1000).toFixed(2)} km<br>
+                    <b>Lat:</b> ${e.latlng.lat.toFixed(7)}°<br>
+                    <b>Lng:</b> ${e.latlng.lng.toFixed(7)}°
+                `).openOn(map);
             }
-            const m = Math.floor(metarRemainingSeconds / 60);
-            const s = metarRemainingSeconds % 60;
-            const timeStr = m + ':' + (s < 10 ? '0' : '') + s;
-            document.getElementById('metar-countdown').textContent = timeStr;
-            document.getElementById('metar-raw-countdown').textContent = timeStr;
-        }, 1000);
-    }
+        });
 
-    // ==================== Current Time ====================
-    function updateCurrentTime() {
-        document.getElementById('current-time-display').textContent = 
-            new Date().toLocaleString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    }
-    setInterval(updateCurrentTime, 1000);
+        // Coordinate display
+        const coordDisplay = document.getElementById('coordinateDisplay');
+        const coordText = document.getElementById('coordText');
+        map.on('mousemove', e => { coordText.textContent = `Lat: ${e.latlng.lat.toFixed(7)}° Lng: ${e.latlng.lng.toFixed(7)}°`; coordDisplay.classList.add('active'); });
 
-    // ==================== Initialize ====================
-    console.log('🎬 Starting all systems...');
-    
-    loadRadarData();
-    startRadarCountdown();
-    
-    fetchMetar();
-    startMetarCountdown();
-    
-    updateCurrentTime();
-    
-    console.log('✅ System ready!');
-})();
-</script>
+        // Legend toggles
+        function setupToggle(id, layer, item) {
+            const cb = document.getElementById(id);
+            cb.addEventListener('change', () => { cb.checked ? map.addLayer(layer) : map.removeLayer(layer); item.classList.toggle('hidden-surface', !cb.checked); });
+        }
+        const items = document.querySelectorAll('.legend-item');
+        setupToggle('toggle-runway', runwayLayer, items[0]);
+        setupToggle('toggle-strip', runwayStripLayer, items[1]);
+        setupToggle('toggle-approach', approachLayer, items[2]);
+        setupToggle('toggle-inner', innerHorizontalLayer, items[3]);
+        setupToggle('toggle-conical', conicalLayer, items[4]);
+        setupToggle('toggle-outer', outerHorizontalLayer, items[5]);
+        setupToggle('toggle-transitional', transitionalLayer, items[6]);
+        setupToggle('toggle-obstacles', obstaclesLayer, items[7]);
+        setupToggle('toggle-obs-labels', obsLabelsLayer, items[8]);
 
+        L.control.scale({ imperial: false }).addTo(map);
+    </script>
 </body>
 </html>
